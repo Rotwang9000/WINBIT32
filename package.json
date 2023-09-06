@@ -4,6 +4,7 @@
   "private": true,
   "homepage": "http://rotwang9000.github.io/bitx",
   "dependencies": {
+    "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
     "@scure/bip39": "^1.2.1",
     "@testing-library/jest-dom": "^5.17.0",
     "@testing-library/react": "^13.4.0",
@@ -16,6 +17,7 @@
     "@thorswap-lib/toolbox-utxo": "^1.0.0-development.136",
     "@thorswap-lib/types": "^0.3.9",
     "crypto-browserify": "^3.12.0",
+    "dotenv": "^16.3.1",
     "gh-pages": "^6.0.0",
     "path-browserify": "^1.0.1",
     "react": "^18.2.0",
@@ -29,7 +31,10 @@
     "yarn": "^1.22.19"
   },
   "scripts": {
+    "predeploy": "react-app-rewired build",
+    "predeploydev": "react-app-rewired build",
     "deploy": "gh-pages -d build -b master",
+    "deploydev": "gh-pages -d build -b Dev",
     "start": "react-app-rewired start",
     "build": "react-app-rewired build",
     "test": "react-app-rewired test",
