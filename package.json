@@ -3,18 +3,33 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@scure/bip39": "^1.2.1",
     "@testing-library/jest-dom": "^5.17.0",
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^13.5.0",
+    "@thorswap-lib/keystore": "^0.0.1",
+    "@thorswap-lib/multichain-entities": "^0.2.36",
+    "@thorswap-lib/swapkit-core": "^1.0.0-development.207",
+    "@thorswap-lib/swapkit-sdk": "^0.1.0-development.77",
+    "@thorswap-lib/toolbox-evm": "^1.0.0-development.158",
+    "@thorswap-lib/toolbox-utxo": "^1.0.0-development.136",
+    "@thorswap-lib/types": "^0.3.9",
+    "crypto-browserify": "^3.12.0",
+    "path-browserify": "^1.0.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "react-scripts": "5.0.1",
-    "web-vitals": "^2.1.4"
+    "react-hook-form": "^7.45.4",
+    "react-native-svg": "^13.13.0",
+    "react-qr-code": "^2.0.12",
+    "react-scripts": "^5.0.1",
+    "stream-browserify": "^3.0.0",
+    "web-vitals": "^2.1.4",
+    "yarn": "^1.22.19"
   },
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
+    "start": "react-app-rewired start",
+    "build": "react-app-rewired build",
+    "test": "react-app-rewired test",
     "eject": "react-scripts eject"
   },
   "eslintConfig": {
@@ -34,5 +49,10 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "buffer": "^6.0.3",
+    "process": "^0.11.10",
+    "react-app-rewired": "^2.2.1"
   }
 }
