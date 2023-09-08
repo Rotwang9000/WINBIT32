@@ -1,3 +1,4 @@
+Soon:
 Private EthBtc auto conversions
 Fee calculations for max transfer 
 QR code reading 
@@ -16,3 +17,6 @@ Bots: telegram, x
 Address book for when logged in by PWA or wallet. 
 Triggers (webhook, price(Inc gas) , time) 
 multiple receivers
+
+Future:
+Saving and Lending in one interface. Perhaps "amplify" rather than lending?
