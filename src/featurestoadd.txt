@@ -1,0 +1,22 @@
+Soon:
+Private EthBtc auto conversions
+Fee calculations for max transfer 
+QR code reading 
+enable streaming swaps
+same/same token handling
+Stablecoin destination 
+Hosted version 
+Callback on transaction complete
+API (access control by token? Airdrop to prev users?) 
+Other chains 
+Other ETH tokens 
+Plugins for shopify, woocommerce, chrome. 
+Metamask/walletconnect connections
+"pay me" links 
+Bots: telegram, x
+Address book for when logged in by PWA or wallet. 
+Triggers (webhook, price(Inc gas) , time) 
+multiple receivers
+
+Future:
+Saving and Lending in one interface. Perhaps "amplify" rather than lending?
