@@ -6,10 +6,22 @@ import { keystoreWallet } from '@thorswap-lib/keystore';
 import { AssetAmount, createSwapKit, WalletOption, SwapKitApi } from '@thorswap-lib/swapkit-sdk'
 import { entropyToMnemonic, generateMnemonic } from '@scure/bip39';
 import { wordlist } from '@scure/bip39/wordlists/english';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef,  } from "react";
 import QRCode from "react-qr-code";
 import "dotenv/config";
+import { Fragment } from "react";
 
+
+  var lastQuoteDetails = {
+    destAmtTxt: "",
+    time: 0,
+    sendingWalletBalance: 0,
+    transferType: [],
+  };
+
+  var countdownTimer = null;
+  var countdownNumber = 11;
+  var numWalletChecks = 0;
 
 const styles = {
   container: {
@@ -59,16 +71,25 @@ function App() {
 
   const [phrase, setPhrase] = useState("");
   const [wallets, setWallets] = useState([]);
+  const walletsRef = useRef(wallets);
+  walletsRef.current = wallets;
+
   const [lastWalletGet, setLastWalletGet] = useState(0);
   const [balances, setBalances] = useState([]); // [{ balance: AssetAmount[]; address: string; walletType: WalletOption }
   const [originBalances, setOriginBalances] = useState(null);
   const [autoswap, setAutoswap] = useState(false);
-  const [sellAmount, setSellAmount] = useState(0);
+  const [sellAmount, setSellAmount] = useState([0, 0]);
   const [slippage, setSlippage] = useState(1);
   const [routes, setRoutes] = useState([]); // [{ optimal: boolean; route: Route[] }
   const [msg, setMsg] = useState("");
   const [msgColour, setMsgColour] = useState("info_msg");
   const [transferType, setTransferType] = useState(["", ""]); //['source', 'dest'] or [] for none eg. ['btc', 'eth']
+  const transferTypeRef = useRef(transferType);
+  transferTypeRef.current = transferType;
+
+  const [lastSwapTx, setLastSwapTx] = useState(null);
+  const [lastSwapTxTime, setLastSwapTxTime] = useState(0);
+  const [lastSwapBtn, setLastSwapBtn] = useState(null);
 
   function setError(msg) {
     if (typeof msg === "object") {
@@ -77,9 +98,16 @@ function App() {
     setMsg(msg);
     setMsgColour("error_msg");
   }
-  function setInfo(msg) {
+  function setInfo(msg, isHTML = false) {
+    // if (isHTML) {
+    //   //message is raw html to be set as Msg to go in as is without escaping
+    //   setMsg(msg);
+    
+    // }
+
     setMsg(msg);
     setMsgColour("info_msg");
+    
   }
 
   function generatePhrase(size = 12) {
@@ -88,16 +116,81 @@ function App() {
     return generateMnemonic(wordlist, entropy);
   }
 
-  async function getAQuote(sellAmt = 0, loop = 0) {
-    if (sellAmount === -1) return;
-    if (destinationAmt !== "MAX" && isNaN(destinationAmt.replace("%", "")))
-      return;
+  async function getAQuote(osellAmt = null, loop = 0, destAmtTxt = null) {
+    console.log("lastQuoteDetails", lastQuoteDetails);
 
-    setSellAmount(-1);
+    if (
+      document.getElementById("destination_amt").value !== destinationAmt
+    ) {
+        console.log("destination amount changed");
+        return;
+    }
+
+    if (sellAmount[0] === -1) return;
+    if (destinationAmt !== "MAX" && isNaN(destinationAmt.replace("%", ""))) {
+      console.log("not max and not %");
+      return;
+    }
+    if (transferType.length !== 2) {
+      console.log("transfer type not set");
+      return;
+    }
+    if (!wallets[0] || !wallets[1]) {
+      console.log("no wallets");
+      return;
+    }
+
+    if (
+      lastQuoteDetails.destAmtTxt === destinationAmt &&
+      Date.now() - lastQuoteDetails.time < 60000 &&
+      osellAmt === null
+       &&
+      lastQuoteDetails.sendingWalletBalance ===
+        selectSendingWallet().balance[0].assetAmount.toString() &&
+      lastQuoteDetails.transferType === transferType
+    ) {
+      console.log("same quote");
+
+      return;
+    }
+    if (osellAmt === null) {
+      console.log(
+        "last destamttxt",
+        lastQuoteDetails.destAmtTxt,
+        destinationAmt
+      );
+      console.log("last time", Date.now() - lastQuoteDetails.time);
+      console.log(
+        "last sendingWalletBalance",
+        lastQuoteDetails.sendingWalletBalance,
+        selectSendingWallet().balance[0].assetAmount.toString()
+      );
+    }
+
+    if (osellAmt !== null && destAmtTxt !== lastQuoteDetails.destAmtTxt) {
+      console.log("different quote!", destAmtTxt, lastQuoteDetails.destAmtTxt);
+      console.log(destAmtTxt);
+      return;
+    }
+
+    if (osellAmt === null) {
+      var arr = { destAmtTxt: destinationAmt, time: Date.now() };
+      //add sending wallet balance
+      var sendingWallet = selectSendingWallet();
+      if (sendingWallet) {
+        arr["sendingWalletBalance"] =
+          sendingWallet.balance[0].assetAmount.toString();
+      }
+      arr["transferType"] = transferType;
+      lastQuoteDetails = arr;
+      destAmtTxt = destinationAmt;
+    }
+    
+    //setSellAmount((prev) => [sellAmt, prev[1]]);
 
     //if destination amount is MAX, get the balance of the destination wallet and use that as the destination amount
     if (
-      sellAmt === 0 &&
+      osellAmt === null &&
       (destinationAmt === "MAX" || // or contains a % sign
         destinationAmt.substring(destinationAmt.length - 1) === "%") &&
       wallets[0] &&
@@ -107,14 +200,13 @@ function App() {
       var bal = parseFloat(wallets[0].balance[0].assetAmount.toString());
       var pct = parseFloat(destinationAmt.replace("%", ""));
       if (isNaN(pct)) pct = 100;
-      sellAmt = bal * (pct / 100);
-      console.log(sellAmt);
-      return getAQuote(sellAmt);
+      var sellAmt = bal * (pct / 100);
+      console.log("sellAmt", sellAmt);
+      return getAQuote(sellAmt, loop + 1, destAmtTxt);
     }
 
     console.log("getting quote");
-    if (transferType.length !== 2) return;
-    if (!wallets[0] || !wallets[1]) return;
+
     var assets = [];
     for (var i = 0; i < transferType.length; i++) {
       if (transferType[i] === "eth") {
@@ -124,8 +216,8 @@ function App() {
       }
     }
 
-    console.log(assets);
-    console.log(wallets);
+    console.log("assets", assets);
+    console.log("wallets", wallets);
     //get the right wallet for each asset
     var walletsForAssets = [];
     for (var i = 0; i < assets.length; i++) {
@@ -152,9 +244,14 @@ function App() {
     };
 
     var testAmt = 1;
-
-    if (sellAmt > 0) {
-      quoteParams.sellAmount = sellAmt;
+    var oopFees = 0;
+    var sellAmt = osellAmt;
+    if (Array.isArray(sellAmt)) {
+      oopFees = sellAmt[1];
+      sellAmt = sellAmt[0];
+    }
+    if (osellAmt !== null) {
+      quoteParams.sellAmount = sellAmt - oopFees;
       testAmt = sellAmt;
       quoteParams.affiliateBasisPoints = affiliateBasisPoints; //100 = 1%
       quoteParams.affiliateAddress = "me";
@@ -165,7 +262,7 @@ function App() {
       quoteParams.affiliateAddress = "me";
     }
 
-    console.log(quoteParams);
+    console.log("quoteParams", quoteParams);
 
     var routes = await SwapKitApi.getQuote(quoteParams);
 
@@ -173,45 +270,86 @@ function App() {
       console.log(routes.message);
       //set #error_phrase
       setError(routes.message.split(":").pop());
-      setSellAmount(0);
+      setSellAmount((prev) => [0, prev[1]]);
       return;
     }
     routes = routes.routes;
 
     // routes = await routes;
-    console.log("routes");
-    console.log(routes);
-
-    setRoutes(routes);
-    console.log(routes);
+    console.log("routes", routes);
+    if (osellAmt !== null) setRoutes(routes);
+    
     if (routes === undefined) {
-      setSellAmount(0);
+      setSellAmount((prev) => [0, prev[1]]);
+      console.log("no routes");
       return;
     }
     //if expectedOutputMaxSlippage is 0 then there is no route
     if (routes[0].expectedOutputMaxSlippage === 0) {
-      setSellAmount(0);
+      setSellAmount((prev) => [0, prev[1]]);
       console.log("no route");
 
       return;
     }
     var eoms_pc = 1;
+    var outOfPocketFees = 0;
+    var feesUSD = 0;
+    var sourceAssetFees = 0;
+    var destAssetFees = 0;
+    var destAssetFeesNoAffilliate = 0;
+    var feesArray = routes[0].fees[Object.keys(routes[0].fees)[0]];
+    console.log("feesArray", feesArray);
 
+     for (var fi = 0; fi < feesArray.length; fi++) {
+        var fee = feesArray[fi];
+        var feeUSD = parseFloat(fee.totalFeeUSD.toString());
+        if (fee.type === "inbound") {
+          if (fee.isOutOfPocket) {
+            outOfPocketFees += parseFloat(fee.totalFee.toString());
+            console.log("outOfPocketFees", outOfPocketFees);
+
+          } else {
+            sourceAssetFees += fee.totalFee;
+          }
+        } else if(fee.type === "outbound"){
+            feesUSD += feeUSD;
+            destAssetFees += fee.totalFee;
+            destAssetFeesNoAffilliate += fee.totalFee 
+            if(fee.affiliateFeeUSD){
+              destAssetFeesNoAffilliate -= fee.affiliateFee;
+            }
+          }
+
+        
+        //remvoe slip fee if it exists
+        // if (fee.slipFeeUSD && sellAmt === 0) {
+        //   fees -= parseFloat(fee.slipFeeUSD.toString());
+        //   fees += 5;
+        // }
+      } 
     //if expectedOutputMaxSlippage is more than 1% out either way, calculate again
     if (!isNaN(destinationAmt)) {
+      //calculate out of pocket fees
+     
       eoms_pc =
         parseFloat(routes[0].expectedOutputMaxSlippage.toString()) /
         destinationAmt;
+      if(destAssetFeesNoAffilliate == destAssetFees){
+        eoms_pc -= 0.01;
+      }
       //get abs difference
       eoms_pc = Math.abs(eoms_pc - 1) * 100;
-      console.log("eoms_pc");
-
-      console.log(eoms_pc);
+      console.log("destinationAmt", destinationAmt);
+      console.log("expectedOutputMaxSlippage", routes[0].expectedOutputMaxSlippage.toString());
+      console.log("eoms_pc", eoms_pc);
     }
     var eoms_ok = false;
     //permit 3% eoms_pc below 500 usd, 1% above 500 usd
     if (parseFloat(routes[0].expectedOutputUSD.toString()) < 500) {
-      if (eoms_pc < 3) {
+      if (
+        eoms_pc < 3 ||
+        (parseFloat(routes[0].expectedOutputUSD.toString()) < 20 && eoms_pc < 5)
+      ) {
         eoms_ok = true;
       }
     } else {
@@ -220,15 +358,32 @@ function App() {
       }
     }
 
-    if (loop > 5) {
-      //if we've tried 5 times, give up
-      setDestinationAmt(routes[0].expectedOutputMaxSlippage.toString());
-      setSellAmount(0);
-      console.log("giving up");
-      eoms_pc = 1;
+    if (osellAmt !== null) {
+      //calulate USD difference of requested amount.
+      var destAmtUSDRate =
+        parseFloat(routes[0].expectedOutputUSD.toString()) /
+        parseFloat(routes[0].expectedOutput.toString());
+      var destAmtUSD = destAmtUSDRate * destinationAmt;
+      var diffUSD =
+        destAmtUSD - parseFloat(routes[0].expectedOutputUSD.toString());
+      //if diffUSD is less than 5, then allow it
+      console.log("diffUSD", diffUSD);
+      if (Math.abs(diffUSD) < 5) {
+        eoms_ok = true;
+      }
     }
 
-    if (sellAmt === 0 || eoms_ok === false) {
+    if (loop > 5 && eoms_ok === false) {
+      //if we've tried 5 times, give up
+      // setDestinationAmt(routes[0].expectedOutputMaxSlippage.toString());
+      setSellAmount([sellAmt, outOfPocketFees]);
+      console.log("giving up");
+      setRoutes(routes);
+      return;
+      //eoms_pc = 1;
+    }
+
+    if (osellAmt === null || eoms_ok === false) {
       //calculate the sell amount to get the right destination amount
       var r = routes[0];
       //routes:
@@ -366,69 +521,101 @@ function App() {
     ]
 } */
       if (!r) {
-        setSellAmount(0);
+        setSellAmount((prev) => [0, prev[1]]);
         return;
       }
 
-      //get rate
-      var rate = parseFloat(r.expectedOutputMaxSlippage.toString()) / testAmt;
-      console.log(rate);
+      //calculate sell amount, taking fee into account and adding for slippage
+      console.log("FeesUSD", feesUSD);
       //get destination amount
       var destAmt = parseFloat(destinationAmt);
-      if (destinationAmt === "MAX") {
-        destAmt = parseFloat(wallets[1].balance[0].assetAmount.toString());
+      //if is 'max' or a %, then use the balance of the sending wallet
+      if (
+        destinationAmt === "MAX" ||
+        destinationAmt.substring(destinationAmt.length - 1) === "%"
+      ) {
+        console.log("using sending wallet balance");
+        //Maybe use estimateMaxSendableAmount
+        var newsellAmt = [
+          parseFloat(selectSendingWallet().balance[0].assetAmount.toString()),
+          outOfPocketFees,
+        ];
+        if (destinationAmt.substring(destinationAmt.length - 1) === "%") {
+          var pct = parseFloat(destinationAmt.replace("%", ""));
+          if (isNaN(pct)) pct = 100;
+          newsellAmt[0] = newsellAmt[0] * (pct / 100);
+        }
+        return getAQuote(newsellAmt, loop + 1, destAmtTxt);
+
+        // destAmt = parseFloat(wallets[selectSendingWallet(true)].balance[0].assetAmount.toString());
       }
 
       console.log(destAmt);
-      //calculate sell amount, taking fee into account and adding for slippage
-      //get total fees in USD
-      var fees = 0;
-      //get first in r.fees array
-      var feesArray = r.fees[Object.keys(r.fees)[0]];
-      for (var i = 0; i < feesArray; i++) {
-        var fee = feesArray[i];
-        var feeUSD = parseFloat(fee.totalFeeUSD.toString());
-        fees += feeUSD;
-        //remvoe slip fee if it exists
-        if (fee.slipFeeUSD && sellAmt === 0) {
-          fees -= parseFloat(fee.slipFeeUSD.toString());
-          fees += 5;
-        }
-      }
 
-      console.log(fees);
       //get total fees in dest asset
       var destAssetUSDRate =
         parseFloat(r.expectedOutputUSD.toString()) /
         parseFloat(r.expectedOutput.toString());
 
-      console.log(destAssetUSDRate);
-      var destAssetFees = fees / destAssetUSDRate;
-      console.log(destAssetFees);
+      console.log("destAssetUSDRate", destAssetUSDRate);
+      //var destAssetFees = feesUSD / destAssetUSDRate;
+
+      //get source asset usd rate from first fee
+      var sourceAssetUSDRate =
+        parseFloat(r.fees[Object.keys(r.fees)[0]][0].totalFeeUSD.toString()) /
+        parseFloat(r.fees[Object.keys(r.fees)[0]][0].totalFee.toString());
+
+      console.log("sourceAssetUSDRate", sourceAssetUSDRate);
+
+      testAmt = testAmt - outOfPocketFees;
+      //get rate
+      var rate =
+        (parseFloat(r.expectedOutputMaxSlippage.toString()) + (destAssetFees * 1.01)) /
+        testAmt;
+      console.log(rate);
+
+      var sourceAssetDestFees = destAssetFees /rate;
+      //var sourceAssetDestFees = feesUSD / sourceAssetUSDRate;
+
+      //rate = parseFloat(r.expectedOutputMaxSlippage.toString() + destAssetFees) / testAmt;
+      console.log("sourceAssetDestFees", sourceAssetDestFees);
+      console.log("destAssetFees", destAssetFees);
       //consider fees in rate
-      console.log(rate);
+      console.log("rate", rate);
       //callculate affiliate fees %
-      var affiliateFeesPct = affiliateBasisPoints / 100; // affiliateFees / destAssetUSDRate
-      console.log("affiliateFeesPct");
-      console.log(affiliateFeesPct);
+      //var affiliateFeesPct = 1; //affiliateBasisPoints / 100; // affiliateFees / destAssetUSDRate
+      // console.log("affiliateFeesPct", affiliateFeesPct);
+      //calculate affiliate rate pct
+      var affiliateFees = destAssetFees - destAssetFeesNoAffilliate;
+      console.log("affiliateFees", affiliateFees)
+      var affiliateFeesPct = 1
+      console.log("affiliateFeesPct", affiliateFeesPct);
 
-      //multiply fees by 1.2 to be "average"
-      //destAssetFees = destAssetFees * 1.2;
-      //rate = rate * (1 + affiliateFeesPct/100)
-      rate = rate + destAssetFees; //* (1 + affiliateFeesPct/100);
-      console.log(rate);
+      var newsellAmt = (destAmt + destAssetFeesNoAffilliate) / rate;
 
-      var newsellAmt = destAmt / rate;
+      console.log(
+        "newsellAmt, aff",
+        newsellAmt,
+        newsellAmt * (affiliateFeesPct / 100)
+      );
+      console.log(
+        "newsellAmt USD, aff USD",
+        newsellAmt * sourceAssetUSDRate,
+        newsellAmt * sourceAssetUSDRate * (affiliateFeesPct / 100)
+      );
+
       newsellAmt = newsellAmt * (1 + affiliateFeesPct / 100);
+      //newsellAmt = newsellAmt + sourceAssetDestFees;
+      newsellAmt = newsellAmt + outOfPocketFees + 0.00000547;
       console.log(newsellAmt);
-      return getAQuote(newsellAmt, loop + 1);
+      return getAQuote([newsellAmt, outOfPocketFees], loop + 1, destAmtTxt);
     } else {
       console.log("we good: " + eoms_pc);
       console.log(routes);
-      setSellAmount(sellAmt);
+      setSellAmount([sellAmt, outOfPocketFees]);
       setRoutes(routes);
 
-      doSwapIf();
+      doSwapIf(routes);
     }
     return routes;
   }
@@ -489,17 +676,23 @@ function App() {
 
   //check for wallet balances every 15 seconds
   useEffect(() => {
-    if (devMode) {
-      setDestinationAddr("0xdc5e0658fd59000e656b00244418774233d84326");
-      setDestinationAmt('0.01');
-    }
+    // if (devMode) {
+    //   setDestinationAddr("0xcd9AdBD82Ce03a225f2cBC4228fB7cdCCF770324");
+    //   setDestinationAmt('0.01');
+    // }
 
     const interval = setInterval(() => {
-      if (!wallets[0] || !wallets[1]) return;
+      const _wallets = walletsRef.current;
+      if (!_wallets[0] || !_wallets[1]){
+        console.log("no wallets", _wallets[0], _wallets[1]);
+          return;
+      } 
 
-      if (autoswap) {
-        fetchWalletBalances();
-      }
+      fetchWalletBalances();
+      
+    }, 60000);
+
+    const interval2 = setInterval(() => {
       if (
         originBalances &&
         originBalances.length > 1 &&
@@ -507,13 +700,17 @@ function App() {
         wallets[1] &&
         wallets[0].balance[0] &&
         wallets[1].balance[0] &&
-        (wallets[0].balance[0].assetAmount > originBalances[0] ||
-          wallets[1].balance[0].assetAmount > originBalances[1])
+        destinationAmt !== '' 
       ) {
         getAQuote();
       }
-    }, 20000);
-    return () => clearInterval(interval);
+    }, 300000);
+
+
+
+    return () => {
+      console.log("clearing interval", interval, interval2);
+      clearInterval(interval); clearInterval(interval2);};
 
     
   }, []);
@@ -523,14 +720,13 @@ function App() {
     if (!wallets[0] || !wallets[1]) return;
     //if destination amount is not MAX and hasn't got focus, and is a number get a quote
     if (
-      destinationAmt !== "MAX" &&
       document.getElementById("destination_amt").dataset.oAutoSwap === "" &&
       !isNaN(destinationAmt) &&
-      destinationAmt !== sellAmount
-    ) {
+      destinationAmt !== "" 
+          ) {
       getAQuote();
     }
-  }, [destinationAmt]);
+  }, [destinationAmt, wallets, transferType, wallets[0], wallets[1]]);
 
   //hide loading overlay when wallets are loaded
   useEffect(() => {
@@ -553,12 +749,13 @@ function App() {
     } catch (error) {}
   }, [wallets]);
 
-  function selectSendingWallet() {
+  function selectSendingWallet(send_index = false) {
     //select sending wallet based on transferType[0]
-    var transfer_type_from = transferType[0];
+    var transfer_type_from = transferTypeRef.current[0];
     for (var i = 0; i < chainIDs.length; i++) {
       if (chainIDs[i].toLowerCase() === transfer_type_from) {
-        return wallets[i];
+        if (send_index) return i;
+        return walletsRef.current[i];
       }
     }
     return null;
@@ -569,15 +766,16 @@ function App() {
     if (!originBalances) return;
     if (originBalances.length !== 2) return;
     if (originBalances[0] === "" || originBalances[1] === "") return;
-    if (sellAmount <= 0) return;
+    if (sellAmount[0] <= 0) return;
 
     //select sending wallet based on transferType[0]
-    var sendingWallet = selectSendingWallet();
+    const sendingWalletIndex = selectSendingWallet(true);
+    const sendingWallet = walletsRef.current[sendingWalletIndex];
 
     //if enough in wallet 0 then do the swap
     const bal = parseFloat(sendingWallet.balance[0].assetAmount.toString());
 
-    if (bal > originBalances[0] && bal >= sellAmount && autoswap) {
+    if (bal > originBalances[i] && bal >= sellAmount[0] && autoswap) {
       setAutoswap(false);
 
       doSwap();
@@ -603,14 +801,22 @@ function App() {
     }
     if (_balances !== balances) {
       setBalances(_balances);
+      doSwapIf();
     }
   }
 
   function fetchWalletsAfterConnect() {
     try {
-      skClient.getWalletByChain(Chain.Ethereum);
+      console.log("fetching wallets after connect")
+      skClient.getWalletByChain(Chain.Ethereum).then((result) => {
+        numWalletChecks = 0;
+        fetchAllWalletBalances();
+      }).catch((error) => { 
+        console.log("error getting eth wallet",error);
+        setWallets([]);
+        setOriginBalances(null);
+      });
 
-      fetchWalletBalances();
     } catch (error) {
       console.log(error);
       setWallets([]);
@@ -618,25 +824,69 @@ function App() {
     }
     // [{ balance: AssetAmount[]; address: string; walletType: WalletOption }]
   }
+  async function fetchAllWalletBalances() {
+    //only call this once every 30 seconds
+    console.log("fetching all wallet balances");
+    setLastWalletGet(Date.now());
+    await Promise.all(connectChains.map(skClient.getWalletByChain)).then(
+      (result) => {
+        console.log("result");
+        console.log(result);
+        if (!result) {
+          console.log("no result");
+          setWallets([]);
+          return;
+        }
+        setWallets(result);
+        setTheBalances(result);
+      }
+    ).catch((error) => {
+      console.log("error getting wallets",error);
+      setError(error);
+      setWallets([]);
+    });
+  }
+
+
+
 
   async function fetchWalletBalances() {
-    //only call this once every 10 seconds
-    if (Date.now() - lastWalletGet < 10000) return;
+    //only call this once every 30 seconds
+    console.log("fetching wallet balances",  numWalletChecks * 5000);
+    numWalletChecks++;
+    if (Date.now() - lastWalletGet < numWalletChecks * 5000) {
+      console.log("too soon");
+      return;
+      }
     setLastWalletGet(Date.now());
 
+    const sourceWalletID = selectSendingWallet(true);
+    if (sourceWalletID === null) {
+      console.log("no source wallet", transferType);
+      return;
+    }
+    const sourceWalletChain = connectChains[sourceWalletID];
+    
     //setWallets(await Promise.all(connectChains.map(skClient.getWalletByChain)) || [] );
-    Promise.all(connectChains.map(skClient.getWalletByChain)).then((result) => {
+    skClient.getWalletByChain(sourceWalletChain).then((result) => {
       console.log("result");
       console.log(result);
       if (!result) {
         console.log("no result");
-        setWallets([]);
-        setOriginBalances(null);
         return;
       }
-      setWallets(result);
-      setTheBalances(result);
+      var _wallets = wallets
+      _wallets[sourceWalletID] = result;
+      if(_wallets[sourceWalletID] !== wallets[sourceWalletID]){
+        setWallets(_wallets);
+        setTheBalances(_wallets);
+      }
+      
+    }).catch((error) => {
+      console.log("error getting wallets",error);
+      setError(error);
     });
+
 
     console.log("wallets");
   }
@@ -704,33 +954,129 @@ function App() {
     }
   }, []);
 
-  function doSwapIf() {
+  function doSwapIf(r = null) {
     if (autoswap) {
       //check balance
       wallet = selectSendingWallet();
-      if (wallet.balance[0].assetAmount > sellAmount) {
+      if (wallet && wallet.balance && wallet.balance[0].assetAmount > sellAmount[0] && sellAmount[0] > 0) {
         //check quote is made in past 2mins
-        if (Date.now() - lastWalletGet < 120000) {
-          doSwap();
+        if (Date.now() - lastQuoteDetails.time < 120000) {
+          console.log("doing swap because balance is enough");
+          doSwap(r);
         } else {
           //get a quote
+          console.log("getting quote because too old");
           getAQuote();
         }
       }
     }
   }
 
-  function doSwap() {
-    if (!wallets[0] || !wallets[1]) return;
-    if (!routes[0]) return;
+  const [doSwapCountdown, setDoSwapCountdown] = useState(false);
+  
+  // //set info box to be countdown with cancel button
+  // useEffect(() => {
+  //   if (doSwapCountdown === -1) return;
+  //   if (doSwapCountdown === 11) return;
+  //   if (doSwapCountdown > 0) {
+  //     setInfo(
+  //       "Swapping in " +
+  //         doSwapCountdown +
+  //         " seconds. <a href='#' onclick='cancelSwap();'>Cancel</a>", true
+  //     );
+  //   } else {
+  //     setInfo("", true);
+  //   }
+  // }, [doSwapCountdown]);
+
+  useEffect(() => {
+    const tmr = doSwapCountdown;
+    if(tmr === -1){
+      setInfo("Cancelled", true);
+      return;
+    } 
+    if(tmr === 11)  return;
+    if(tmr > 0){
+      setInfo(<>Swapping in {tmr} seconds. <button onClick={() => cancelSwap()}
+        >Cancel</button></>, true);
+    }else{
+      setInfo("Swapping...", true);
+    }
+  }
+  , [doSwapCountdown]);
+
+  function cancelSwap() {
+    
+    clearTimeout(countdownTimer);
+    countdownTimer = -1;
+    countdownNumber = 11;
+    setDoSwapCountdown(false);
+  }
+
+
+  function doSwap(r = null, fromCounter = false) {
+
+    // if (!countdowntime) {
+    //   countdowntime = doSwapCountdown;
+    // }
+    var countdowntime = countdownNumber;
+    console.log("countdowntime", countdowntime);
+    //implement a countdown
+
+    if (countdowntime === -1 || countdownTimer === -1) {
+      cancelSwap();
+    }
+
+    if (fromCounter !== false) {
+      console.log("from counter", countdowntime);
+      countdownTimer = null;
+    }
+
+    if(fromCounter === false && countdownTimer !== null){
+      console.log("already counting down")
+      return;
+    }
+
+
+    if (countdowntime > 0 || countdowntime === null) {
+      if (countdowntime === null) {
+        countdowntime = 10;
+      }else{
+        countdowntime--;
+      }
+      countdownNumber = countdowntime;
+      if(!countdownTimer){     
+        countdownTimer = setTimeout(() => {
+          console.log("countdown", countdowntime);
+          doSwap(r, true);
+        }, 1000);
+      }
+      setDoSwapCountdown(countdowntime);
+      return;
+    }
+    //if countdown is 0, do swap
+
+
+    if (!wallets[0] || !wallets[1]){
+      setInfo("No wallets connected", true);
+    } 
+    if(!r) r = routes;
+
+    if (!r[0]) {
+      setInfo("No routes found", true);
+      return;
+    }
 
     console.log("doing swap");
-    console.log(routes);
+    console.log("Routes", routes);
+
+    //turn off autoswap
+    setAutoswap(false);
 
     //const routes = getAQuote();
-    const bestRoute = routes.find(({ optimal }) => optimal);
+    const bestRoute = r.find(({ optimal }) => optimal);
 
-    console.log(bestRoute);
+    console.log("Bestroute", bestRoute);
 
     const swapParams = {
       route: bestRoute,
@@ -741,28 +1087,64 @@ function App() {
       // Fast => 1.5
       // Fastest => 2
     };
-    console.log(swapParams);
-    console.log(skClient);
+    console.log("Swapparams",swapParams);
+    //console.log(skClient);
 
-    const txHash = skClient.swap(swapParams);
+    const txHash = skClient.swap(swapParams)
+    .then((result) => {
+      console.log("result", result);
 
-    if (!txHash) {
-      console.log("no tx hash");
-      return;
-    }
-    try {
-      //get input chain from route
-      const inputChain = bestRoute.meta.buyChain;
-
+      setDoSwapCountdown(false);
       // Returns explorer url like etherscan, viewblock, etc.
-      const explorerUrl = skClient.getExplorerTxUrl(inputChain, txHash);
-
-      // Returns explorer url like etherscan, viewblock, etc.
+      const explorerUrl = skClient.getExplorerTxUrl(
+        bestRoute.meta.sellChain,
+        result
+      );
       setTXUrl(explorerUrl);
-      return explorerUrl;
-    } catch (error) {
+      setInfo(<>Swap Started! <a href={explorerUrl} target='_blank'>View TX</a></>);
+      setLastSwapTx(result);
+      setLastSwapTxTime(Date.now());
+      setLastSwapBtn(
+        <>
+          <div className="info_msg">
+            Swap Started! <a href={explorerUrl} target='_blank'>View TX</a>
+          </div>
+        </>
+      );
+      return result;
+    })
+    
+    .catch((error) => {
       console.log(error);
-    }
+      setError(error);
+      console.log("bestRoute", bestRoute);
+      console.log("swapParams", swapParams);
+      //log balances of sending wallet
+      wallet = selectSendingWallet();
+      console.log("sendingwallet", wallet);
+      return null;
+    });
+
+
+    // if (!txHash) {
+    //   console.log("no tx hash");
+    //   return;
+    // }
+    // try {
+    //   //get input chain from route
+    //   const inputChain = bestRoute.meta.buyChain;
+
+    //   // Returns explorer url like etherscan, viewblock, etc.
+    //   const explorerUrl = skClient.getExplorerTxUrl(inputChain, txHash);
+
+    //   // Returns explorer url like etherscan, viewblock, etc.
+    //   setTXUrl(explorerUrl);
+    //   setInfo("Swap Started! <a href='" + explorerUrl + "'>View TX</a>",true);
+    //   return explorerUrl;
+    // } catch (error) {
+    //   console.log(error);
+    // }
+    setDoSwapCountdown(false);
   }
 
   //on change in phrase, connect wallet
@@ -813,16 +1195,35 @@ function App() {
   }
 
   var sellAmountTxt = "";
-  if (sellAmount > 0) {
-    var ruSellAmount = Math.ceil(sellAmount * 1000000) / 1000000;
+  var differenceFromSell = "";
+  if (sellAmount[0] > 0) {
+    var ruSellAmount = Math.ceil(sellAmount[0] * 1000000) / 1000000;
     sellAmountTxt = ruSellAmount.toString();
-  } else if (sellAmount === -1) {
+    differenceFromSell = walletbalance - ruSellAmount;
+  } else if (sellAmount[0] === -1) {
     //loading gif
     sellAmountTxt = "...";
+    differenceFromSell = "...";
   }
 
-  console.log(originBalances);
+  //calulate difference from expectedOutputMaxSlippage to destinationAmt
+  var differenceFromDestination = "";
+  if (routes && routes[0]) {
+    var eoms = parseFloat(routes[0].expectedOutputMaxSlippage.toString());
+    var destAmt = parseFloat(destinationAmt);
+    if (destAmt > 0) {
+      differenceFromDestination = destAmt - eoms;
+    }
+  }
 
+    // if (doSwapCountdown > -1 && doSwapCountdown < 11) {
+    //   setTimeout(() => {
+    //     doSwap();
+    //   }, 1000);
+    // }
+  //we want msg to go into the div as raw html not escaped
+
+    
   return (
     <div style={styles.container}>
       <h4>Swap in your browser</h4>
@@ -854,7 +1255,8 @@ function App() {
           <div id="error_phrase" className={msgColour}>
             {msg}
           </div>
-          <div>
+
+  <div>
             <input
               type="checkbox"
               id="autoswap"
@@ -896,12 +1298,30 @@ function App() {
             onBlur={(e) => {
               setAutoswap(e.target.dataset.oAutoSwap === "true");
               e.target.dataset.oAutoSwap = "";
+              if (e.target.dataset.changeTimer !== "") {
+                clearTimeout(e.target.dataset.changeTimer);
+              }
               getAQuote();
             }}
-            onChange={(e) => setDestinationAmt(e.target.value)}
+            onChange={(e) => {
+              setDestinationAmt(e.target.value);
+            }}
+            onKeyUp={(e) => {
+              setDestinationAmt(e.target.value);
+              if (e.target.dataset.changeTimer !== "") {
+                clearTimeout(e.target.dataset.changeTimer);
+              }
+              e.target.dataset.changeTimer = setTimeout(() => {
+                console.log("timeout");
+                getAQuote();
+              }, 5000);
+            }}
             value={destinationAmt}
             data-o-auto-swap=""
+            data-change-timer=""
+            title={differenceFromDestination}
           />
+          <br />
         </div>
         <div className="fixed_destination_amt">{destinationAmt}</div>
       </div>
@@ -977,14 +1397,19 @@ function App() {
             </div>
             <div>{walletaddress}</div>
             <QRCode value={walletaddress} />
-            <div>Current Balance: {walletbalance}</div>
+            <div>
+              Current Balance: {walletbalance} ({differenceFromSell})
+            </div>
           </div>
         </div>
       )}
       <br />
       <div className="input_slippage">
         {" "}
-        Received amount could be 1% different due to slippage. Swap Fee: 1%
+        Received amount could be 1% different due to slippage and also small
+        differences due to gas fees.
+        <br />
+        Swap Fee: 1%
       </div>
 
       <button
@@ -995,9 +1420,6 @@ function App() {
         }}
       >
         Swap
-      </button>
-      <button type="button" onClick={() => getAQuote()}>
-        Get Quote
       </button>
       <button type="button" onClick={() => setPhrase(generatePhrase())}>
         Generate Phrase
@@ -1026,7 +1448,7 @@ function App() {
       <button
         type="button"
         onClick={() => {
-          setOriginBalances([0, 0]);
+          setOriginBalances(["0", "0", 0]);
         }}
       >
         Set Origin Balances
