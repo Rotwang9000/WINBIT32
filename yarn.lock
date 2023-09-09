@@ -7064,6 +7064,11 @@ fraction.js@^4.2.0:
   resolved "https://registry.yarnpkg.com/fraction.js/-/fraction.js-4.3.4.tgz#b2bac8249a610c3396106da97c5a71da75b94b1c"
   integrity sha512-pwiTgt0Q7t+GHZA4yaLjObx4vXmmdcS0iSJ19o8d/goUGgItX9UZWKWNnLHehxviD8wU2IWRsnR8cD5+yOJP2Q==
 
+fragment@^0.3.0:
+  version "0.3.0"
+  resolved "https://registry.yarnpkg.com/fragment/-/fragment-0.3.0.tgz#d40108514f58823816399ac5998e6676daec0c0c"
+  integrity sha512-7QtQrT2Cp/uOFGj13ipmwJivPcpzvJdWoStc7NYE2PXEdTbVe4Cyye+iTZA18g8vL9EWNDNJZzqGkm/6qMuoOg==
+
 fresh@0.5.2:
   version "0.5.2"
   resolved "https://registry.yarnpkg.com/fresh/-/fresh-0.5.2.tgz#3d8cadd90d976569fa835ab1f8e4b23a105605a7"
