@@ -2,7 +2,7 @@
   "name": "bitx",
   "version": "0.1.0",
   "private": true,
-  "homepage": "http://rotwang9000.github.io/bitx",
+  "homepage": "https://private.bitx.live",
   "dependencies": {
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
     "@scure/bip39": "^1.2.1",
@@ -34,7 +34,7 @@
   "scripts": {
     "predeploy": "react-app-rewired build",
     "predeploydev": "react-app-rewired build",
-    "deploy": "gh-pages -d build -b master",
+    "deploy": "gh-pages -d build -b main",
     "deploydev": "gh-pages -d build -b Dev",
     "start": "react-app-rewired start",
     "build": "react-app-rewired build",

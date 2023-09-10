@@ -135,7 +135,7 @@ function App() {
       console.log("transfer type not set");
       return;
     }
-    if (!wallets[0] || !wallets[1]) {
+    if (!wallets[0] || !wallets[1]  || !selectSendingWallet())  {
       console.log("no wallets");
       return;
     }
@@ -162,8 +162,7 @@ function App() {
       console.log("last time", Date.now() - lastQuoteDetails.time);
       console.log(
         "last sendingWalletBalance",
-        lastQuoteDetails.sendingWalletBalance,
-        selectSendingWallet().balance[0].assetAmount.toString()
+        lastQuoteDetails.sendingWalletBalance
       );
     }
 
@@ -846,8 +845,10 @@ function App() {
       setWallets([]);
     });
   }
-
-
+//set lastWalletget = 0 when anything changes
+ useEffect(() => {
+    setLastWalletGet(0);
+  }, [destinationAmt, destinationAddr, transferType, phrase, slippage, autoswap]);
 
 
   async function fetchWalletBalances() {
