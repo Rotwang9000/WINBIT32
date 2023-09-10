@@ -1256,8 +1256,7 @@ function App() {
           <div id="error_phrase" className={msgColour}>
             {msg}
           </div>
-
-  <div>
+          <div>
             <input
               type="checkbox"
               id="autoswap"
@@ -1326,7 +1325,7 @@ function App() {
         </div>
         <div className="fixed_destination_amt">{destinationAmt}</div>
       </div>
-      <div>
+      <div className="hflex_whenwide">
         <div className="transfer_type">
           <div className="transfer_from">
             <b>Pay with:</b>
@@ -1412,7 +1411,7 @@ function App() {
         <br />
         Swap Fee: 1%
       </div>
-
+<h3>Dev buttons.. swap is automatic!</h3>
       <button
         type="button"
         onClick={() => {
