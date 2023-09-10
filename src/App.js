@@ -1389,7 +1389,7 @@ function App() {
         <div className="error_transfer_type">Please select a transfer type</div>
       )}
       {transferType.length === 2 && (
-        <div className="div_transfer">
+        <div className="div_transfer h">
           <div className="div_qr">
             <div id="send_to_msg">
               Send <span id="send_to_amt">{sellAmountTxt}</span>{" "}
