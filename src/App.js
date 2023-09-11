@@ -47,8 +47,15 @@ const skClient = createSwapKit({
   wallets: [keystoreWallet],
 });
 
-const connectChains = [Chain.Ethereum, Chain.Bitcoin, Chain.THORChain];
+
+const chains = {'eth':Chain.Ethereum, 'btc':Chain.Bitcoin, 'thor':Chain.THORChain};
+//get chains values as list
+const connectChains = Object.values(chains);
 const chainIDs = ["ETH", "BTC"];
+const sendTypes = ["eth.eth", "btc.btc"];
+const receiveTypes = ["eth.eth", "btc.btc", "thor.rune", "eth.usdt", "eth.usdc"];
+
+
 
 
 
@@ -70,7 +77,7 @@ function App() {
 
 
   const [phrase, setPhrase] = useState("");
-  const [wallets, setWallets] = useState([]);
+  const [wallets, setWallets] = useState({});
   const walletsRef = useRef(wallets);
   walletsRef.current = wallets;
 
@@ -782,16 +789,18 @@ function App() {
   }, [sellAmount, balances, originBalances, wallets]);
 
   function setTheBalances(walletdata = null) {
-    var _balances = [];
+    var _balances = {};
     if (!walletdata) walletdata = wallets;
 
-    for (var i = 0; i < walletdata.length; i++) {
-      var _wallet = walletdata[i];
+    //for (var i = 0; i < walletdata.length; i++) {
+      //foreach walletdata
+    for(var key in walletdata){
+      var _wallet = walletdata[key];
       var balance = 0;
       if (_wallet.balance[0] && _wallet.balance[0].assetAmount) {
         balance = _wallet.balance[0].assetAmount.toString();
       }
-      _balances.push(balance);
+      _balances[key] = balance;
     }
     console.log("balances", _balances);
     if (!originBalances) {
@@ -812,13 +821,13 @@ function App() {
         fetchAllWalletBalances();
       }).catch((error) => { 
         console.log("error getting eth wallet",error);
-        setWallets([]);
+        setWallets({});
         setOriginBalances(null);
       });
 
     } catch (error) {
       console.log(error);
-      setWallets([]);
+      setWallets({});
       setOriginBalances(null);
     }
     // [{ balance: AssetAmount[]; address: string; walletType: WalletOption }]
@@ -833,16 +842,23 @@ function App() {
         console.log(result);
         if (!result) {
           console.log("no result");
-          setWallets([]);
+          setWallets({});
           return;
         }
-        setWallets(result);
+        //map result to wallets, using keys from chains
+        var _wallets = {};
+        for (var i = 0; i < result.length; i++) {
+          _wallets[chains[i]] = result[i];
+        }
+
+
+        setWallets(_wallets);
         setTheBalances(result);
       }
     ).catch((error) => {
       console.log("error getting wallets",error);
       setError(error);
-      setWallets([]);
+      setWallets({});
     });
   }
 //set lastWalletget = 0 when anything changes
