@@ -26,7 +26,7 @@ import { Fragment } from "react";
 
 const styles = {
   container: {
-    width: "80%",
+    width: "99%",
     margin: "0 auto",
   },
   input: {
@@ -77,7 +77,7 @@ function App() {
   //get from query string 'dest_amt' or set to 'MAX' if not set
   const [destinationAmt, setDestinationAmt] = useState("MAX");
 
-
+  const [swapLink, setSwapLink] = useState("");
   const [phrase, setPhrase] = useState("");
   const [wallets, setWallets] = useState({});
   const walletsRef = useRef(wallets);
@@ -965,13 +965,22 @@ function App() {
   }, [lastWalletGet]);
 
   function genConnect(data) {
+    if(phrase === "Generating Phrase") return;
+    if(phrase.length > 1) return;
+
     connectWallet(WalletOption.KEYSTORE);
     //fetchWallets();
     // { username: 'test', email: 'test', password: 'test' }
   }
+
+  //on  very first load only...
+ 
+
   //genconnect on load
   useEffect(() => {
+
     genConnect();
+
     //set destination address from query string
     const queryString = window.location.search;
     const urlParams = new URLSearchParams(queryString);
@@ -1018,6 +1027,31 @@ function App() {
         "fixed_destination_amt"
       )[0].style.display = "none";
     }
+
+    const dest_type = urlParams.get("in");
+    console.log("dest_type", dest_type);
+    if (dest_type) {
+      console.log("Got transfer type from query string", dest_type)
+      setTransferType([transferType[0], dest_type]);
+      //hide input_destination_amt
+      document.getElementsByClassName(
+        "input_destination_type"
+      )[0].style.display = "none";
+      //show fixed_destination_amt
+      document.getElementsByClassName(
+        "fixed_destination_type"
+      )[0].style.display = "block";
+    } else {
+      //show input_destination_amt
+      document.getElementsByClassName(
+        "input_destination_type"
+      )[0].style.display = "block";
+      //hide fixed_destination_amt
+      document.getElementsByClassName(
+        "fixed_destination_type"
+      )[0].style.display = "none";
+    }
+  
   }, []);
 
   function doSwapIf(r = null) {
@@ -1300,6 +1334,19 @@ function App() {
       differenceFromDestination = destAmt - eoms;
     }
   }
+  
+   useEffect(() => {
+    if (destinationAddr === "") return;
+    
+    var _swapLink = "https://private.bitx.live/?to=" + destinationAddr 
+    if(destinationAmt !== '' && !isNaN(destinationAmt)) _swapLink = _swapLink + "&amt=" + destinationAmt;
+    if(transferType[1] !== '') _swapLink = _swapLink + '&in='+transferType[1];
+    
+  
+    setSwapLink(s => _swapLink);
+    
+  }, [destinationAddr, destinationAmt, transferType]);
+
 
     // if (doSwapCountdown > -1 && doSwapCountdown < 11) {
     //   setTimeout(() => {
@@ -1353,6 +1400,28 @@ function App() {
         </div>
       </div>
       <hr />
+      {swapLink !== "" && (
+        <div>
+          Share this request:
+          <br />{" "}
+          <button
+            className="btn_copy"
+            target="_blank"
+            onClick={(e) =>
+              e.preventDefault() &
+              navigator.clipboard.writeText(swapLink).then(() => {
+                setInfo("Copied to clipboard");
+              })
+            }
+          >
+            {" "}
+            <i className="fa fa-clipboard" aria-hidden="true">
+              {" "}
+            </i>
+            {swapLink}
+          </button>
+        </div>
+      )}
       <div className="hflex_whenwide">
         <div className="input_destination_addr">
           Enter the destination address:
@@ -1413,9 +1482,12 @@ function App() {
         <div className="transfer_type">
           <div className="transfer_from">
             <b>Pay with:</b>
-            {fromTypes.map((chainID) => {
-              return (
-                (<div key={chainID}>
+            <br />
+            <div>
+              {fromTypes.map((chainID) => {
+                return (
+                  <div key={chainID}>
+
                     <input
                       type="radio"
                       id={"from_" + chainID}
@@ -1433,15 +1505,16 @@ function App() {
                       {shortName(chainID.toUpperCase())}
                     </label>
                   </div>
-                )
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
-          <div className="transfer_to">
+          <div className="transfer_to input_destination_type">
             <b>Receiver gets:</b>
-            {toTypes.map((chainID) => {
-              return (
-                (
+            <br />
+            <div>
+              {toTypes.map((chainID) => {
+                return (
                   <div key={chainID}>
                     <input
                       type="radio"
@@ -1460,9 +1533,13 @@ function App() {
                       {shortName(chainID.toUpperCase())}
                     </label>
                   </div>
-                )
-              );
-            })}
+                );
+              })}
+            </div>
+          </div>
+          <div className="fixed_destination_type">
+            <b>Receiver gets:</b> {destinationAmt}{" "}
+            {shortName(transferType[1].toUpperCase())}
           </div>
         </div>
       </div>
@@ -1492,7 +1569,7 @@ function App() {
         <br />
         Swap Fee: 1%
       </div>
-<h3>Dev buttons.. swap is automatic!</h3>
+      <h3>Dev buttons.. swap is automatic!</h3>
       <button
         type="button"
         onClick={() => {
