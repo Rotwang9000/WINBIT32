@@ -7,7 +7,7 @@ import reportWebVitals from './reportWebVitals';
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
-    <div className="loading_overlay">Loading...</div>
+    <div className="loading_overlay" id="loading_overlay" onClick={() => { document.getElementById('loading_overlay').style.display = 'none'; }}>Loading...</div>
 
     <App />
   </React.StrictMode>
