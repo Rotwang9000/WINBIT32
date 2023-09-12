@@ -20,6 +20,7 @@ import { Fragment } from "react";
   };
 
   var countdownTimer = null;
+  var swapID = ''; //only do one swap at once!
   var countdownNumber = 11;
   var numWalletChecks = 0;
 
@@ -48,12 +49,13 @@ const skClient = createSwapKit({
 });
 
 
-const chains = {'eth':Chain.Ethereum, 'btc':Chain.Bitcoin, 'thor':Chain.THORChain};
+const chains = {'ETH':Chain.Ethereum, 'BTC':Chain.Bitcoin, 'THOR':Chain.THORChain, };
 //get chains values as list
 const connectChains = Object.values(chains);
 const chainIDs = ["ETH", "BTC"];
-const sendTypes = ["eth.eth", "btc.btc"];
-const receiveTypes = ["eth.eth", "btc.btc", "thor.rune", "eth.usdt", "eth.usdc"];
+const fromTypes = ["ETH.ETH", "BTC.BTC"];
+const toTypes = ["ETH.ETH", "BTC.BTC", "ETH.USDC-0XA0B86991C6218B36C1D19D4A2E9EB0CE3606EB48"];
+const typeInfo = {'ETH.ETH':{'shortname':'ETH'}, 'BTC.BTC':{'shortname':'BTC'}, 'ETH.USDC-0XA0B86991C6218B36C1D19D4A2E9EB0CE3606EB48':{'shortname':'USDC'}};
 
 
 
@@ -82,15 +84,18 @@ function App() {
   walletsRef.current = wallets;
 
   const [lastWalletGet, setLastWalletGet] = useState(0);
-  const [balances, setBalances] = useState([]); // [{ balance: AssetAmount[]; address: string; walletType: WalletOption }
+  const [balances, setBalances] = useState({}); // [{ balance: AssetAmount[]; address: string; walletType: WalletOption }
   const [originBalances, setOriginBalances] = useState(null);
   const [autoswap, setAutoswap] = useState(false);
   const [sellAmount, setSellAmount] = useState([0, 0]);
+  const sellAmountRef = useRef(sellAmount);
+  sellAmountRef.current = sellAmount;
+
   const [slippage, setSlippage] = useState(1);
   const [routes, setRoutes] = useState([]); // [{ optimal: boolean; route: Route[] }
   const [msg, setMsg] = useState("");
   const [msgColour, setMsgColour] = useState("info_msg");
-  const [transferType, setTransferType] = useState(["", ""]); //['source', 'dest'] or [] for none eg. ['btc', 'eth']
+  const [transferType, setTransferType] = useState(["", ""]); //['source', 'dest'] or [] for none eg. ['BTC.BTC', 'ETH.ETH']
   const transferTypeRef = useRef(transferType);
   transferTypeRef.current = transferType;
 
@@ -115,6 +120,25 @@ function App() {
     setMsg(msg);
     setMsgColour("info_msg");
     
+  }
+
+  function shortName(fullSymbol){
+    if(!typeInfo[fullSymbol]) return fullSymbol;
+    return typeInfo[fullSymbol].shortname;
+  }
+
+  function wallet(fullSymbol) {
+    //get wallet from full symbol
+    var wsplit = fullSymbol.split(".");
+    if (wsplit.length !== 2) wsplit = fullSymbol.split("/");
+
+    var chain = wsplit[0];
+    var symbol = wsplit[1];
+
+    const _wallets = walletsRef.current;
+    const _wallet = _wallets[fullSymbol.toUpperCase()];
+
+    return _wallet;
   }
 
   function generatePhrase(size = 12) {
@@ -142,7 +166,7 @@ function App() {
       console.log("transfer type not set");
       return;
     }
-    if (!wallets[0] || !wallets[1]  || !selectSendingWallet())  {
+    if (!wallets['ETH.ETH'] || !selectSendingWallet())  {
       console.log("no wallets");
       return;
     }
@@ -179,6 +203,13 @@ function App() {
       return;
     }
 
+    if (
+      lastQuoteDetails.destAmtTxt !== destinationAmt ||
+      lastQuoteDetails.transferType !== transferType
+    ) {
+      document.getElementById("send_to_amt").innerHTML = "---";
+    }
+
     if (osellAmt === null) {
       var arr = { destAmtTxt: destinationAmt, time: Date.now() };
       //add sending wallet balance
@@ -195,15 +226,16 @@ function App() {
     //setSellAmount((prev) => [sellAmt, prev[1]]);
 
     //if destination amount is MAX, get the balance of the destination wallet and use that as the destination amount
+    var _sendWallet = selectSendingWallet();
     if (
       osellAmt === null &&
       (destinationAmt === "MAX" || // or contains a % sign
         destinationAmt.substring(destinationAmt.length - 1) === "%") &&
-      wallets[0] &&
-      wallets[0].balance[0] &&
-      wallets[0].balance[0].assetAmount > 0
+      _sendWallet &&
+      _sendWallet.balance[0] &&
+      _sendWallet.balance[0].assetAmount > 0
     ) {
-      var bal = parseFloat(wallets[0].balance[0].assetAmount.toString());
+      var bal = parseFloat(_sendWallet.balance[0].assetAmount.toString());
       var pct = parseFloat(destinationAmt.replace("%", ""));
       if (isNaN(pct)) pct = 100;
       var sellAmt = bal * (pct / 100);
@@ -215,36 +247,38 @@ function App() {
 
     var assets = [];
     for (var i = 0; i < transferType.length; i++) {
-      if (transferType[i] === "eth") {
+      if (transferType[i] === "ETH.ETH") {
         assets.push("ETH.ETH");
-      } else if (transferType[i] === "btc") {
+      } else if (transferType[i] === "BTC.BTC") {
         assets.push("BTC.BTC");
+      }else{
+        assets.push(transferType[i].toUpperCase());
       }
     }
 
     console.log("assets", assets);
     console.log("wallets", wallets);
     //get the right wallet for each asset
-    var walletsForAssets = [];
-    for (var i = 0; i < assets.length; i++) {
-      for (var j = 0; j < 2; j++) {
-        if (
-          wallets[j].balance[0].asset.chain +
-            "." +
-            wallets[j].balance[0].asset.symbol ===
-          assets[i]
-        ) {
-          walletsForAssets.push(wallets[j]);
-        }
-      }
-    }
+    // var walletsForAssets = [];
+    // for (var i = 0; i < assets.length; i++) {
+    //   for (var j = 0; j < 2; j++) {
+    //     if (
+    //       wallets[j].balance[0].asset.chain +
+    //         "." +
+    //         wallets[j].balance[0].asset.symbol ===
+    //       assets[i]
+    //     ) {
+    //       walletsForAssets.push(wallets[j]);
+    //     }
+    //   }
+    // }
 
     const affiliateBasisPoints = 100; //100 = 1%
 
     const quoteParams = {
       sellAsset: assets[0],
       buyAsset: assets[1],
-      senderAddress: walletsForAssets[0].address, // A valid Bitcoin address
+      senderAddress: wallets[assets[0]].address, // A valid Bitcoin address
       recipientAddress: destinationAddr, // A valid Ethereum address
       slippage: slippage, // 1 = 1%
     };
@@ -682,15 +716,16 @@ function App() {
 
   //check for wallet balances every 15 seconds
   useEffect(() => {
-    // if (devMode) {
-    //   setDestinationAddr("0xcd9AdBD82Ce03a225f2cBC4228fB7cdCCF770324");
-    //   setDestinationAmt('0.01');
-    // }
+    if (devMode) {
+      setDestinationAddr("0xcd9AdBD82Ce03a225f2cBC4228fB7cdCCF770324");
+      // setDestinationAmt('0.01');
+    }
 
     const interval = setInterval(() => {
       const _wallets = walletsRef.current;
-      if (!_wallets[0] || !_wallets[1]){
-        console.log("no wallets", _wallets[0], _wallets[1]);
+      if (!_wallets['ETH.ETH'] || !_wallets['BTC.BTC']){
+        console.log("no wallets!", _wallets, _wallets["ETH.ETH"], _wallets["BTC.BTC"]);
+
           return;
       } 
 
@@ -702,10 +737,10 @@ function App() {
       if (
         originBalances &&
         originBalances.length > 1 &&
-        wallets[0] &&
-        wallets[1] &&
-        wallets[0].balance[0] &&
-        wallets[1].balance[0] &&
+        wallets['ETH.ETH'] &&
+        wallets['BTC.BTC'] &&
+        wallets['ETH.ETH'].balance[0] &&
+        wallets['BTC.BTC'].balance[0] &&
         destinationAmt !== '' 
       ) {
         getAQuote();
@@ -723,7 +758,7 @@ function App() {
 
   //get a quote when destination amount changes
   useEffect(() => {
-    if (!wallets[0] || !wallets[1]) return;
+    if (!wallets['ETH.ETH'] || !wallets['BTC.BTC']) return;
     //if destination amount is not MAX and hasn't got focus, and is a number get a quote
     if (
       document.getElementById("destination_amt").dataset.oAutoSwap === "" &&
@@ -732,7 +767,7 @@ function App() {
           ) {
       getAQuote();
     }
-  }, [destinationAmt, wallets, transferType, wallets[0], wallets[1]]);
+  }, [destinationAmt, wallets, transferType]);
 
   //hide loading overlay when wallets are loaded
   useEffect(() => {
@@ -742,10 +777,8 @@ function App() {
       console.log(wallets);
 
       if (
-        wallets[0] &&
-        wallets[1] &&
-        wallets[0].balance[0] &&
-        wallets[1].balance[0]
+        wallets['ETH.ETH'] &&
+        wallets['ETH.ETH'].balance[0]
       ) {
         document.getElementsByClassName("loading_overlay")[0].style.display =
           "none";
@@ -758,30 +791,39 @@ function App() {
   function selectSendingWallet(send_index = false) {
     //select sending wallet based on transferType[0]
     var transfer_type_from = transferTypeRef.current[0];
-    for (var i = 0; i < chainIDs.length; i++) {
-      if (chainIDs[i].toLowerCase() === transfer_type_from) {
-        if (send_index) return i;
-        return walletsRef.current[i];
-      }
-    }
-    return null;
+    if(send_index) return transfer_type_from.toUpperCase();
+    if (walletsRef.current[transfer_type_from.toUpperCase()] === undefined)
+      return null;
+    return walletsRef.current[transfer_type_from.toUpperCase()];
+
+    // for (var i = 0; i < chainIDs.length; i++) {
+    //   if (chainIDs[i].toLowerCase() === transfer_type_from) {
+    //     if (send_index) return i;
+    //     return walletsRef.current[i];
+    //   }
+    // }
+    // return null;
   }
 
   useEffect(() => {
-    if (!wallets[0] || !wallets[1]) return;
+    if (!wallets['ETH.ETH']) return;
     if (!originBalances) return;
-    if (originBalances.length !== 2) return;
-    if (originBalances[0] === "" || originBalances[1] === "") return;
+    if (originBalances.length < 2) return;
+    if (originBalances['ETH.ETH'] === "") return;
     if (sellAmount[0] <= 0) return;
 
     //select sending wallet based on transferType[0]
     const sendingWalletIndex = selectSendingWallet(true);
     const sendingWallet = walletsRef.current[sendingWalletIndex];
 
+    if(!sendingWallet || !sendingWallet.balance[0]){
+      console.log("no sending wallet", sendingWalletIndex, sendingWallet);
+      return;
+    } 
     //if enough in wallet 0 then do the swap
     const bal = parseFloat(sendingWallet.balance[0].assetAmount.toString());
 
-    if (bal > originBalances[i] && bal >= sellAmount[0] && autoswap) {
+    if (bal > originBalances[sendingWalletIndex] && bal >= sellAmount[0] && autoswap) {
       setAutoswap(false);
 
       doSwap();
@@ -790,7 +832,7 @@ function App() {
 
   function setTheBalances(walletdata = null) {
     var _balances = {};
-    if (!walletdata) walletdata = wallets;
+    if (!walletdata) walletdata = walletsRef.current;
 
     //for (var i = 0; i < walletdata.length; i++) {
       //foreach walletdata
@@ -804,7 +846,7 @@ function App() {
     }
     console.log("balances", _balances);
     if (!originBalances) {
-      console.log("setting origin balances");
+      console.log("setting origin balances", _balances );
       setOriginBalances(_balances);
     }
     if (_balances !== balances) {
@@ -848,7 +890,7 @@ function App() {
         //map result to wallets, using keys from chains
         var _wallets = {};
         for (var i = 0; i < result.length; i++) {
-          _wallets[chains[i]] = result[i];
+          _wallets[toTypes[i]] = result[i];
         }
 
 
@@ -882,7 +924,7 @@ function App() {
       console.log("no source wallet", transferType);
       return;
     }
-    const sourceWalletChain = connectChains[sourceWalletID];
+    const sourceWalletChain = chains[sourceWalletID.split(".")[0]];
     
     //setWallets(await Promise.all(connectChains.map(skClient.getWalletByChain)) || [] );
     skClient.getWalletByChain(sourceWalletChain).then((result) => {
@@ -892,11 +934,18 @@ function App() {
         console.log("no result");
         return;
       }
-      var _wallets = wallets
+      var _wallets = walletsRef.current;
       _wallets[sourceWalletID] = result;
       if(_wallets[sourceWalletID] !== wallets[sourceWalletID]){
         setWallets(_wallets);
         setTheBalances(_wallets);
+      }
+      var _wallet = selectSendingWallet();
+      if(!_wallet || !_wallet.balance || !_wallet.balance[0]) return;
+      const sa = sellAmountRef.current[0]
+      if (_wallet && _wallet.balance && _wallet.balance[0].assetAmount > sa && sa > 0) {
+        setInfo(<><button onClick={() => doSwap()}>Swap</button></>, true);
+        doSwapIf();
       }
       
     }).catch((error) => {
@@ -974,8 +1023,16 @@ function App() {
   function doSwapIf(r = null) {
     if (autoswap) {
       //check balance
-      wallet = selectSendingWallet();
-      if (wallet && wallet.balance && wallet.balance[0].assetAmount > sellAmount[0] && sellAmount[0] > 0) {
+      _wallet = selectSendingWallet();
+      if (!_wallet || !_wallet.balance || !_wallet.balance[0]) return;
+
+      console.log("wallet", _wallet);
+
+
+      console.log("wallet balance", _wallet.balance[0]);
+      const sa = sellAmountRef.current[0]
+      
+      if (_wallet && _wallet.balance && _wallet.balance[0].assetAmount > sa && sa > 0) {
         //check quote is made in past 2mins
         if (Date.now() - lastQuoteDetails.time < 120000) {
           console.log("doing swap because balance is enough");
@@ -985,6 +1042,8 @@ function App() {
           console.log("getting quote because too old");
           getAQuote();
         }
+      }else{
+        console.log("not enough balance", _wallet.balance[0].assetAmount, sellAmount[0]); 
       }
     }
   }
@@ -1008,8 +1067,10 @@ function App() {
 
   useEffect(() => {
     const tmr = doSwapCountdown;
-    if(tmr === -1){
+    if(tmr === -1 || tmr === false){
       setInfo("Cancelled", true);
+      setDoSwapCountdown(false);
+      setAutoswap(false);
       return;
     } 
     if(tmr === 11)  return;
@@ -1017,6 +1078,7 @@ function App() {
       setInfo(<>Swapping in {tmr} seconds. <button onClick={() => cancelSwap()}
         >Cancel</button></>, true);
     }else{
+      console.log("doSwapCountdown", doSwapCountdown);
       setInfo("Swapping...", true);
     }
   }
@@ -1025,13 +1087,18 @@ function App() {
   function cancelSwap() {
     
     clearTimeout(countdownTimer);
-    countdownTimer = -1;
+    countdownTimer = null;
     countdownNumber = 11;
     setDoSwapCountdown(false);
   }
 
 
-  function doSwap(r = null, fromCounter = false) {
+  function doSwap(r = null, fromCounter = false, _swapID = null) {
+
+    if(_swapID !== null && _swapID !== swapID){
+      console.log("swapID mismatch", _swapID, swapID);
+      return;
+    }
 
     // if (!countdowntime) {
     //   countdowntime = doSwapCountdown;
@@ -1056,6 +1123,9 @@ function App() {
 
 
     if (countdowntime > 0 || countdowntime === null) {
+      if(countdowntime === null || countdowntime === 11){
+        swapID = Math.random();
+      }
       if (countdowntime === null) {
         countdowntime = 10;
       }else{
@@ -1065,16 +1135,19 @@ function App() {
       if(!countdownTimer){     
         countdownTimer = setTimeout(() => {
           console.log("countdown", countdowntime);
-          doSwap(r, true);
+          doSwap(r, true, swapID);
         }, 1000);
       }
       setDoSwapCountdown(countdowntime);
       return;
     }
     //if countdown is 0, do swap
+    if(swapID !== _swapID || swapID === null){
+      console.log("swapID mismatch or direct call", _swapID, swapID);
+      return;
+    }
 
-
-    if (!wallets[0] || !wallets[1]){
+    if (!wallets['ETH.ETH']){
       setInfo("No wallets connected", true);
     } 
     if(!r) r = routes;
@@ -1137,8 +1210,8 @@ function App() {
       console.log("bestRoute", bestRoute);
       console.log("swapParams", swapParams);
       //log balances of sending wallet
-      wallet = selectSendingWallet();
-      console.log("sendingwallet", wallet);
+      _wallet = selectSendingWallet();
+      console.log("sendingwallet", _wallet);
       return null;
     });
 
@@ -1181,13 +1254,13 @@ function App() {
     if (destinationAddr === "") return;
 
     // if(destinationAddr beings '0x{
-    if (destinationAddr.substring(0, 2) === "0x" && destinationAddr.length > 2 && transferType[1] !== 'eth') {
-      setTransferType(["btc", "eth"]);
+    if (destinationAddr.substring(0, 2) === "0x" && destinationAddr.length > 2 && transferType[1] === '') {
+      setTransferType(["BTC.BTC", "ETH.ETH"]);
     } else if (
       (destinationAddr.substring(0, 1) === "1" ||
-      destinationAddr.substring(0, 3) === "bc1") && transferType[1] !== 'btc'
+      destinationAddr.substring(0, 3) === "bc1") && transferType[1] === ''
     ) {
-      setTransferType(["eth", "btc"]);
+      setTransferType(["ETH.ETH", "BTC.BTC"]);
       // }else{
       //   setTransferType('');
     }
@@ -1196,18 +1269,13 @@ function App() {
   //get wallet address from transferType
   var walletaddress = "";
   //walletindex = transferType[0] index from chainIDs.tolower
-  var walletindex = -1;
-  for (var i = 0; i < chainIDs.length; i++) {
-    if (chainIDs[i].toLowerCase() === transferType[0]) {
-      walletindex = i;
-    }
-  }
-  var wallet = wallets[walletindex];
+  var walletindex = transferTypeRef.current[0];
+  var _wallet = wallets[walletindex];
   var walletbalance = "";
-  if (wallet) {
+  if (_wallet) {
     try {
-      walletaddress = wallet.address;
-      walletbalance = wallet.balance[0].assetAmount.toString();
+      walletaddress = _wallet.address;
+      walletbalance = _wallet.balance[0].assetAmount.toString();
     } catch (error) {}
   }
 
@@ -1345,11 +1413,9 @@ function App() {
         <div className="transfer_type">
           <div className="transfer_from">
             <b>Pay with:</b>
-            {chainIDs.map((chainID) => {
+            {fromTypes.map((chainID) => {
               return (
-                (chainID = chainID.toLowerCase()),
-                (
-                  <div key={chainID}>
+                (<div key={chainID}>
                     <input
                       type="radio"
                       id={"from_" + chainID}
@@ -1364,7 +1430,7 @@ function App() {
                       checked={transferType[0] === chainID}
                     />
                     <label htmlFor={"from_" + chainID}>
-                      {chainID.toUpperCase()}
+                      {shortName(chainID.toUpperCase())}
                     </label>
                   </div>
                 )
@@ -1373,9 +1439,8 @@ function App() {
           </div>
           <div className="transfer_to">
             <b>Receiver gets:</b>
-            {chainIDs.map((chainID) => {
+            {toTypes.map((chainID) => {
               return (
-                (chainID = chainID.toLowerCase()),
                 (
                   <div key={chainID}>
                     <input
@@ -1392,7 +1457,7 @@ function App() {
                       }}
                     />
                     <label htmlFor={"to_" + chainID}>
-                      {chainID.toUpperCase()}
+                      {shortName(chainID.toUpperCase())}
                     </label>
                   </div>
                 )
@@ -1409,7 +1474,7 @@ function App() {
           <div className="div_qr">
             <div id="send_to_msg">
               Send <span id="send_to_amt">{sellAmountTxt}</span>{" "}
-              {transferType[0].toUpperCase()} to:
+              {shortName(transferType[0].toUpperCase())} to:
             </div>
             <div>{walletaddress}</div>
             <QRCode value={walletaddress} />
