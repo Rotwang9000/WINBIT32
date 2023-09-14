@@ -694,7 +694,7 @@ function Bitx(props) {
               console.log("result");
               console.log(result);
               if (result) {
-                setInfo("Connected to wallet!");
+                setInfo("Connected!");
                 fetchWalletsAfterConnect();
               }
             });
@@ -722,10 +722,10 @@ function Bitx(props) {
 
   //check for wallet balances every 15 seconds
   useEffect(() => {
-    if (devMode) {
-      setDestinationAddr("0xcd9AdBD82Ce03a225f2cBC4228fB7cdCCF770324");
-      // setDestinationAmt('0.01');
-    }
+    // if (devMode) {
+    //   setDestinationAddr("0xcd9AdBD82Ce03a225f2cBC4228fB7cdCCF770324");
+    //   // setDestinationAmt('0.01');
+    // }
 
     const interval = setInterval(() => {
       const _wallets = walletsRef.current;
@@ -1385,6 +1385,14 @@ function Bitx(props) {
             onChange={(e) => {
               setPhrase(e.target.value) && setAutoswap(false);
             }}
+            onClick={(e) => {
+              //copy to clipboard
+              navigator.clipboard.writeText(phrase).then(() => {
+                setInfo("Copied Phrase to clipboard");
+              }
+              );
+
+            }}
             style={styles.textarea}
           ></textarea>
           <div id="error_phrase" className={msgColour}>
@@ -1413,7 +1421,7 @@ function Bitx(props) {
             onClick={(e) =>
               e.preventDefault() &
               navigator.clipboard.writeText(swapLink).then(() => {
-                setInfo("Copied to clipboard");
+                setInfo("Copied Share URL to clipboard");
               })
             }
           >
@@ -1424,8 +1432,8 @@ function Bitx(props) {
             {swapLink}
           </button>
         </div>
-      )}        
-      
+      )}
+
       <div className="hflex_whenwide mt mb">
         <div className="input_destination_addr">
           <div className="input_title">
@@ -1556,17 +1564,46 @@ function Bitx(props) {
           </div>
         </div>
       </div>
-      {transferType.length !== 2 && (
-        <div className="error_transfer_type">Please select a transfer type</div>
-      )}
-      {transferType.length === 2 && (
+      {!transferType ||
+        (transferType[1] === "" && (
+          <div className="div_transfer h div_qr">
+            Please select a transfer type and a destination.
+            <div>
+            <button
+              onClick={props.onShowQRPop}
+              style={{ marginLeft: "10px", display: "inline-block" }}
+            >
+              <i className="fa fa-qrcode" aria-hidden="true">
+                {" "}
+              </i> Scan QR for destination address
+            </button>
+            </div>
+          </div>
+        ))}
+      {transferType.length === 2 && transferType[1] !== "" && (
         <div className="div_transfer h">
           <div className="div_qr">
             <div id="send_to_msg">
-              Send <span id="send_to_amt">{sellAmountTxt}</span>{" "}
+              Send <span id="send_to_amt"
+              onClick={() => {
+                //copy to clipboard
+                navigator.clipboard.writeText(sellAmount[0]).then(() => {
+                  setInfo("Copied Amount to clipboard");
+                }
+                );
+              }}
+              >{sellAmountTxt}</span>{" "}
               {shortName(transferType[0].toUpperCase())} to:
             </div>
-            <div>{walletaddress}</div>
+            <div onClick={
+              () => { //copy to clipboard
+                navigator.clipboard.writeText(walletaddress).then(() => {
+                  setInfo("Copied Address to clipboard");
+                }
+                );
+              }
+            }>
+              {walletaddress}</div>
             <QRCode value={walletaddress} />
             <div>
               Current Balance: {walletbalance} ({differenceFromSell})

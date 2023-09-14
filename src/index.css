@@ -30,6 +30,23 @@ input[type=text] {
       -moz-box-sizing: border-box;
 }
 
+.h button{
+
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  padding: 5px;
+  margin: 5px;
+  margin-left: 0;
+  margin-right: 15px;
+  width: 100%;
+  max-width: 600px;
+  font-size: large;
+  cursor: pointer;
+  box-sizing: border-box;
+  -moz-box-sizing: border-box;
+
+}
+
 .input_title{
   height: 25px;
 }
@@ -175,6 +192,10 @@ code {
   font-size: large;
 }
 
+.h{
+  font-size: large;
+  font-weight: bold;
+}
 
 @media screen and (max-width: 700px) {
   .hflex_whenwide {

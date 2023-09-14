@@ -72,6 +72,8 @@ class QrPop extends Component {
             onScan={this.handleScan}
             onResult={this.handleScan}
             style={{ width: "100%" }}
+            
+            facingMode={"environment"}
           />
           <p>{this.state.result}</p>
         </div>
