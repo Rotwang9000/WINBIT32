@@ -1340,9 +1340,15 @@ function Bitx(props) {
   }
   
    useEffect(() => {
-    if (destinationAddr === "") return;
+    var _da = destinationAddr;
     
-    var _swapLink = "https://private.bitx.live/?to=" + destinationAddr 
+    if(transferType[1] !== '' && destinationAddr === '' && wallets[transferType[1]] && wallets[transferType[1]].address){
+      _da = wallets[transferType[1]].address;
+    }
+
+    if (!_da ||_da === "") return;
+    
+    var _swapLink = "https://private.bitx.live/?to=" + _da 
     if(destinationAmt !== '' && !isNaN(destinationAmt)) _swapLink = _swapLink + "&amt=" + destinationAmt;
     if(transferType[1] !== '') _swapLink = _swapLink + '&in='+transferType[1];
     
@@ -1565,7 +1571,7 @@ function Bitx(props) {
         </div>
       </div>
       {!transferType ||
-        (transferType[1] === "" && (
+        (transferType[0] === "" && (
           <div className="div_transfer h div_qr">
             Please select a transfer type and a destination.
             <div>
@@ -1580,7 +1586,7 @@ function Bitx(props) {
             </div>
           </div>
         ))}
-      {transferType.length === 2 && transferType[1] !== "" && (
+      {transferType.length === 2 && transferType[0] !== "" && (
         <div className="div_transfer h">
           <div className="div_qr">
             <div id="send_to_msg">
