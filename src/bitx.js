@@ -1535,11 +1535,9 @@ function Bitx(props) {
           <div className="fixed_destination_amt">
             {destinationAmt} {shortName(transferType[1].toUpperCase())}
           </div>
-        </div>
-        <div className="hflex_whenwide">
           <div className="transfer_type">
             <div className="transfer_to input_destination_type">
-              <div style={{ marginTop: 0 }}>
+              <div style={{ marginTop: 0,width:'fit-content' }}>
                 {toTypes.map((chainID) => {
                   return (
                     <div key={chainID}>
@@ -1568,7 +1566,10 @@ function Bitx(props) {
               <b>Receiver gets:</b> {destinationAmt}{" "}
               {shortName(transferType[1].toUpperCase())}
             </div>
-
+          </div>
+        </div>
+        <div className="hflex_whenwide">
+          <div className="transfer_type">
             <div className="transfer_from">
               <div style={{ marginTop: 0 }}>
                 <div>
