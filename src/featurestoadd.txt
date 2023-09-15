@@ -1,22 +1,31 @@
-Soon:
+Basic Idea: Pay with whatever you have as whatever someone wants.
+Automated as much as possible.
+No Click Payments.
+Integration plugins.
+
+Part Done:
 Private EthBtc auto conversions
 Fee calculations for max transfer 
 QR code reading 
+Stablecoin destination
+"pay me" links 
+
+Soon (in no real order):
 enable streaming swaps
 same/same token handling
-Stablecoin destination 
-Hosted version 
-Callback on transaction complete
+Hosted version "On-Chain" (but not strictly decentralised - permits swaps after browser closed)
+Callback on transaction complete (and other steps)
 API (access control by token? Airdrop to prev users?) 
 Other chains 
-Other ETH tokens 
+Other ETH tokens (with permissions)
 Plugins for shopify, woocommerce, chrome. 
-Metamask/walletconnect connections
-"pay me" links 
 Bots: telegram, x
 Address book for when logged in by PWA or wallet. 
 Triggers (webhook, price(Inc gas) , time) 
 multiple receivers
+Multiple inputs
+Metamask/walletconnect connections
+
 
 Future:
 Saving and Lending in one interface. Perhaps "amplify" rather than lending?
