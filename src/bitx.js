@@ -1406,7 +1406,7 @@ function Bitx(props) {
               });
             }}
           >
-            Copy and Continue
+            Copy and Continue...
           </button>
           <div>
             <br />
@@ -1420,6 +1420,16 @@ function Bitx(props) {
             way to the destination <br /> or <b>YOU WILL LOSE YOUR MONEY</b>
           </div>
         </div>
+                  <br />
+          <button
+            className="btn_copy"
+            onClick={(e) => {
+                setStep(2);
+            
+            }}
+          >
+            Continue...
+          </button>
       </div>
       <div className="hflex_whenwide infomsgdiv">
         <div id="error_phrase" className={msgColour}>
