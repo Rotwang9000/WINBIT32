@@ -38,9 +38,10 @@ input[type=text] {
   margin: 5px;
   margin-left: 0;
   margin-right: 15px;
-  width: 100%;
+  width: 80%;
   max-width: 600px;
-  font-size: large;
+  font-size: 1em;
+
   cursor: pointer;
   box-sizing: border-box;
   -moz-box-sizing: border-box;
@@ -89,6 +90,7 @@ code {
   margin: 5px;
   background-image: linear-gradient(315deg, #99ff99 0%, #ccffcc 74%);
   text-align: center;
+  width: 100%;
 
 }
 .error_msg{
@@ -101,6 +103,10 @@ code {
   background-image: linear-gradient(315deg, #ff9999 0%, #ffcccc 74%);
 }
 
+.hid {
+  display: none!important;
+}
+
 .hflex_whenwide{
   display: flex;
   flex-direction: row;
@@ -108,17 +114,28 @@ code {
   align-items: center;
   margin: auto;
   min-width: fit-content;
+  text-align: center;
   
 }
-.mt{
-  margin-top: 10px;
-}
-.mb{
-  margin-bottom: 10px;
-}
+
 .hflex_whenwide>div{
   flex:auto;
 }
+
+.vflex {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  margin: auto;
+  min-width: fit-content;
+  text-align: center;
+
+}
+.vflex>div{
+  flex:auto;
+}
+
 .transfer_type {
   display: flex;
   flex-direction: row;
@@ -133,7 +150,7 @@ code {
 .transfer_type div>div {
   display: flex;
   margin: 10px;
-  padding: 10px;
+  padding: 3px;
   border: 1px solid #fff;
   border-radius: 5px;
   cursor: pointer;
@@ -190,6 +207,43 @@ code {
   font-weight: bold;
   color: #000;
   font-size: large;
+  
+   display: flex;
+    flex-direction: column;
+    align-items: center;
+   
+}
+.sharediv{
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  margin: auto;
+  width: 100%;;
+  height: 100%;
+  border-radius: 10px;
+  border: 1px solid #fff;
+  padding: 10px;
+  box-sizing: border-box;
+  -moz-box-sizing: border-box;
+}
+.btn_share{
+  background-image: linear-gradient(315deg, #fff 0%, #ccc 74%);
+  color: #000;
+  font-weight: bold;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  padding: 5px;
+  margin: 5px;
+  margin-left: 0;
+  margin-right: 15px;
+  width: 90%;
+  max-width: 600px;
+  font-size: normal;
+  box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  cursor: pointer;
+
 }
 
 .h{
@@ -214,6 +268,8 @@ code {
     .div_qr, .div_qr>div {
       width: 100%;
         font-size: 3.8vw;
+        max-width: 100vw;
+        padding: 0;
     }
 }
   
@@ -237,10 +293,39 @@ width: 100%;
 }
 
 .btn_copy{
-  max-width: 100%;
+  max-width: 75vw;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  
+
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  padding: 5px;
+  margin: 5px;
+  margin-left: 0;
+  margin-right: 0px;
+  width: 90%;
+  max-width: 600px;
+  font-size: large;
+  box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  cursor: pointer;
+  background-image: linear-gradient(315deg, #fff 0%, #ccc 74%);
+
 }
 
+.mt {
+  margin-top: 10px;
+}
+
+.mb {
+  margin-bottom: 10px;
+}
+
+.nmb {
+  margin-bottom: 0;
+}
+
+.nmt {
+  margin-top: 0;
+}

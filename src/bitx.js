@@ -8,6 +8,7 @@ import { useEffect, useState, useRef,  } from "react";
 import QRCode from "react-qr-code";
 import "dotenv/config";
 import QRPop from "./qrpop.js";
+import { set } from 'react-hook-form';
 
   var lastQuoteDetails = {
     destAmtTxt: "",
@@ -62,16 +63,8 @@ const typeInfo = {'ETH.ETH':{'shortname':'ETH'}, 'BTC.BTC':{'shortname':'BTC'}, 
 function Bitx(props) {
 
 
-  function isDevMode() {
-    if (window.location.hostname === "localhost") {
-      return true;
-    } else {
-      return false;
-    }
-  }
 
-  const devMode = isDevMode();
-
+  const [devButtons, setDevButtons] = useState(false);
   const [txUrl, setTXUrl] = useState("");
   const [destinationAddr, setDestinationAddr] = useState("");
   if(props.qrResult && props.qrResult !== destinationAddr){
@@ -80,7 +73,7 @@ function Bitx(props) {
 
   //get from query string 'dest_amt' or set to 'MAX' if not set
   const [destinationAmt, setDestinationAmt] = useState("MAX");
-
+  const [step, setStep] = useState(1);
   const [swapLink, setSwapLink] = useState("");
   const [phrase, setPhrase] = useState("");
   const [wallets, setWallets] = useState({});
@@ -108,6 +101,18 @@ function Bitx(props) {
   const [lastSwapBtn, setLastSwapBtn] = useState(null);
 
   const [qrReaderOpen, setQrReaderOpen] = useState(false);
+
+
+  function isDevMode() {
+    if (window.location.hostname === "localhost") {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  const devMode = isDevMode();
+
 
   function setError(msg) {
     if (typeof msg === "object") {
@@ -213,7 +218,7 @@ function Bitx(props) {
       lastQuoteDetails.destAmtTxt !== destinationAmt ||
       lastQuoteDetails.transferType !== transferType
     ) {
-      document.getElementById("send_to_amt").innerHTML = "---";
+      document.getElementById("send_to_amt").innerHTML = "<i class='fa fa-spinner fa-spin'> </i>";
     }
 
     if (osellAmt === null) {
@@ -1325,7 +1330,7 @@ function Bitx(props) {
     differenceFromSell = walletbalance - ruSellAmount;
   } else if (sellAmount[0] === -1) {
     //loading gif
-    sellAmountTxt = "...";
+    sellAmountTxt = <i class='fa fa-spinner fa-spin'> </i>;
     differenceFromSell = "...";
   }
 
@@ -1367,22 +1372,11 @@ function Bitx(props) {
     
   return (
     <div style={styles.container}>
-      <h4>Swap in your browser</h4>
-      <div className="hflex_whenwide">
+      <div className={"vflex " + (step !== 1 ? "hid" : "")}>
+        <h4>Pay in one crypto, Receive in another</h4>
+        <h5>Auto Swap, done decentralised in your browser</h5>
         <div>
           <b>Make a note of this phrase!</b>
-          <br />
-          It is the only way to recover your funds should your connection be
-          lost or your browser reloaded.
-          <br />
-          This transaction is completed inside your browser, your phrase is not
-          sent to us.
-          <br />
-          <b>You must leave this window open</b> until the payment is on its way
-          to the destination <br /> or <b>YOU WILL LOSE YOUR MONEY</b>
-        </div>
-        <div>
-          You can also enter your own phrase here:
           <br />
           <textarea
             id="phrase"
@@ -1395,285 +1389,330 @@ function Bitx(props) {
               //copy to clipboard
               navigator.clipboard.writeText(phrase).then(() => {
                 setInfo("Copied Phrase to clipboard");
-              }
-              );
-
+              });
             }}
             style={styles.textarea}
           ></textarea>
-          <div id="error_phrase" className={msgColour}>
-            {msg}
-          </div>
-          <div>
-            <input
-              type="checkbox"
-              id="autoswap"
-              name="autoswap"
-              checked={autoswap}
-              onChange={(e) => setAutoswap(e.target.checked)}
-            />
-            <label htmlFor="autoswap">Auto Swap</label>
-          </div>
-        </div>
-      </div>
-      <hr />
-      {swapLink !== "" && (
-        <div>
-          Share this request:
-          <br />{" "}
+          <br />
+          You can also enter a previously generated Bitx phrase here.
+          <br />
+          Do no use one from any other wallet!
+          <br />
           <button
             className="btn_copy"
-            target="_blank"
-            onClick={(e) =>
-              e.preventDefault() &
-              navigator.clipboard.writeText(swapLink).then(() => {
-                setInfo("Copied Share URL to clipboard");
-              })
-            }
+            onClick={(e) => {
+              navigator.clipboard.writeText(phrase).then(() => {
+                setStep(2);
+              });
+            }}
           >
-            {" "}
-            <i className="fa fa-clipboard" aria-hidden="true">
-              {" "}
-            </i>
-            {swapLink}
+            Copy and Continue
           </button>
+          <div>
+            <br />
+            This phrase the only way to recover your funds should your
+            connection be lost or your browser reloaded.
+            <br />
+            This transaction is completed inside your browser, your phrase is
+            not sent to us.
+            <br />
+            <b>You must leave this window open</b> until the payment is on its
+            way to the destination <br /> or <b>YOU WILL LOSE YOUR MONEY</b>
+          </div>
         </div>
-      )}
-
-      <div className="hflex_whenwide mt mb">
-        <div className="input_destination_addr">
-          <div className="input_title">
-            Enter the destination address:{" "}
+      </div>
+      <div className="hflex_whenwide infomsgdiv">
+        <div id="error_phrase" className={msgColour}>
+          {msg}
+        </div>
+        <div>
+          <input
+            type="checkbox"
+            id="autoswap"
+            name="autoswap"
+            checked={autoswap}
+            onChange={(e) => setAutoswap(e.target.checked)}
+          />
+          <label htmlFor="autoswap">Auto Swap</label>
+        </div>
+      </div>
+      <div className={step !== 2 ? "hid" : ""}>
+        {swapLink !== "" && (
+          <div className="sharediv">
+            Share this request:
+            <br />{" "}
             <button
-              onClick={props.onShowQRPop}
-              style={{ marginLeft: "10px", display: "inline-block" }}
+              className="btn_copy"
+              target="_blank"
+              onClick={(e) =>
+                e.preventDefault() &
+                navigator.clipboard.writeText(swapLink).then(() => {
+                  setInfo("Copied Share URL to clipboard");
+                })
+              }
             >
-              <i className="fa fa-qrcode" aria-hidden="true">
+              {" "}
+              <i className="fa fa-clipboard" aria-hidden="true">
                 {" "}
               </i>
+              {swapLink}
             </button>
           </div>
-          <input
-            type="text"
-            id="destination_addr"
-            name="destination_addr"
-            placeholder="Destination Address, BTC or ETH"
-            style={styles.input}
-            onChange={(e) => setDestinationAddr(e.target.value)}
-            value={destinationAddr}
-          />
-        </div>
-        <div className="fixed_destination_addr">{destinationAddr}</div>
-        <div className="input_destination_amt">
-          <div className="input_title">Enter the destination amount</div>
-          <input
-            type="text"
-            id="destination_amt"
-            name="destination_amt"
-            placeholder="Destination Amount"
-            style={styles.input}
-            onFocus={(e) => {
-              e.target.dataset.oAutoSwap = autoswap ? "true" : "nottrue";
-              setAutoswap(false);
-            }}
-            onBlur={(e) => {
-              setAutoswap(e.target.dataset.oAutoSwap === "true");
-              e.target.dataset.oAutoSwap = "";
-              if (e.target.dataset.changeTimer !== "") {
-                clearTimeout(e.target.dataset.changeTimer);
-              }
-              getAQuote();
-            }}
-            onChange={(e) => {
-              setDestinationAmt(e.target.value);
-            }}
-            onKeyUp={(e) => {
-              setDestinationAmt(e.target.value);
-              if (e.target.dataset.changeTimer !== "") {
-                clearTimeout(e.target.dataset.changeTimer);
-              }
-              e.target.dataset.changeTimer = setTimeout(() => {
-                console.log("timeout");
-                getAQuote();
-              }, 5000);
-            }}
-            value={destinationAmt}
-            data-o-auto-swap=""
-            data-change-timer=""
-            title={differenceFromDestination}
-          />
-          <br />
-        </div>
-        <div className="fixed_destination_amt">{destinationAmt}</div>
-      </div>
-      <div className="hflex_whenwide">
-        <div className="transfer_type">
-          <div className="transfer_from">
-            <b>Pay with:</b>
-            <br />
-            <div>
-              {fromTypes.map((chainID) => {
-                return (
-                  <div key={chainID}>
-                    <input
-                      type="radio"
-                      id={"from_" + chainID}
-                      name="transfer_type_from"
-                      value={chainID}
-                      onChange={(e) => {
-                        var type = transferType.slice();
-                        type[0] = chainID;
-                        console.log(type);
-                        setTransferType(type);
-                      }}
-                      checked={transferType[0] === chainID}
-                    />
-                    <label htmlFor={"from_" + chainID}>
-                      {shortName(chainID.toUpperCase())}
-                    </label>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-          <div className="transfer_to input_destination_type">
-            <b>Receiver gets:</b>
-            <br />
-            <div>
-              {toTypes.map((chainID) => {
-                return (
-                  <div key={chainID}>
-                    <input
-                      type="radio"
-                      id={"to_" + chainID}
-                      name="transfer_type_to"
-                      value={chainID}
-                      checked={transferType[1] === chainID}
-                      onChange={(e) => {
-                        var type = transferType.slice();
-                        type[1] = chainID;
-                        console.log(type);
-                        setTransferType(type);
-                      }}
-                    />
-                    <label htmlFor={"to_" + chainID}>
-                      {shortName(chainID.toUpperCase())}
-                    </label>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-          <div className="fixed_destination_type">
-            <b>Receiver gets:</b> {destinationAmt}{" "}
-            {shortName(transferType[1].toUpperCase())}
-          </div>
-        </div>
-      </div>
-      {!transferType ||
-        (transferType[0] === "" && (
-          <div className="div_transfer h div_qr">
-            Please select a transfer type and a destination.
-            <div>
-            <button
-              onClick={props.onShowQRPop}
-              style={{ marginLeft: "10px", display: "inline-block" }}
-            >
-              <i className="fa fa-qrcode" aria-hidden="true">
-                {" "}
-              </i> Scan QR for destination address
-            </button>
-            </div>
-          </div>
-        ))}
-      {transferType.length === 2 && transferType[0] !== "" && (
-        <div className="div_transfer h">
-          <div className="div_qr">
-            <div id="send_to_msg">
-              Send <span id="send_to_amt"
-              onClick={() => {
-                //copy to clipboard
-                navigator.clipboard.writeText(sellAmount[0]).then(() => {
-                  setInfo("Copied Amount to clipboard");
-                }
-                );
-              }}
-              >{sellAmountTxt}</span>{" "}
-              {shortName(transferType[0].toUpperCase())} to:
-            </div>
-            <div onClick={
-              () => { //copy to clipboard
-                navigator.clipboard.writeText(walletaddress).then(() => {
-                  setInfo("Copied Address to clipboard");
-                }
-                );
-              }
-            }>
-              {walletaddress}</div>
-            <QRCode value={walletaddress} />
-            <div>
-              Current Balance: {walletbalance} ({differenceFromSell})
-            </div>
-          </div>
-        </div>
-      )}
-      <br />
-      <div className="input_slippage">
-        {" "}
-        Received amount could be 1% different due to slippage and also small
-        differences due to gas fees.
-        <br />
-        Swap Fee: 1%
-      </div>
-      <h3>Dev buttons.. swap is automatic!</h3>
-      <button
-        type="button"
-        onClick={() => {
-          console.log(skClient.connectedChains);
-          doSwap();
-        }}
-      >
-        Swap
-      </button>
-      <button type="button" onClick={() => setPhrase(generatePhrase())}>
-        Generate Phrase
-      </button>
-      <button
-        type="button"
-        onClick={() => connectWallet(WalletOption.KEYSTORE)}
-      >
-        Connect Wallet
-      </button>
-      <button type="button" onClick={() => fetchWalletBalances()}>
-        Fetch Balances
-      </button>
-      <button type="button" onClick={() => console.log(wallets)}>
-        Log Wallet
-      </button>
-      <button type="button" onClick={() => console.log(phrase)}>
-        Log Phrase
-      </button>
-      <button type="button" onClick={() => console.log(skClient)}>
-        Log skClient
-      </button>
-      <button type="button" onClick={() => getAQuote()}>
-        Get Quote
-      </button>
-      <button
-        type="button"
-        onClick={() => {
-          setOriginBalances(["0", "0", 0]);
-        }}
-      >
-        Set Origin Balances
-      </button>
+        )}
 
-      <div>
-        <a href="{txUrl}" target="_blank">
-          View TX {txUrl}
-        </a>
+        <div className="hflex_whenwide mt nmb">
+          <div className="input_destination_addr nmt">
+            <div className="input_title">
+              Enter the destination address:{" "}
+              <button
+                onClick={props.onShowQRPop}
+                style={{ marginLeft: "10px", display: "inline-block" }}
+              >
+                <i className="fa fa-qrcode" aria-hidden="true">
+                  {" "}
+                </i>
+              </button>
+            </div>
+            <input
+              type="text"
+              id="destination_addr"
+              name="destination_addr"
+              placeholder="Destination Address, BTC or ETH"
+              style={styles.input}
+              onChange={(e) => setDestinationAddr(e.target.value)}
+              value={destinationAddr}
+            />
+          </div>
+          <div className="fixed_destination_addr">
+            Sending to: {destinationAddr}
+          </div>
+          <div className="input_destination_amt">
+            <div className="input_title">Enter the destination amount</div>
+            <input
+              type="text"
+              id="destination_amt"
+              name="destination_amt"
+              placeholder="Destination Amount"
+              style={styles.input}
+              onFocus={(e) => {
+                e.target.dataset.oAutoSwap = autoswap ? "true" : "nottrue";
+                setAutoswap(false);
+              }}
+              onBlur={(e) => {
+                setAutoswap(e.target.dataset.oAutoSwap === "true");
+                e.target.dataset.oAutoSwap = "";
+                if (e.target.dataset.changeTimer !== "") {
+                  clearTimeout(e.target.dataset.changeTimer);
+                }
+                getAQuote();
+              }}
+              onChange={(e) => {
+                if (e.target.value === "dev") {
+                  setInfo("dev buttons shown");
+                  setDevButtons(true);
+                  e.target.value = "";
+                  return;
+                }
+                setDestinationAmt(e.target.value);
+              }}
+              onKeyUp={(e) => {
+                setDestinationAmt(e.target.value);
+                if (e.target.dataset.changeTimer !== "") {
+                  clearTimeout(e.target.dataset.changeTimer);
+                }
+                e.target.dataset.changeTimer = setTimeout(() => {
+                  console.log("timeout");
+                  getAQuote();
+                }, 5000);
+              }}
+              value={destinationAmt}
+              data-o-auto-swap=""
+              data-change-timer=""
+              title={differenceFromDestination}
+            />
+            <br />
+          </div>
+          <div className="fixed_destination_amt">
+            {destinationAmt} {shortName(transferType[1].toUpperCase())}
+          </div>
+        </div>
+        <div className="hflex_whenwide">
+          <div className="transfer_type">
+            <div className="transfer_to input_destination_type">
+              <div style={{ marginTop: 0 }}>
+                {toTypes.map((chainID) => {
+                  return (
+                    <div key={chainID}>
+                      <input
+                        type="radio"
+                        id={"to_" + chainID}
+                        name="transfer_type_to"
+                        value={chainID}
+                        checked={transferType[1] === chainID}
+                        onChange={(e) => {
+                          var type = transferType.slice();
+                          type[1] = chainID;
+                          console.log(type);
+                          setTransferType(type);
+                        }}
+                      />
+                      <label htmlFor={"to_" + chainID}>
+                        {shortName(chainID.toUpperCase())}
+                      </label>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+            <div className="fixed_destination_type">
+              <b>Receiver gets:</b> {destinationAmt}{" "}
+              {shortName(transferType[1].toUpperCase())}
+            </div>
+
+            <div className="transfer_from">
+              <div style={{ marginTop: 0 }}>
+                <div>
+                  {" "}
+                  <b>Pay with:</b>
+                </div>
+                {fromTypes.map((chainID) => {
+                  return (
+                    <div key={chainID}>
+                      <input
+                        type="radio"
+                        id={"from_" + chainID}
+                        name="transfer_type_from"
+                        value={chainID}
+                        onChange={(e) => {
+                          var type = transferType.slice();
+                          type[0] = chainID;
+                          console.log(type);
+                          setTransferType(type);
+                        }}
+                        checked={transferType[0] === chainID}
+                      />
+                      <label htmlFor={"from_" + chainID}>
+                        {shortName(chainID.toUpperCase())}
+                      </label>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </div>
+        {!transferType ||
+          (transferType[0] === "" && (
+            <div className="div_transfer h div_qr">
+              Please select a transfer type and a destination.
+              <div>
+                <button
+                  onClick={props.onShowQRPop}
+                  style={{ marginLeft: "10px", display: "inline-block" }}
+                >
+                  <i className="fa fa-qrcode" aria-hidden="true">
+                    {" "}
+                  </i>{" "}
+                  Scan QR for destination address
+                </button>
+              </div>
+            </div>
+          ))}
+        {transferType.length === 2 && transferType[0] !== "" && (
+          <div className="div_transfer h">
+            <div className="div_qr">
+              <div id="send_to_msg" style={{ display: "block" }}>
+                Send{" "}
+                <span
+                  id="send_to_amt"
+                  onClick={() => {
+                    //copy to clipboard
+                    navigator.clipboard.writeText(sellAmount[0]).then(() => {
+                      setInfo("Copied Amount to clipboard");
+                    });
+                  }}
+                >
+                  {sellAmountTxt}
+                </span>{" "}
+                {shortName(transferType[0].toUpperCase())} to:
+              </div>
+              <div
+                onClick={() => {
+                  //copy to clipboard
+                  navigator.clipboard.writeText(walletaddress).then(() => {
+                    setInfo("Copied Address to clipboard");
+                  });
+                }}
+              >
+                {walletaddress}
+              </div>
+              <QRCode value={walletaddress} />
+              <div>
+                Current Balance: {walletbalance} ({differenceFromSell})
+              </div>
+            </div>
+          </div>
+        )}
+        <br />
+        <div className="input_slippage">
+          {" "}
+          Received amount could be 1% different due to slippage and also small
+          differences due to gas fees.
+          <br />
+          Swap Fee: 1%
+        </div>
+        <div className="{devButtons || isDevMode? '' : 'hid'}">
+          <h3>Dev buttons.. swap is automatic!</h3>
+          <button
+            type="button"
+            onClick={() => {
+              console.log(skClient.connectedChains);
+              doSwap();
+            }}
+          >
+            Swap
+          </button>
+          <button type="button" onClick={() => setPhrase(generatePhrase())}>
+            Generate Phrase
+          </button>
+          <button
+            type="button"
+            onClick={() => connectWallet(WalletOption.KEYSTORE)}
+          >
+            Connect Wallet
+          </button>
+          <button type="button" onClick={() => fetchWalletBalances()}>
+            Fetch Balances
+          </button>
+          <button type="button" onClick={() => console.log(wallets)}>
+            Log Wallet
+          </button>
+          <button type="button" onClick={() => console.log(phrase)}>
+            Log Phrase
+          </button>
+          <button type="button" onClick={() => console.log(skClient)}>
+            Log skClient
+          </button>
+          <button type="button" onClick={() => getAQuote()}>
+            Get Quote
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setOriginBalances(["0", "0", 0]);
+            }}
+          >
+            Set Origin Balances
+          </button>
+
+          <div>
+            <a href="{txUrl}" target="_blank">
+              View TX {txUrl}
+            </a>
+          </div>
+        </div>
+        <div id="fetching_balances">...</div>
       </div>
-      <div id="fetching_balances">...</div>
     </div>
   );
 }
