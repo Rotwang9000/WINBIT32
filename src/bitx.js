@@ -1672,7 +1672,7 @@ function Bitx(props) {
           <br />
           Swap Fee: 1%
         </div>
-        <div className="{(devButtons || isDevMode)? '' : 'hid'}">
+        <div className={(devButtons || isDevMode)? '' : 'hid'}>
           <h3>Dev buttons.. swap is automatic!</h3>
           <button
             type="button"
