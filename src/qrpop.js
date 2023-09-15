@@ -3,8 +3,6 @@
 import React, { Component } from 'react';
 import { QrReader } from "react-qr-reader";
 
-var qr_on_screen = false;
-
 class QrPop extends Component {
 	  constructor(props) {
 	super(props);
@@ -72,8 +70,7 @@ class QrPop extends Component {
             onScan={this.handleScan}
             onResult={this.handleScan}
             style={{ width: "100%" }}
-            
-            facingMode={"environment"}
+            constraints={{ facingMode: "environment" }}
           />
           <p>{this.state.result}</p>
         </div>
