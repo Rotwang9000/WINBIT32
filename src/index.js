@@ -7,6 +7,12 @@ import reportWebVitals from './reportWebVitals';
 import { QrReader } from "react-qr-reader";
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
+
+//random number between 0 and 9 inclusive
+const rdm = Math.floor(Math.random() * 10).toString();
+
+
+
 root.render(
   <>
     <div
@@ -16,7 +22,10 @@ root.render(
         document.getElementById("loading_overlay").style.display = "none";
       }}
     >
-      Loading...
+      <div>Loading...</div>
+      <div><img src={process.env.PUBLIC_URL + "/bglogos/logo"+ rdm  +".png"} alt="logo" /></div>
+      
+      
     </div>
     <App />
   </>

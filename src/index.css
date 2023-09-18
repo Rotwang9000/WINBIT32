@@ -30,6 +30,20 @@ input[type=text] {
       -moz-box-sizing: border-box;
 }
 
+textarea {
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  padding: 5px;
+  margin: 5px;
+  width: 100%;
+  max-width: 600px;
+  font-size: 1.2em;
+    box-sizing: border-box;
+      -moz-box-sizing: border-box;
+  text-align: center;
+  height:fit-content;
+}
+
 .h button{
 
   border-radius: 5px;
@@ -47,6 +61,29 @@ input[type=text] {
   -moz-box-sizing: border-box;
 
 }
+
+button.smallbutton {
+  background-image: linear-gradient(315deg, #fff 0%, #ccc 74%);
+  color: #000;
+  font-weight: bold;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  padding: 5px;
+  margin: 5px;
+  margin-left: 0;
+  margin-right: 15px;
+  width: 50px;
+  max-width: 100%;
+  font-size: small;
+  box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  cursor: pointer;
+
+}
+button.smallbutton>i{
+  font-size: 1em;
+}
+
 
 .input_title{
   height: 25px;
@@ -79,8 +116,35 @@ code {
   left: 0;
   bottom: 0;
   right: 0;
+  align-items: center;
+  flex-direction: column;
+  justify-content: center;
+  text-align: center;
+  font-size: 1.5em;
+  font-weight: bold;
+  padding: 10px;
+  box-sizing: border-box;
+  -moz-box-sizing: border-box;
+
   
 }
+.loading_overlay>div{
+  max-width: 600px;
+  width:100%;
+  margin: auto;
+  text-align: center;
+  font-size: 1.5em;
+  font-weight: bold;
+  padding: 10px;
+  box-sizing: border-box;
+  -moz-box-sizing: border-box;
+
+}
+
+.loading_overlay img{
+  max-width:100%;
+}
+
 .info_msg{
   color:black;
   font-weight: bold;
@@ -120,6 +184,11 @@ code {
 
 .hflex_whenwide>div{
   flex:auto;
+  text-align: center;
+
+}
+.step>div{
+  text-align: center;
 }
 
 .vflex {
@@ -181,6 +250,7 @@ code {
   z-index: 999;
   
 }
+
 .div_qr {
   background: #fff;
   padding: 16px;
@@ -289,7 +359,8 @@ width: 100%;
 }
 
 .fa{
-  margin: 4px;
+  margin: 1px;
+  font-size: 1.5em;
 }
 
 .btn_copy{

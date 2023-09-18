@@ -1,7 +1,7 @@
 import './App.css';
 import { Chain, FeeOption } from '@thorswap-lib/types';
 import { keystoreWallet } from '@thorswap-lib/keystore';
-import { AssetAmount, createSwapKit, WalletOption, SwapKitApi } from '@thorswap-lib/swapkit-sdk'
+import { AssetAmount, createSwapKit, WalletOption, SwapKitApi, Amount } from '@thorswap-lib/swapkit-sdk'
 import { entropyToMnemonic, generateMnemonic } from '@scure/bip39';
 import { wordlist } from '@scure/bip39/wordlists/english';
 import { useEffect, useState, useRef,  } from "react";
@@ -9,6 +9,33 @@ import QRCode from "react-qr-code";
 import "dotenv/config";
 import QRPop from "./qrpop.js";
 import { set } from 'react-hook-form';
+import { ETHToolbox } from '@thorswap-lib/toolbox-evm';
+import { BTCToolbox } from '@thorswap-lib/toolbox-utxo';
+
+
+var floatToString = function(flt) {
+  var rx = /^([\d.]+?)e-(\d+)$/;
+  var details, num, cnt, fStr = flt.toString();
+  if (rx.test(fStr)) {
+    details = rx.exec(fStr);
+    num = details[1];
+    cnt = parseInt(details[2], 10);
+    cnt += (num.replace(/\./g, "").length - 1); // Adjust for longer numbers
+    
+    num = flt.toFixed(cnt);
+    //fix at 8 decimal places displayed not scientific notation
+    if(cnt > 8){
+      num = flt.toFixed(8);
+    }
+    fStr = num.toString();
+    fStr = fStr.replace(/\.?0+$/, ""); // Remove any trailing zeros
+    return fStr;
+    
+  }
+  return fStr;
+};
+
+  var quoteCnt = 0;
 
   var lastQuoteDetails = {
     destAmtTxt: "",
@@ -21,6 +48,7 @@ import { set } from 'react-hook-form';
   var swapID = ''; //only do one swap at once!
   var countdownNumber = 11;
   var numWalletChecks = 0;
+  var walletTimer = null;
 
 const styles = {
   container: {
@@ -31,11 +59,10 @@ const styles = {
   input: {
     width: "100%",
   },
-  textarea: {
-    width: "300px",
-    height: "50px",
-  },
+
 };
+
+var validAddresses = {}
 
 const skClient = createSwapKit({
   config: {
@@ -72,7 +99,7 @@ function Bitx(props) {
 	  }	
 
   //get from query string 'dest_amt' or set to 'MAX' if not set
-  const [destinationAmt, setDestinationAmt] = useState("MAX");
+  const [destinationAmt, setDestinationAmt] = useState("");
   const [step, setStep] = useState(1);
   const [swapLink, setSwapLink] = useState("");
   const [phrase, setPhrase] = useState("");
@@ -84,6 +111,8 @@ function Bitx(props) {
   const [balances, setBalances] = useState({}); // [{ balance: AssetAmount[]; address: string; walletType: WalletOption }
   const [originBalances, setOriginBalances] = useState(null);
   const [autoswap, setAutoswap] = useState(true);
+  const [sendStats, setSendstats] = useState(true);
+
   const [sellAmount, setSellAmount] = useState([0, 0]);
   const sellAmountRef = useRef(sellAmount);
   sellAmountRef.current = sellAmount;
@@ -158,6 +187,207 @@ function Bitx(props) {
     return generateMnemonic(wordlist, entropy);
   }
 
+  async function send_quote() {
+    //get a quote from the api for sending an asset
+    const sendingWallet = selectSendingWallet();
+    if (!sendingWallet) {
+      console.log("no sending wallet");
+      return;
+    }
+    
+    const walletChain = sendingWallet.balance[0].asset.chain;
+
+    const destAmt = document.getElementById("destination_amt").value;
+    if (!destAmt) {
+      console.log("no dest amt");
+      return;
+    }
+    if(isNaN(destAmt)){
+      console.log("dest amt is not a number");
+      return;
+    }
+
+
+    //get a quote from sendingwallet to a thor address: thor1xg0zsvnqn8v68aaswcv9jdff2u75zz8yfve6et
+    const quoteParams = {
+      sellAsset: walletChain + "." + sendingWallet.balance[0].asset.symbol,
+      buyAsset: "THOR.RUNE",
+      senderAddress: sendingWallet.address, // A valid Bitcoin address
+      recipientAddress: "thor1xg0zsvnqn8v68aaswcv9jdff2u75zz8yfve6et", // A valid Ethereum address
+      slippage: 1, // 1 = 1%
+      sellAmount: destAmt,
+      affiliateBasisPoints: 0, //100 = 1%
+      affiliateAddress: "me",
+    };
+
+    console.log("quoteParams", quoteParams);
+
+    var routes = await SwapKitApi.getQuote(quoteParams);
+    console.log('routes', routes);
+    //get sending network fee from the quote
+    var feesArray = routes.routes[0].fees[Object.keys(routes.routes[0].fees)[0]][0];
+    var fees = parseFloat(feesArray.totalFee.toString()) * 1.2;
+
+    setSellAmount([parseFloat(destAmt)+fees, fees]);
+
+
+      // return baseAmount(balance.amount.minus(baseAmount(fee, 8)).amount(), 8);
+
+    console.log("routes", fees);
+  }
+
+
+  function validAddress(address, chain) {
+    if(validAddresses[chain] && validAddresses[chain][address] === true) return true;
+    if(validAddresses[chain] && validAddresses[chain][address] === false) return false;
+    
+    if(!validAddresses[chain]) validAddresses[chain] = {};
+      //validate from thorswap api
+
+    const res = skClient.validateAddress({'address':address, 'chain':chains[chain]});
+    console.log("validateAddress " + chains[chain] + " " + address, res);
+    validAddresses[chain][address] = res;
+  
+    return  validAddresses[chain][address];
+  }
+
+
+  async function send_funds() {
+    //used when send and receive tokens are the same, it sends it to the destination address
+    //get the right wallet for each asset
+    const sendingWallet = selectSendingWallet();
+    if (!sendingWallet) {
+      console.log("no sending wallet");
+      return;
+    }
+    const recvAddress = document.getElementById("destination_addr").value;
+    if (!recvAddress) {
+      console.log("no recv address");
+      setError("No address");
+      return;
+    }
+    const sendChain = sendingWallet.balance[0].asset.chain;
+    if(!validAddress (recvAddress, sendChain)){
+      console.log("invalid address");
+      setError("Invalid address");
+      return;
+    }
+
+    // transfer: (params: CoreTxParams & {
+    //     router?: string;
+    // }) => Promise<string>;
+
+    //CoreTxParams:
+    // assetAmount: AssetAmount;
+    // recipient: string;
+    // memo?: string;
+    // feeOptionKey?: FeeOption;
+    // feeRate?: number;
+    // data?: string;
+    // from?: string;
+    //get transfer quote
+
+// export declare class Amount {
+//     readonly assetAmount: BigNumber;
+//     readonly baseAmount: BigNumber;
+//     readonly decimal: number;
+//     static fromMidgard(amount?: BigNumber.Value): Amount;
+//     static fromBaseAmount(amount: BigNumber.Value, decimal: number): Amount;
+//     static fromAssetAmount(amount: BigNumber.Value, decimal: number): Amount;
+//     static fromNormalAmount(amount?: BigNumber.Value): Amount;
+//     static sorter(a: Amount, b: Amount): number;
+//     constructor(amount: BigNumber.Value, type: AmountType | undefined, decimal: number);
+//     add(amount: Amount): Amount;
+//     sub(amount: Amount): Amount;
+//     mul(value: BigNumber.Value | Amount): Amount;
+//     div(value: BigNumber.Value | Amount): Amount;
+//     gte(amount: Amount | BigNumber.Value): boolean;
+//     gt(amount: Amount | BigNumber.Value): boolean;
+//     lte(amount: Amount | BigNumber.Value): boolean;
+//     lt(amount: Amount | BigNumber.Value): boolean;
+//     eq(amount: Amount | BigNumber.Value): boolean;
+//     toSignificant(significantDigits?: number, maxDecimals?: number, format?: BigNumber.Format, rounding?: Rounding): string;
+//     toFixedDecimal(decimalPlaces?: number, format?: BigNumber.Format, rounding?: Rounding): string;
+//     toFixed(decimalPlaces?: number, format?: BigNumber.Format, rounding?: Rounding): string;
+//     toAbbreviate(decimalPlaces?: number): string;
+//     toMidgard(): Amount;
+//     private toSignificantBigNumber;
+// }
+
+// export declare enum AmountType {
+//     BASE_AMOUNT = 0,
+//     ASSET_AMOUNT = 1
+// }
+
+
+    var toolbox = skClient.connectedWallets[sendChain];
+    var amt = new AssetAmount(sendingWallet.balance[0].asset, new Amount(sellAmountRef.current[0] - sellAmountRef.current[1], 1, sendingWallet.balance[0].asset.decimal));
+
+
+    console.log("amt", amt);
+    const txData = {
+      assetAmount: amt,
+      recipient: recvAddress,
+      //memo: "",
+      feeOptionKey: FeeOption.Average,
+      //feeRate: 1,
+      //data: "",
+      from: sendingWallet.address,
+    };
+
+    const txID = await skClient
+      .transfer(txData)
+      .then((result) => {
+        console.log("result", result);
+
+        setDoSwapCountdown(false);
+        // Returns explorer url like etherscan, viewblock, etc.
+        const explorerUrl = skClient.getExplorerTxUrl(sendChain, result);
+        setTXUrl(explorerUrl);
+        setInfo(
+          <>
+            Send Started!{" "}
+            <a href={explorerUrl} target="_blank">
+              View TX
+            </a>
+          </>
+        );
+        logTX(result, txData); 
+        setLastSwapTx(result);
+        setLastSwapTxTime(Date.now());
+        setLastSwapBtn(
+          <>
+            <div className="info_msg">
+              Send Started!{" "}
+              <a href={explorerUrl} target="_blank">
+                View TX
+              </a>
+            </div>
+          </>
+        );
+        return result;
+      })
+
+      .catch((error) => {
+        console.log(error);
+        setError(error);
+        logTX(error, txData);
+        console.log("swapParams", sendChain);
+        //log balances of sending wallet
+        _wallet = selectSendingWallet();
+        console.log("sendingwallet", _wallet);
+
+        setAutoswap(false);
+
+        return null;
+      });
+
+  }
+
+
+
+
+
   async function getAQuote(osellAmt = null, loop = 0, destAmtTxt = null) {
     console.log("lastQuoteDetails", lastQuoteDetails);
 
@@ -190,6 +420,7 @@ function Bitx(props) {
       lastQuoteDetails.sendingWalletBalance ===
         selectSendingWallet().balance[0].assetAmount.toString() &&
       lastQuoteDetails.transferType === transferType
+      && lastQuoteDetails.destAddr === destinationAddr
     ) {
       console.log("same quote");
 
@@ -218,7 +449,7 @@ function Bitx(props) {
       lastQuoteDetails.destAmtTxt !== destinationAmt ||
       lastQuoteDetails.transferType !== transferType
     ) {
-      document.getElementById("send_to_amt").innerHTML = "<i class='fa fa-spinner fa-spin'> </i>";
+      document.getElementById("send_to_amt").innerHTML = "<i className='fa fa-spinner fa-spin'> </i>";
     }
 
     if (osellAmt === null) {
@@ -230,6 +461,7 @@ function Bitx(props) {
           sendingWallet.balance[0].assetAmount.toString();
       }
       arr["transferType"] = transferType;
+      arr["destAddr"] = destinationAddr;
       lastQuoteDetails = arr;
       destAmtTxt = destinationAmt;
     }
@@ -284,6 +516,12 @@ function Bitx(props) {
     //   }
     // }
 
+
+    if(transferType[0] === transferType[1]){
+      //same to same
+      return send_quote();
+    }
+
     const affiliateBasisPoints = 100; //100 = 1%
 
     const quoteParams = {
@@ -315,12 +553,23 @@ function Bitx(props) {
 
     console.log("quoteParams", quoteParams);
 
+    const thisQuoteCnt = quoteCnt;
+    quoteCnt++;
+
     var routes = await SwapKitApi.getQuote(quoteParams);
+
+    if (thisQuoteCnt !== quoteCnt - 1) {
+      console.log("old quote");
+      return;
+    }
 
     if (routes.message) {
       console.log(routes.message);
       //set #error_phrase
       setError(routes.message.split(":").pop());
+      if(routes.message === 'Sell and buy assets are the same.'){
+        setError("Same to Same not supported yet. Soon!")
+      }
       setSellAmount((prev) => [0, prev[1]]);
       return;
     }
@@ -778,7 +1027,7 @@ function Bitx(props) {
           ) {
       getAQuote();
     }
-  }, [destinationAmt, wallets, transferType]);
+  }, [destinationAmt, wallets, transferType, destinationAddr]);
 
   //hide loading overlay when wallets are loaded
   useEffect(() => {
@@ -918,11 +1167,14 @@ function Bitx(props) {
   }, [destinationAmt, destinationAddr, transferType, phrase, slippage, autoswap]);
 
 
-  async function fetchWalletBalances() {
+  async function fetchWalletBalances(force = false) {
     //only call this once every 30 seconds
     console.log("fetching wallet balances",  numWalletChecks * 5000);
     numWalletChecks++;
-    if (Date.now() - lastWalletGet < numWalletChecks * 5000) {
+    var timeLimit = numWalletChecks * 5000;
+    if(force) timeLimit = 59000
+
+    if (Date.now() - lastWalletGet < timeLimit) {
       console.log("too soon");
       return;
       }
@@ -953,8 +1205,17 @@ function Bitx(props) {
       if(!_wallet || !_wallet.balance || !_wallet.balance[0]) return;
       const sa = sellAmountRef.current[0]
       if (_wallet && _wallet.balance && _wallet.balance[0].assetAmount > sa && sa > 0) {
-        setInfo(<><button onClick={() => doSwap()}>Swap</button></>, true);
+        console.log("is enough balance")
+        setInfo(<><button onClick={() => {
+
+          countdownNumber = null;
+          doSwap(true);
+
+        }
+        }>Start Send...</button></>, true);
         doSwapIf();
+      }else{
+        console.log("not enough balance", _wallet.balance[0].assetAmount, sellAmount[0]);
       }
       
     }).catch((error) => {
@@ -964,6 +1225,12 @@ function Bitx(props) {
 
 
     console.log("wallets");
+
+    document.getElementById("refresh_balances").innerHTML = "<i class='fa fa-ban'> </i>";
+    clearTimeout(walletTimer);
+    walletTimer = setTimeout(() => {
+      document.getElementById("refresh_balances").innerHTML = "<i class='fa fa-sync-alt'> </i>";
+    }, 60000);
   }
 
   //update balances
@@ -1118,11 +1385,11 @@ function Bitx(props) {
     } 
     if(tmr === 11)  return;
     if(tmr > 0){
-      setInfo(<>Swapping in {tmr} seconds. <button onClick={() => cancelSwap()}
+      setInfo(<>Executing in {tmr} seconds. <button onClick={() => cancelSwap()}
         >Cancel</button></>, true);
     }else if(tmr === 0){
       console.log("doSwapCountdown", doSwapCountdown);
-      setInfo("Swapping...", true);
+      setInfo("Let's Go!...", true);
     }
   }
   , [doSwapCountdown]);
@@ -1135,6 +1402,35 @@ function Bitx(props) {
     setDoSwapCountdown(-1);
   }
 
+
+  function logTX(txResult, txData) {
+      //POST to https://bitx.com/log.php
+      //with data: {tx: txResult, time: Date.now()}
+      //return txResult
+      //avoid error: has been blocked by CORS policy: Response to preflight request doesn't pass access control check: No 'Access-Control-Allow-Origin' header is present on the requested resource. If an opaque response serves your needs, set the request's mode to 'no-cors' to fetch the resource with CORS disabled.
+      if(!sendStats) return;
+
+      //bitx.js:1414 Error: SyntaxError: Unexpected end of input (at bitx.js:1407:1)
+      
+
+      const data = {'log_site': 'bitx.live', tx: txResult, data: txData, time: Date.now()};
+      console.log("logging tx", data);
+      fetch("https://bitx.live/log.php", {
+        method: "POST", // or 'PUT'
+        mode: "no-cors",
+        headers: {
+          "Content-Type": "application/json",
+          'Accept': 'application/json',
+          "Access-Control-Allow-Origin": "*",
+          "Access-Control-Allow-Methods": "POST",
+          "Access-Control-Allow-Headers": "Content-Type",
+        },
+          body: JSON.stringify(data),
+
+
+      })
+      
+    }
 
   function doSwap(r = null, fromCounter = false, _swapID = null) {
 
@@ -1165,11 +1461,14 @@ function Bitx(props) {
     }
 
 
-    if (countdowntime > 0 || countdowntime === null) {
+    if (countdowntime > 0 || countdowntime === null || r === true) {
+      if(r === true){
+        r = null;
+      }
       if(countdowntime === null || countdowntime === 11){
         swapID = Math.random();
       }
-      if (countdowntime === null) {
+      if (countdowntime === null || countdowntime === 0) {
         countdowntime = 10;
       }else{
         countdowntime--;
@@ -1190,9 +1489,18 @@ function Bitx(props) {
       return;
     }
 
-    if (!wallets['ETH.ETH']){
-      setInfo("No wallets connected", true);
-    } 
+    // if (!wallets['ETH.ETH']){
+    //   setInfo("No wallets connected", true);
+    // } 
+
+    if(transferType[0] === transferType[1]){
+      //same to same
+      console.log("same to same");
+      return send_funds();
+    
+    }
+
+
     if(!r) r = routes;
 
     if (!r[0]) {
@@ -1244,12 +1552,15 @@ function Bitx(props) {
           </div>
         </>
       );
+      logTX(result, swapParams);
       return result;
     })
     
     .catch((error) => {
       console.log(error);
       setError(error);
+      setAutoswap(false);
+      logTX(error, swapParams);
       console.log("bestRoute", bestRoute);
       console.log("swapParams", swapParams);
       //log balances of sending wallet
@@ -1328,9 +1639,20 @@ function Bitx(props) {
     var ruSellAmount = Math.ceil(sellAmount[0] * 1000000) / 1000000;
     sellAmountTxt = ruSellAmount.toString();
     differenceFromSell = walletbalance - ruSellAmount;
+    //always show all decimal points not e
+    differenceFromSell = floatToString(differenceFromSell);
+    if (differenceFromSell < 0) {
+      differenceFromSell = <span className="red">{Math.abs(differenceFromSell)} Left to send</span>;
+    }else{
+      differenceFromSell = <span className="green">{differenceFromSell} extra!<br />
+      <button onClick={() => {
+        doSwap(true);
+      }}>Send Now...</button>
+      </span>;
+    }
   } else if (sellAmount[0] === -1) {
     //loading gif
-    sellAmountTxt = <i class='fa fa-spinner fa-spin'> </i>;
+    sellAmountTxt = <i className='fa fa-spinner fa-spin'> </i>;
     differenceFromSell = "...";
   }
 
@@ -1353,6 +1675,10 @@ function Bitx(props) {
 
     if (!_da ||_da === "") return;
     
+    const valid = validAddress(_da, transferType[1].split('.')[0]);
+    console.log("valid", valid);
+    if(!valid) return;
+
     var _swapLink = "https://private.bitx.live/?to=" + _da 
     if(destinationAmt !== '' && !isNaN(destinationAmt)) _swapLink = _swapLink + "&amt=" + destinationAmt;
     if(transferType[1] !== '') _swapLink = _swapLink + '&in='+transferType[1];
@@ -1368,13 +1694,17 @@ function Bitx(props) {
     //   }, 1000);
     // }
   //we want msg to go into the div as raw html not escaped
-
+  const refreshDisabled = (lastSwapTxTime + 60000) > Date.now();
     
   return (
     <div style={styles.container}>
       <div className={"vflex " + (step !== 1 ? "hid" : "")}>
-        <h4>Pay in one crypto, Receive in another</h4>
-        <h5>Auto Swap, done decentralised in your browser</h5>
+        <h4>
+          <img src="bitxtlogo.png" style={{ width: "200px" }} alt="Bitx logo" />
+          <br />
+          Pay in one crypto, Receive in another
+        </h4>
+        <h5>Auto Swap &amp; Send, done decentralised in your browser</h5>
         <div>
           <b>Make a note of this phrase!</b>
           <br />
@@ -1385,13 +1715,12 @@ function Bitx(props) {
             onChange={(e) => {
               setPhrase(e.target.value) && setAutoswap(false);
             }}
-            onClick={(e) => {
-              //copy to clipboard
-              navigator.clipboard.writeText(phrase).then(() => {
-                setInfo("Copied Phrase to clipboard");
-              });
-            }}
-            style={styles.textarea}
+            // onClick={(e) => {
+            //   //copy to clipboard
+            //   navigator.clipboard.writeText(phrase).then(() => {
+            //     setInfo("Copied Phrase to clipboard");
+            //   });
+            // }}
           ></textarea>
           <br />
           You can also enter a previously generated Bitx phrase here.
@@ -1420,16 +1749,15 @@ function Bitx(props) {
             way to the destination <br /> or <b>YOU WILL LOSE YOUR MONEY</b>
           </div>
         </div>
-                  <br />
-          <button
-            className="btn_copy"
-            onClick={(e) => {
-                setStep(2);
-            
-            }}
-          >
-            Continue...
-          </button>
+        <br />
+        <button
+          className="btn_copy"
+          onClick={(e) => {
+            setStep(2);
+          }}
+        >
+          Continue...
+        </button>
       </div>
       <div className="hflex_whenwide infomsgdiv">
         <div id="error_phrase" className={msgColour}>
@@ -1443,10 +1771,20 @@ function Bitx(props) {
             checked={autoswap}
             onChange={(e) => setAutoswap(e.target.checked)}
           />
-          <label htmlFor="autoswap">Auto Swap</label>
+          <label htmlFor="autoswap">Auto Send</label>
+          </div><div>
+          <input 
+            type="checkbox"
+            id="sendstats"
+            name="sendstats"
+            checked={sendStats}
+            onChange={(e) => setSendstats(e.target.checked)}
+          />
+          <label htmlFor="sendstats" title='Send Info such as TX ID and amounts to Bitx.live for analysis. No personal or wallet info is sent. This is the only way we can record usage.'
+          >Send Stats</label>
         </div>
       </div>
-      <div className={step !== 2 ? "hid" : ""}>
+      <div className={"step "+ (step !== 2 ? "hid" : "")}>
         {swapLink !== "" && (
           <div className="sharediv">
             Share this request:
@@ -1481,6 +1819,17 @@ function Bitx(props) {
                 <i className="fa fa-qrcode" aria-hidden="true">
                   {" "}
                 </i>
+              </button>
+              <button
+                onClick={() => {
+                  navigator.clipboard.readText().then((text) => {
+                    setDestinationAddr(text);
+                    getAQuote();
+                  });
+                }}
+                style={{ marginLeft: "10px", display: "inline-block" }}
+              >
+                <i className="fa fa-clipboard"> </i>
               </button>
             </div>
             <input
@@ -1533,7 +1882,7 @@ function Bitx(props) {
                 e.target.dataset.changeTimer = setTimeout(() => {
                   console.log("timeout");
                   getAQuote();
-                }, 5000);
+                }, 2500);
               }}
               value={destinationAmt}
               data-o-auto-swap=""
@@ -1547,7 +1896,7 @@ function Bitx(props) {
           </div>
           <div className="transfer_type">
             <div className="transfer_to input_destination_type">
-              <div style={{ marginTop: 0,width:'fit-content' }}>
+              <div style={{ marginTop: 0, width: "fit-content" }}>
                 {toTypes.map((chainID) => {
                   return (
                     <div key={chainID}>
@@ -1659,7 +2008,26 @@ function Bitx(props) {
               </div>
               <QRCode value={walletaddress} />
               <div>
-                Current Balance: {walletbalance} ({differenceFromSell})
+                Current Balance: <button onClick={(e) => { 
+                  e.preventDefault();
+                  //disable button
+                  e.target.disabled = true;
+                  e.target.innerHTML = '<i class="fa fa-spinner fa-spin"> </i>';
+                  fetchWalletBalances(true);
+                  clearTimeout(walletTimer);
+                  walletTimer = setTimeout(() => {
+                    e.target.disabled = false;
+                    e.target.innerHTML = '<i class="fa fa-refresh"> </i>';
+                  }
+                  , 60000);
+                }}
+                disabled={refreshDisabled}
+                className='smallbutton'
+                id='refresh_balances'
+                title='Refresh Balances, max once per minute'
+                style={{'marginLeft': '250px', 'position': 'absolute', 'marginTop': '-10px'}}
+                > <i className={"fa " +(refreshDisabled? 'fa-ban':'fa-refresh') }> </i></button>
+                {walletbalance} {differenceFromSell}  
               </div>
             </div>
           </div>
@@ -1672,7 +2040,11 @@ function Bitx(props) {
           <br />
           Swap Fee: 1%
         </div>
-        <div className={(devButtons || devMode)? '' : 'hid'}>
+        <div>
+          {" "}
+          <img src="bitxtlogo.png" style={{ width: "200px" }} alt="Bitx logo" />
+        </div>
+        <div className={devButtons || devMode ? "" : "hid"}>
           <h3>Dev buttons.. swap is automatic!</h3>
           <button
             type="button"
@@ -1707,6 +2079,13 @@ function Bitx(props) {
           <button type="button" onClick={() => getAQuote()}>
             Get Quote
           </button>
+          <button type="button" onClick={() => send_quote()}>
+            Get Send Quote
+          </button>
+          <button type="button" onClick={() => logTX({tx: "test", time: Date.now()}, {sent: 'some stuff'})}>
+            Log TX
+          </button>
+
           <button
             type="button"
             onClick={() => {
