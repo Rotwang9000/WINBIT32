@@ -1225,12 +1225,15 @@ function Bitx(props) {
 
 
     console.log("wallets");
-
-    document.getElementById("refresh_balances").innerHTML = "<i class='fa fa-ban'> </i>";
-    clearTimeout(walletTimer);
-    walletTimer = setTimeout(() => {
-      document.getElementById("refresh_balances").innerHTML = "<i class='fa fa-sync-alt'> </i>";
-    }, 60000);
+    try{
+      document.getElementById("refresh_balances").innerHTML = "<i class='fa fa-ban'> </i>";
+      clearTimeout(walletTimer);
+      walletTimer = setTimeout(() => {
+        document.getElementById("refresh_balances").innerHTML = "<i class='fa fa-sync-alt'> </i>";
+      }, 60000);
+    }catch(error){
+      console.log(error);
+    }
   }
 
   //update balances
@@ -2017,7 +2020,11 @@ function Bitx(props) {
                   clearTimeout(walletTimer);
                   walletTimer = setTimeout(() => {
                     e.target.disabled = false;
-                    e.target.innerHTML = '<i class="fa fa-refresh"> </i>';
+                    try{
+                      e.target.innerHTML = '<i class="fa fa-refresh"> </i>';
+                    }catch(error){
+                      console.log(error);
+                    }
                   }
                   , 60000);
                 }}
