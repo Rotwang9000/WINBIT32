@@ -1,4 +1,5 @@
 import './App.css';
+import './buttons.css'
 import { Chain, FeeOption } from '@thorswap-lib/types';
 import { keystoreWallet } from '@thorswap-lib/keystore';
 import { AssetAmount, createSwapKit, WalletOption, SwapKitApi, Amount } from '@thorswap-lib/swapkit-sdk'
@@ -407,10 +408,27 @@ function Bitx(props) {
       console.log("transfer type not set");
       return;
     }
-    if (!wallets['ETH.ETH'] || !selectSendingWallet())  {
+    console.log("transfertype", transferType);
+    if(!transferType[1] || transferType[1].length === 0 ){
+
+      setInfo("Please choose a destination asset");
+      return;
+    }
+
+    var destAddr = document.getElementById("destination_addr").value;
+
+    if (!validAddress(destAddr, transferType[1].split(".")[0])) {
+      setInfo("Invalid address for " + transferType[1].split(".")[0]);
+      console.log("invalid address for " + transferType[1].split(".")[0]);
+      return;
+    }
+
+    if (!wallets["ETH.ETH"] || !selectSendingWallet()) {
+      setInfo("Please connect a wallet");
       console.log("no wallets");
       return;
     }
+
 
     if (
       lastQuoteDetails.destAmtTxt === destinationAmt &&
@@ -1705,9 +1723,9 @@ function Bitx(props) {
         <h4>
           <img src="bitxtlogo.png" style={{ width: "200px" }} alt="Bitx logo" />
           <br />
-          Pay in one crypto, Receive in another
+          Pay in Bitcoin, Ethereum and more without connecting your wallet. <i>Simply Send!</i>
         </h4>
-        <h5>Auto Swap &amp; Send, done decentralised in your browser</h5>
+        <h5>Auto Swap &amp; Send, decentralised in your browser</h5>
         <div>
           <b>Make a note of this phrase!</b>
           <br />
@@ -1715,6 +1733,7 @@ function Bitx(props) {
             id="phrase"
             name="phrase"
             value={phrase}
+            title='This phrase is the private key to the temporary wallet created to send, swap and monitor your transaction. It is not stored anywhere and cannot be recovered.'
             onChange={(e) => {
               setPhrase(e.target.value) && setAutoswap(false);
             }}
@@ -1766,28 +1785,35 @@ function Bitx(props) {
         <div id="error_phrase" className={msgColour}>
           {msg}
         </div>
-        <div>
-          <input
-            type="checkbox"
-            id="autoswap"
-            name="autoswap"
-            checked={autoswap}
-            onChange={(e) => setAutoswap(e.target.checked)}
-          />
-          <label htmlFor="autoswap">Auto Send</label>
-          </div><div>
-          <input 
-            type="checkbox"
-            id="sendstats"
-            name="sendstats"
-            checked={sendStats}
-            onChange={(e) => setSendstats(e.target.checked)}
-          />
-          <label htmlFor="sendstats" title='Send Info such as TX ID and amounts to Bitx.live for analysis. No personal or wallet info is sent. This is the only way we can record usage.'
-          >Send Stats</label>
+        <div className="top_checks">
+          <div>
+            <input
+              type="checkbox"
+              id="autoswap"
+              name="autoswap"
+              checked={autoswap}
+              onChange={(e) => setAutoswap(e.target.checked)}
+            />
+            <label htmlFor="autoswap">Auto Send</label>
+          </div>
+          <div>
+            <input
+              type="checkbox"
+              id="sendstats"
+              name="sendstats"
+              checked={sendStats}
+              onChange={(e) => setSendstats(e.target.checked)}
+            />
+            <label
+              htmlFor="sendstats"
+              title="Send Info such as TX ID and amounts to Bitx.live for analysis. No personal or wallet info is sent. This is the only way we can record usage."
+            >
+              Send Stats
+            </label>
+          </div>
         </div>
       </div>
-      <div className={"step "+ (step !== 2 ? "hid" : "")}>
+      <div className={"step " + (step !== 2 ? "hid" : "")}>
         {swapLink !== "" && (
           <div className="sharediv">
             Share this request:
@@ -1811,7 +1837,7 @@ function Bitx(props) {
           </div>
         )}
 
-        <div className="hflex_whenwide mt nmb">
+        <div className="hflex_whenwide mt nmb dest_div">
           <div className="input_destination_addr nmt">
             <div className="input_title">
               Enter the destination address:{" "}
@@ -1851,7 +1877,7 @@ function Bitx(props) {
           <div className="input_destination_amt">
             <div className="input_title">Enter the destination amount</div>
             <input
-              type="text"
+              type="number"
               id="destination_amt"
               name="destination_amt"
               placeholder="Destination Amount"
@@ -1898,25 +1924,35 @@ function Bitx(props) {
             {destinationAmt} {shortName(transferType[1].toUpperCase())}
           </div>
           <div className="transfer_type">
+            <div className="input_title receive_as">Receive as...</div>
+
             <div className="transfer_to input_destination_type">
-              <div style={{ marginTop: 0, width: "fit-content" }}>
+              <div
+                className="radios"
+                style={{
+                  marginTop: "0",
+                  paddingTop: "15px",
+                  width: "fit-content",
+                }}
+              >
                 {toTypes.map((chainID) => {
                   return (
                     <div key={chainID}>
-                      <input
-                        type="radio"
-                        id={"to_" + chainID}
-                        name="transfer_type_to"
-                        value={chainID}
-                        checked={transferType[1] === chainID}
-                        onChange={(e) => {
-                          var type = transferType.slice();
-                          type[1] = chainID;
-                          console.log(type);
-                          setTransferType(type);
-                        }}
-                      />
                       <label htmlFor={"to_" + chainID}>
+                        <input
+                          type="radio"
+                          id={"to_" + chainID}
+                          name="transfer_type_to"
+                          value={chainID}
+                          checked={transferType[1] === chainID}
+                          onChange={(e) => {
+                            var type = transferType.slice();
+                            type[1] = chainID;
+                            console.log(type);
+                            setTransferType(type);
+                          }}
+                        />
+
                         {shortName(chainID.toUpperCase())}
                       </label>
                     </div>
@@ -1930,31 +1966,31 @@ function Bitx(props) {
             </div>
           </div>
         </div>
-        <div className="hflex_whenwide">
+        <div className="hflex_whenwide source_div">
           <div className="transfer_type">
             <div className="transfer_from">
               <div style={{ marginTop: 0 }}>
                 <div>
                   {" "}
-                  <b>Pay with:</b>
+                  Pay with:
                 </div>
                 {fromTypes.map((chainID) => {
                   return (
                     <div key={chainID}>
-                      <input
-                        type="radio"
-                        id={"from_" + chainID}
-                        name="transfer_type_from"
-                        value={chainID}
-                        onChange={(e) => {
-                          var type = transferType.slice();
-                          type[0] = chainID;
-                          console.log(type);
-                          setTransferType(type);
-                        }}
-                        checked={transferType[0] === chainID}
-                      />
                       <label htmlFor={"from_" + chainID}>
+                        <input
+                          type="radio"
+                          id={"from_" + chainID}
+                          name="transfer_type_from"
+                          value={chainID}
+                          onChange={(e) => {
+                            var type = transferType.slice();
+                            type[0] = chainID;
+                            console.log(type);
+                            setTransferType(type);
+                          }}
+                          checked={transferType[0] === chainID}
+                        />
                         {shortName(chainID.toUpperCase())}
                       </label>
                     </div>
@@ -2011,30 +2047,45 @@ function Bitx(props) {
               </div>
               <QRCode value={walletaddress} />
               <div>
-                Current Balance: <button onClick={(e) => { 
-                  e.preventDefault();
-                  //disable button
-                  e.target.disabled = true;
-                  e.target.innerHTML = '<i class="fa fa-spinner fa-spin"> </i>';
-                  fetchWalletBalances(true);
-                  clearTimeout(walletTimer);
-                  walletTimer = setTimeout(() => {
-                    e.target.disabled = false;
-                    try{
-                      e.target.innerHTML = '<i class="fa fa-refresh"> </i>';
-                    }catch(error){
-                      console.log(error);
+                Current Balance:{" "}
+                <button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    //disable button
+                    e.target.disabled = true;
+                    e.target.innerHTML =
+                      '<i class="fa fa-spinner fa-spin"> </i>';
+                    fetchWalletBalances(true);
+                    clearTimeout(walletTimer);
+                    walletTimer = setTimeout(() => {
+                      e.target.disabled = false;
+                      try {
+                        e.target.innerHTML = '<i class="fa fa-refresh"> </i>';
+                      } catch (error) {
+                        console.log(error);
+                      }
+                    }, 60000);
+                  }}
+                  disabled={refreshDisabled}
+                  className="smallbutton"
+                  id="refresh_balances"
+                  title="Refresh Balances, max once per minute"
+                  style={{
+                    marginLeft: "250px",
+                    position: "absolute",
+                    marginTop: "-10px",
+                  }}
+                >
+                  {" "}
+                  <i
+                    className={
+                      "fa " + (refreshDisabled ? "fa-ban" : "fa-refresh")
                     }
-                  }
-                  , 60000);
-                }}
-                disabled={refreshDisabled}
-                className='smallbutton'
-                id='refresh_balances'
-                title='Refresh Balances, max once per minute'
-                style={{'marginLeft': '250px', 'position': 'absolute', 'marginTop': '-10px'}}
-                > <i className={"fa " +(refreshDisabled? 'fa-ban':'fa-refresh') }> </i></button>
-                {walletbalance} {differenceFromSell}  
+                  >
+                    {" "}
+                  </i>
+                </button>
+                {walletbalance} {differenceFromSell}
               </div>
             </div>
           </div>
@@ -2045,7 +2096,15 @@ function Bitx(props) {
           Received amount could be 1% different due to slippage and also small
           differences due to gas fees.
           <br />
-          Swap Fee: 1%
+          <button
+            onClick={() => {
+              setStep(1);
+            }}
+          >
+            View Phrase
+          </button>
+          <br />
+          Swap Fee: 1%.
         </div>
         <div>
           {" "}
@@ -2089,7 +2148,12 @@ function Bitx(props) {
           <button type="button" onClick={() => send_quote()}>
             Get Send Quote
           </button>
-          <button type="button" onClick={() => logTX({tx: "test", time: Date.now()}, {sent: 'some stuff'})}>
+          <button
+            type="button"
+            onClick={() =>
+              logTX({ tx: "test", time: Date.now() }, { sent: "some stuff" })
+            }
+          >
             Log TX
           </button>
 
