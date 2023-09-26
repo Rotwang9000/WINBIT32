@@ -7,15 +7,34 @@ body {
   -moz-osx-font-smoothing: grayscale;
   
   background-color: #ccc;
-  background-image: linear-gradient(315deg, #ccc 0%, #fff 74%);
+  background-image: linear-gradient(315deg, #ccc 0%, #000 74%);
   min-height: 100vh;
   background-repeat: no-repeat;
   background-attachment: fixed;
   background-size: cover;
   background-position: top;
   
-  
 }
+div{
+    box-sizing: border-box;
+}
+
+.container  {
+  width: 100%;
+  max-width: 1000px;
+  margin: 0 auto;
+  background-image: linear-gradient(315deg, #ccc 0%, #fff 74%);
+  min-height: 100vh;
+
+}
+@media screen and (min-width: 700px) {
+  .container  {
+    padding-left: 20px;
+    padding-right: 20px;
+  };
+}
+    
+
 input[type=text], input[type=password], input[type=email], input[type=number] {
   border-radius: 5px;
   border: 1px solid #ccc;
@@ -35,7 +54,7 @@ textarea {
   border: 1px solid #ccc;
   padding: 5px;
   margin: 5px;
-  width: 100%;
+  width: 95%;
   max-width: 600px;
   font-size: 1.2em;
     box-sizing: border-box;
@@ -59,7 +78,27 @@ button{
   
 }
 
+.div_moreinfo{
+  font-size: smaller;
+  font-weight: normal;
+  color: #000;
+  text-align: center;
+  margin: auto;
+  width: 100%;
+  max-width: 600px;
+  padding: 5px;
+  box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  border: 1px dashed #faa;
+  border-radius: 5px;
+  margin-bottom: 10px;
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
 
+}
 
 .h button{
 
