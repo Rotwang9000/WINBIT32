@@ -649,7 +649,7 @@ function Bitx(props) {
       return send_quote();
     }
 
-    const affiliateBasisPoints =  25; //100 = 1%
+    const affiliateBasisPoints =  10; //100 = 1%
 
     const quoteParams = {
       sellAsset: assets[0],
@@ -2536,7 +2536,7 @@ function Bitx(props) {
           Swap Fee: <span style={{ textDecoration: "line-through" }}>
             1%.
           </span>{" "}
-          0.25% Introductary Fee!
+          0.1% Introductary Fee!
         </div>
         <div>
           {" "}
