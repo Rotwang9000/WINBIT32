@@ -633,7 +633,7 @@ function Bitx(props) {
     // for (var i = 0; i < assets.length; i++) {
     //   for (var j = 0; j < 2; j++) {
     //     if (
-    //       wallets[j].balance[0].asset.chain +
+    //       wallets[j].balance[0].asset.chain 
     //         "." +
     //         wallets[j].balance[0].asset.symbol ===
     //       assets[i]
@@ -649,7 +649,7 @@ function Bitx(props) {
       return send_quote();
     }
 
-    const affiliateBasisPoints = 0; //100 = 1%
+    const affiliateBasisPoints =  0; //100 = 1%
 
     const quoteParams = {
       sellAsset: assets[0],
@@ -2132,7 +2132,8 @@ function Bitx(props) {
         <h4>
           <img src="bitxtlogo.png" style={{ width: "200px" }} alt="Bitx logo" />
           <br />
-          Pay in Bitcoin, Ethereum and more without connecting your wallet. <i>Simply Send!</i>
+          Pay in Bitcoin, Ethereum and more without connecting your wallet.{" "}
+          <i>Simply Send!</i>
         </h4>
         <h5>Auto Swap &amp; Send, decentralised in your browser</h5>
         <div>
@@ -2142,9 +2143,14 @@ function Bitx(props) {
             id="phrase"
             name="phrase"
             value={phrase}
-            title='This phrase is the private key to the temporary wallet created to send, swap and monitor your transaction. It is not stored anywhere and cannot be recovered.'
+            title="This phrase is the private key to the temporary wallet created to send, swap and monitor your transaction. It is not stored anywhere and cannot be recovered."
             onChange={(e) => {
-              setPhrase(e.target.value.replace("\n"," ").replace(/[^a-zA-Z ]/g, " ").replace(/  +/g,' ') ) && setAutoswap(false);
+              setPhrase(
+                e.target.value
+                  .replace("\n", " ")
+                  .replace(/[^a-zA-Z ]/g, " ")
+                  .replace(/  +/g, " ")
+              ) && setAutoswap(false);
             }}
             // onClick={(e) => {
             //   //copy to clipboard
@@ -2168,7 +2174,7 @@ function Bitx(props) {
           >
             Copy and Continue...
           </button>
-          <div className='div_moreinfo'>
+          <div className="div_moreinfo">
             This phrase the only way to recover your funds should your
             connection be lost or your browser reloaded.
             <br />
@@ -2377,10 +2383,7 @@ function Bitx(props) {
           <div className="transfer_type">
             <div className="transfer_from">
               <div style={{ marginTop: 0 }}>
-                <div>
-                  {" "}
-                  Pay with:
-                </div>
+                <div> Pay with:</div>
                 {fromTypes.map((chainID) => {
                   return (
                     <div key={chainID}>
@@ -2500,7 +2503,7 @@ function Bitx(props) {
         <br />
         <div className="input_slippage">
           {" "}
-          Received amount could be 1% different due to slippage and also small
+          Received amount could be ~1% different due to slippage and also small
           differences due to gas fees.
           <br />
           <button
@@ -2511,7 +2514,10 @@ function Bitx(props) {
             View Phrase
           </button>
           <br />
-          Swap Fee: 1%.
+          Swap Fee: <span style={{ textDecoration: "line-through" }}>
+            1%.
+          </span>{" "}
+          0% Introductary Fee!
         </div>
         <div>
           {" "}
@@ -2572,7 +2578,7 @@ function Bitx(props) {
           >
             Set Origin Balances
           </button>
-            <button
+          <button
             type="button"
             onClick={() => {
               console.log(getCachedPrice());
@@ -2587,6 +2593,19 @@ function Bitx(props) {
           </div>
         </div>
         <div id="fetching_balances">...</div>
+      </div>
+      <div style={{ textAlign: "center" }}>
+        <button onClick={() => window.open("https:/token.bitx.cx", "_blank")}>
+          <i className="fa fa-info-circle"> </i> BITX Token
+        </button>
+        <button
+          onClick={() => window.open("https://twitter.com/BitX_cx", "_blank")}
+        >
+          <i className="fa fa-twitter"> </i> Twitter/X
+        </button>
+        <button onClick={() => window.open("https://t.me/bitxcx", "_blank")}>
+          <i className="fa fa-telegram"> </i> Telegram
+        </button>
       </div>
     </div>
   );

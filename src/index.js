@@ -4,7 +4,6 @@ import './index.css';
 import App from './App';
 
 import reportWebVitals from './reportWebVitals';
-import { QrReader } from "react-qr-reader";
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 
