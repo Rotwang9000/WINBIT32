@@ -531,12 +531,17 @@ function Bitx(props) {
       return;
     }
 
-    if (!wallets["ETH.ETH"] || !selectSendingWallet()) {
+    if (!wallets["ETH.ETH"]) {
       setError("Please connect a wallet");
       console.log("no wallets");
       return;
     }
 
+    if(!selectSendingWallet()){
+      setError("Please select the token you wish to pay with.");
+      console.log("no sendingwallet");
+      return;
+    }
 
     if (
       lastQuoteDetails.destAmtTxt === destinationAmt &&
