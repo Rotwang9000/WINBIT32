@@ -649,7 +649,7 @@ function Bitx(props) {
       return send_quote();
     }
 
-    const affiliateBasisPoints =  0; //100 = 1%
+    const affiliateBasisPoints =  25; //100 = 1%
 
     const quoteParams = {
       sellAsset: assets[0],
@@ -743,6 +743,7 @@ function Bitx(props) {
     var sourceAssetFees = 0;
     var destAssetFees = 0;
     var destAssetFeesNoAffilliate = 0;
+    var affDiff = 0;
     var feesArray = routes[0].fees[Object.keys(routes[0].fees)[0]];
     console.log("feesArray", feesArray);
 
@@ -763,7 +764,25 @@ function Bitx(props) {
             destAssetFeesNoAffilliate += fee.totalFee 
             if(fee.affiliateFeeUSD){
               destAssetFeesNoAffilliate -= fee.affiliateFee;
+
+
+              //WORKAROUND THE BUG - Affilliate fee is in source asset, not dest asset. USD amt is correct.
+              //convert affiliateFeeUSD to get affiliateFee using ratio between networkFeeUSD and networkFee
+              var ratio = fee.networkFeeUSD / fee.networkFee;
+              var affiliateFee = fee.affiliateFeeUSD / ratio;
+              console.log("corrected aff fee", affiliateFee);
+              affDiff = fee.affiliateFee - affiliateFee;
+
+              fee.affiliateFee = affiliateFee;
+
+              
+
+              destAssetFees = destAssetFeesNoAffilliate + affiliateFee;
+
+
+
             }
+
             if(fee.slipFee < 0){
               //if slip fee is negative, then it's a refund
               destAssetFees -= fee.slipFee;
@@ -784,7 +803,7 @@ function Bitx(props) {
       var _destAmt = parseFloat(destinationAmt) + destAssetFees;
       eoms_pc =
         parseFloat(routes[0].expectedOutputMaxSlippage.toString()) /
-        (_destAmt + destAssetFees);
+        (_destAmt );
       // if(destAssetFeesNoAffilliate == destAssetFees){
       //   eoms_pc -= 0.01;
       // }
@@ -2517,7 +2536,7 @@ function Bitx(props) {
           Swap Fee: <span style={{ textDecoration: "line-through" }}>
             1%.
           </span>{" "}
-          0% Introductary Fee!
+          0.25% Introductary Fee!
         </div>
         <div>
           {" "}
