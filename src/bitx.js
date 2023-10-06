@@ -701,6 +701,10 @@ function Bitx(props) {
 
     var routes = await SwapKitApi.getQuote(quoteParams).catch((error) => {
       console.log(error);
+      //if error.message begins with Internal Server Error, change message
+      if (error.message.startsWith("Internal Server Error")) {
+        error.message = "Amount too low or other error";
+      }
       setError(error);
       return error;
     });
@@ -1718,7 +1722,7 @@ function Bitx(props) {
       console.log("wallet balance", _wallet.balance[0]);
       const sa = sellAmountRef.current[0]
       
-      if (_wallet && _wallet.balance && _wallet.balance[0].assetAmount > sa && sa > 0) {
+      if (_wallet && _wallet.balance && _wallet.balance[0].assetAmount >= sa && sa > 0) {
         //check quote is made in past 2mins
         if (Date.now() - lastQuoteDetails.time < 120000) {
           console.log("doing swap because balance is enough");
