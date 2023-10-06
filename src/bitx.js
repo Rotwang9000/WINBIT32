@@ -546,7 +546,7 @@ function Bitx(props) {
     if (
       lastQuoteDetails.destAmtTxt === destinationAmt &&
       Date.now() - lastQuoteDetails.time < 60000 &&
-      osellAmt === null
+      osellAmt === null &&  osellAmt !== true
        &&
       lastQuoteDetails.sendingWalletBalance ===
         balanceAssetAmount(selectSendingWallet(), true) &&
@@ -554,7 +554,7 @@ function Bitx(props) {
       && lastQuoteDetails.destAddr === destinationAddr
     ) {
       console.log("same quote");
-
+     
       return;
     }
     if (osellAmt === null) {
@@ -1486,9 +1486,11 @@ function Bitx(props) {
   function splitWalletResult(result) {
     var _wallets = {};
     var _addr = '';
-
+    // console.log("presplitresult", result);
+    // console.log("len", result.length);
     for (var i = 0; i < result.length; i++) {
       _addr = result[i].address;
+      console.log("address",_addr);
       for(var key in result[i].balance){
         var _balance = result[i].balance[key];
         _wallets[_balance.asset.chain + "." + _balance.asset.symbol] = { 'address': _addr, 'balance': [_balance] };
@@ -1564,7 +1566,7 @@ function Bitx(props) {
         return;
       }
       var _wallets = walletsRef.current;
-      var _reswallets = splitWalletResult(result);
+      var _reswallets = splitWalletResult([result]);
       if(!_reswallets[sourceWalletID]) return;
       _wallets[sourceWalletID] = _reswallets[sourceWalletID];
 
@@ -2541,7 +2543,7 @@ function Bitx(props) {
           Swap Fee: <span style={{ textDecoration: "line-through" }}>
             1%.
           </span>{" "}
-          0.1% Introductary Fee!
+          0.1% Introductory Fee!
         </div>
         <div>
           {" "}
