@@ -2254,7 +2254,7 @@ function Bitx(props) {
     <div className="container">
       <div className={"vflex " + (step !== 1 ? "hid" : "")}>
         <div className="header_btns">
-          <button onClick={() => window.open("https:/token.bitx.cx", "_blank")}>
+          <button onClick={() => window.open("https://token.bitx.cx", "_blank")}>
             <i className="fa fa-btc"> </i> BITX Token
           </button>
           <button
@@ -2814,7 +2814,7 @@ function Bitx(props) {
         <div id="fetching_balances">...</div>
       </div>
       <div style={{ textAlign: "center" }} className="footer_btns">
-        <button onClick={() => window.open("https:/token.bitx.cx", "_blank")}>
+        <button onClick={() => window.open("https://token.bitx.cx", "_blank")}>
           <i className="fa fa-info-circle"> </i> BITX Token
         </button>
         <button
