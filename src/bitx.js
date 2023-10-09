@@ -45,6 +45,7 @@ var floatToString = function(flt) {
     time: 0,
     sendingWalletBalance: 0,
     transferType: [],
+    streamSwap: false,
   };
 
   var countdownTimer = null;
@@ -142,7 +143,9 @@ function Bitx(props) {
   const [differenceFromSellTxt, setDifferenceFromSellTxt] = useState('');
   const [sellAmountTxt, setSellAmountTxt] = useState('');
   const [qrReaderOpen, setQrReaderOpen] = useState(false);
-
+  const [streamingAvailable, setStreamingAvailable] = useState(false);
+  const [streamingVars, setStreamingVars] = useState({});
+  const [streamingSwap, setStreamingSwap] = useState(false);
 
   function isDevMode() {
     if (window.location.hostname === "localhost") {
@@ -291,7 +294,7 @@ function Bitx(props) {
     var fees = parseFloat(feesArray.totalFee.toString()) * 1.2;
 
     setSellAmount([parseFloat(destAmt)+fees, fees]);
-
+    setStreamingAvailable(false);
 
       // return baseAmount(balance.amount.minus(baseAmount(fee, 8)).amount(), 8);
 
@@ -552,6 +555,7 @@ function Bitx(props) {
         balanceAssetAmount(selectSendingWallet(), true) &&
       lastQuoteDetails.transferType === transferType
       && lastQuoteDetails.destAddr === destinationAddr
+      && lastQuoteDetails.streamingSwap === streamingSwap
     ) {
       console.log("same quote");
      
@@ -594,6 +598,7 @@ function Bitx(props) {
       }
       arr["transferType"] = transferType;
       arr["destAddr"] = destinationAddr;
+      arr["streamingSwap"] = streamingSwap;
       lastQuoteDetails = arr;
       destAmtTxt = destinationAmt;
     }
@@ -730,7 +735,50 @@ function Bitx(props) {
     // routes = await routes;
     console.log("routes", routes);
     if (osellAmt !== null) setRoutes(routes);
-    
+    try{
+      const r = routes[0];
+      if(r.streamingSwap && Object.keys(r.streamingSwap).length > 1){
+        const rs = r.streamingSwap;
+        var _ssvar = { duration: rs.estimatedTime };
+        const durationX = rs.estimatedTime  / r.estimatedTime ;
+        _ssvar["durationx"] = durationX;
+        const savingspc = (rs.expectedOutput - r.expectedOutput) / r.expectedOutput * 100;
+        _ssvar["savingspc"] = savingspc;
+        setStreamingVars(_ssvar);
+        console.log("streamingvar", _ssvar);
+
+
+        if(document.getElementById("streaming_swap") && document.getElementById("streaming_swap").checked){
+          //use streaming swap values from rs in r
+          for (var i = 0; i < Object.keys(rs).length; i++) {
+            //get the key of i object in rs
+            const rskey = Object.keys(rs)[i];
+            routes[0][rskey] = rs[rskey];
+            console.log("rskey", rskey);
+          }
+          
+
+        }
+        
+        if (r.expectedOutputUSD > 100000) {
+          //if expected output is more than 100k, then force streaming swap
+          setStreamingSwap(true);
+          if (document.getElementById("streaming_swap")) {
+            document.getElementById("streaming_swap").checked = true;
+            document.getElementById("streaming_swap").disabled = true;
+          }
+          setInfo("Streaming swap is required for larger amounts.");
+        } else if (document.getElementById("streaming_swap")) {
+          document.getElementById("streaming_swap").disabled = false;
+        }
+
+
+      }
+      setStreamingAvailable(routes[0].meta.hasStreamingSwap);    
+    }catch(e){
+      setStreamingAvailable(false);
+    }
+
     if (routes === undefined) {
       setSellAmount((prev) => [0, prev[1]]);
       console.log("no routes");
@@ -855,6 +903,14 @@ function Bitx(props) {
         eoms_ok = true;
       }
     }
+
+    if (loop > 3 && eoms_ok === false &&  routes[0].meta.hasStreamingSwap === true) {
+      //turn stream swap on
+      setStreamingSwap(true);
+      document.getElementById("streaming_swap").checked = true;
+
+    }
+
 
     if (loop > 5 && eoms_ok === false) {
       //if we've tried 5 times, give up
@@ -1373,7 +1429,7 @@ function Bitx(props) {
           ) {
       getAQuote();
     }
-  }, [destinationAmt, wallets, transferType, destinationAddr]);
+  }, [destinationAmt, wallets, transferType, destinationAddr, streamingSwap]);
 
   //hide loading overlay when wallets are loaded
   useEffect(() => {
@@ -1712,6 +1768,12 @@ function Bitx(props) {
 
   function doSwapIf(r = null) {
     if (autoswap) {
+      if (!transferType[1] || transferType[1].length === 0) {
+        setInfo("Please choose a destination asset");
+        return;
+      }
+
+
       //check balance
       _wallet = selectSendingWallet();
       if (!_wallet || !_wallet.balance || !_wallet.balance[0]) return;
@@ -1799,7 +1861,7 @@ function Bitx(props) {
         method: "POST", // or 'PUT'
         mode: "no-cors",
         headers: {
-          "Content-Type": "application/json",
+          "Content-Type": "application/json", 
           'Accept': 'application/json',
           "Access-Control-Allow-Origin": "*",
           "Access-Control-Allow-Methods": "POST",
@@ -1825,8 +1887,8 @@ function Bitx(props) {
     var countdowntime = countdownNumber;
     console.log("countdowntime", countdowntime);
     //implement a countdown
-
     if (countdowntime === -1 || countdownTimer === -1) {
+
       cancelSwap();
     }
 
@@ -1968,7 +2030,35 @@ function Bitx(props) {
 
     console.log("Bestroute", bestRoute);
 
+    var _streamSwap = bestRoute.meta.hasStreamingSwap;
+    if (_streamSwap) {
+      //check if option selected from radio buttons
+      if (document.getElementById("streaming_swap") && document.getElementById("streaming_swap").checked === false) {
+        _streamSwap = false;
+      }
+    }
+
+    if (bestRoute.expectedOutputUSD > 100000) {
+      _streamSwap = true;
+    }
+
+
+
+    if (
+      ((document.getElementById("streaming_swap") &&
+      document.getElementById("streaming_swap").checked === true)
+      || _streamSwap === true)
+      &&
+      bestRoute.meta.hasStreamingSwap === false
+    ) {
+      setError("Streaming swap not available for this route");
+      return;
+    }
+
+
+
     const swapParams = {
+      streamSwap: _streamSwap,
       route: bestRoute,
       recipient: destinationAddr,
       feeOptionKey: FeeOption.Average,
@@ -1983,7 +2073,7 @@ function Bitx(props) {
     const txHash = skClient.swap(swapParams)
     .then((result) => {
       console.log("result", result);
-
+      countdownNumber = null;
       setDoSwapCountdown(false);
       // Returns explorer url like etherscan, viewblock, etc.
       const explorerUrl = skClient.getExplorerTxUrl(
@@ -2007,8 +2097,12 @@ function Bitx(props) {
     
     .catch((error) => {
       console.log(error);
+      if(error.message && error.message.includes("core_swap_route_not_complete")){
+        setError("Destination address or other required parameter missing ");
+      }
       setError(error);
       setAutoswap(false);
+      countdownNumber = 11;
       logTX(error, swapParams);
       console.log("bestRoute", bestRoute);
       console.log("swapParams", swapParams);
@@ -2159,8 +2253,28 @@ function Bitx(props) {
   return (
     <div className="container">
       <div className={"vflex " + (step !== 1 ? "hid" : "")}>
+        <div className="header_btns">
+          <button onClick={() => window.open("https:/token.bitx.cx", "_blank")}>
+            <i className="fa fa-btc"> </i> BITX Token
+          </button>
+          <button
+            onClick={() =>
+              window.open(
+                "https://github.com/Rotwang9000/bitx_live/wiki",
+                "_blank"
+              )
+            }
+          >
+            <i className="fa fa-info-circle"> </i> Info
+          </button>
+        </div>
         <h4>
-          <img src="bitxtlogo.png" style={{ width: "200px" }} alt="Bitx logo" />
+          <img
+            src="bitxtlogo.png"
+            style={{ width: "200px" }}
+            alt="Bitx logo"
+            className="step1_logo"
+          />
           <br />
           Pay in Bitcoin, Ethereum and more without connecting your wallet.{" "}
           <i>Simply Send!</i>
@@ -2212,9 +2326,18 @@ function Bitx(props) {
             <br />
             <b>You must leave this window open</b> until the payment is on its
             way to the destination <br /> or <b>YOU WILL LOSE YOUR MONEY</b>
+            <i>
+              This site is simply an interface to{" "}
+              <a href="https://thorchain.org/" target="_blank">
+                Thorchain.
+              </a>{" "}
+              Responsibility of use is solely with the user. No Liability is
+              accepted for any loss or any other reason.
+              <br />
+              Use of the site is acceptance of these terms.
+            </i>
           </div>
         </div>
-        <br />
         <button
           className="btn_copy"
           onClick={(e) => {
@@ -2280,7 +2403,10 @@ function Bitx(props) {
           </div>
         )}
 
-        <div className="hflex_whenwide mt nmb dest_div">
+        <div
+          className="hflex_whenwide mt nmb dest_div"
+          style={{ marginTop: 0 }}
+        >
           <div className="input_destination_addr nmt">
             <div className="input_title">
               Enter the destination address:{" "}
@@ -2374,7 +2500,7 @@ function Bitx(props) {
                 className="radios"
                 style={{
                   marginTop: "0",
-                  paddingTop: "15px",
+                  paddingTop: "5px",
                   width: "fit-content",
                 }}
               >
@@ -2413,7 +2539,7 @@ function Bitx(props) {
           <div className="transfer_type">
             <div className="transfer_from">
               <div style={{ marginTop: 0 }}>
-                <div> Pay with:</div>
+                <div className='input_title'> Pay with:</div>
                 {fromTypes.map((chainID) => {
                   return (
                     <div key={chainID}>
@@ -2440,6 +2566,71 @@ function Bitx(props) {
             </div>
           </div>
         </div>
+        {streamingAvailable && (
+          <div
+            className="hflex_whenwide streaming_available"
+            onClick={() => setStreamingSwap((e) => !e)}
+          >
+            <div className="input_title">
+              Streaming Swap{" "}
+              <span
+                className="fa fa-info-circle"
+                onClick={(e) => {
+                  e.stopPropagation();
+                }}
+                title="Streaming swaps split the transaction into smaller chunks for a better rate. They can take up to 24hours and so are subject to market changes during the swap time though therefore the output can vary from that expected."
+              >
+                {" "}
+              </span>
+            </div>
+            <div className="streaming_info">
+              <div>
+                <div>
+                  <i className="fa fa-clock-o" aria-hidden="true">
+                    {" "}
+                  </i>
+                  Estimated Swap Time:
+                </div>
+                <div id="streaming_time" className="ssvar">
+                  {streamingVars.duration}s (
+                  {Math.round(streamingVars.durationx * 10) / 10}x)
+                </div>
+              </div>
+              <div>
+                <div>
+                  <i className="fa fa-btc" aria-hidden="true">
+                    {" "}
+                  </i>
+                  Estimated Savings:
+                </div>
+                <div id="streaming_savings" className="ssvar">
+                  {Math.round(streamingVars.savingspc * 100) / 100}%
+                </div>
+              </div>
+            </div>
+            <div className="input_slippage">
+              <div>
+                <label
+                  htmlFor="streaming_swap"
+                  title="Streaming swaps can take up to 24hours but due to less slippage should end up a better rate. They are subject to market changes during the swap time though so the output can vary"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                  }}
+                >
+                  Use Streaming Swap:
+                </label>
+                <input
+                  type="checkbox"
+                  id="streaming_swap"
+                  name="streaming_swap"
+                  checked={streamingSwap}
+                  onChange={(e) => setStreamingSwap(e.target.checked)}
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
         {!transferType ||
           (transferType[0] === "" && (
             <div className="div_transfer h div_qr">
@@ -2530,11 +2721,9 @@ function Bitx(props) {
             </div>
           </div>
         )}
-        <br />
         <div className="input_slippage">
-          {" "}
-          Received amount could be ~1% different due to slippage and also small
-          differences due to gas fees.
+          Received amount could be slightly different due to slippage and
+          varying gas fees. Site in Beta, please report bugs.
           <br />
           <button
             onClick={() => {
@@ -2551,7 +2740,7 @@ function Bitx(props) {
         </div>
         <div>
           {" "}
-          <img src="bitxtlogo.png" style={{ width: "200px" }} alt="Bitx logo" />
+          <img src="bitxtlogo.png" alt="Bitx logo" className="step2_logo" />
         </div>
         <div className={devButtons || devMode ? "" : "hid"}>
           <h3>Dev buttons.. swap is automatic!</h3>
@@ -2624,7 +2813,7 @@ function Bitx(props) {
         </div>
         <div id="fetching_balances">...</div>
       </div>
-      <div style={{ textAlign: "center" }}>
+      <div style={{ textAlign: "center" }} className="footer_btns">
         <button onClick={() => window.open("https:/token.bitx.cx", "_blank")}>
           <i className="fa fa-info-circle"> </i> BITX Token
         </button>

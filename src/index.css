@@ -18,6 +18,59 @@ body {
 div{
     box-sizing: border-box;
 }
+h4{
+  margin-bottom: 0;
+}
+
+h5{
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+
+.header_btns{
+  position: absolute;
+  top: 0;
+  right: 10px;
+  z-index: 999;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  margin: auto;
+  width: fit-content;
+  height: fit-content;
+  max-width: 100vw;
+}  
+.footer_btns{
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  margin: auto;
+  width: fit-content;
+  height: fit-content;
+  margin-top: 10px;
+  margin-bottom: 10px;
+    max-width: 100vw;
+}
+.header_btns>button
+{
+  width: 170px;
+  height: 50px;
+  padding: 5px;
+  font-size: large;
+
+}
+.footer_btns>button{
+ width:150px;
+ height: 35px;
+ padding: 5px;
+ font-size: medium;
+
+}
+.header_btns>button>i, .footer_btns>button>i{
+  font-size: 1em;
+}
 
 .container  {
   width: 100%;
@@ -34,6 +87,12 @@ div{
   };
 }
     
+.step1_logo{
+  margin-top: 35px;
+}
+.step2_logo{
+  height:125px;
+}
 
 input[type=text], input[type=password], input[type=email], input[type=number] {
   border-radius: 5px;
@@ -170,7 +229,9 @@ button.smallbutton>i{
   font-size: 1em;
 }
 
-
+.input_slippage{
+  font-size: small;
+}
 .input_title{
   height: 40px;
   vertical-align: middle;
@@ -301,7 +362,7 @@ code {
   border: 3px dashed #fff;
 }
 .source_div{
-  margin-top: 10px;
+  margin-top: 0px;
 }
 
 .transfer_type {
@@ -530,4 +591,83 @@ width: 100%;
 
 .nmt {
   margin-top: 0;
+}
+
+.streaming_info{
+  display: flex;
+  flex-direction: column;
+  width:350px;
+}
+.input_title{
+  font-size: 1em;
+  font-weight: bold;
+  text-align: center;
+  margin: auto;
+ 
+}
+
+.fa-info-circle{
+  font-size: 1em;
+  color: #000;
+  cursor: pointer;
+}
+.fa-info-circle:active:after {
+  content: attr(title);
+  padding: 5px;
+  border: 1px solid #ccc;
+  left: 10%;
+  background: #ccc;
+  color: #000;
+  position: absolute;
+  z-index: 999;
+  width: 200px;
+  text-align: center;
+  font-size: 0.8em;
+  font-weight: normal;
+  border-radius: 5px;
+  box-sizing: border-box;
+  -moz-box-sizing: border-box;
+
+
+}
+
+.streaming_available{
+  background-color: #ffffcc;
+  cursor: pointer;
+  padding-bottom: 10px;
+
+}
+.streaming_available .input_title{
+  color: #000;
+  font-style: italic;
+}
+.streaming_available label{
+  color: #000;
+  font-size: 16px;
+  font-weight: bold;
+  padding: 10px;
+;
+}
+.streaming_available input[type=checkbox]{
+  cursor: pointer;
+    transform: scale(1.2, 1.2);
+}
+
+
+.streaming_info{
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+
+.streaming_info>div{
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  margin: auto;
+  width: 100%;
+}
+.streaming_info>div>div:first-of-type{
+  width:70%;
+  text-align: left;
 }
