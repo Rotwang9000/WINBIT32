@@ -128,6 +128,15 @@ input[type=text], input[type=password], input[type=email], input[type=number] {
     box-sizing: border-box;
       -moz-box-sizing: border-box;
 }
+input[type=number]{
+  text-align: center;
+}
+
+.swap_link_div{
+  white-space: nowrap;
+  width: 100%;
+}
+
 #destination_addr, #swap_link{
   font-stretch: ultra-condensed;
 }
@@ -607,6 +616,14 @@ code {
           flex-direction: row;
           display: flex;
         }
+
+                input[type=text],
+                input[type=password],
+                input[type=email],
+                input[type=number] {  
+                  margin-right: 0;
+                  margin-left: 0;
+                }
 
 }
   

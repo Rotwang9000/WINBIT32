@@ -2754,21 +2754,33 @@ function Bitx(props) {
         {swapLink !== "" && (
           <div className="sharediv">
             Your Paylink to request this payment from others:
-            <br />{" "}
-              <input
-                id="swap_link"
-                type="text"
-                readOnly
-                value={swapLink}
-                onClick={(e) =>{
-                  e.preventDefault();
-                  //select all
-                  e.target.select();
-                  navigator.clipboard.writeText(swapLink).then(() => {
-                    setInfo("Copied Share URL to clipboard");
-                })}
-                }
-              />
+            <div className='swap_link_div'>
+            <input
+              id="swap_link"
+              type="text"
+              readOnly
+              value={swapLink}
+              onClick={(e) => {
+                e.preventDefault();
+                //select all
+                e.target.select();
+                navigator.clipboard.writeText(swapLink).then(() => {
+                  setInfo("Copied Share URL to clipboard");
+                });
+              }}
+            />
+            <div
+              className="fa fa-copy"
+              title="Copy Share URL to clipboard"
+              style={{ cursor: "pointer" }}
+
+              onClick={() => {
+                navigator.clipboard.writeText(swapLink).then(() => {
+                  setInfo("Copied Share URL to clipboard");
+                });
+              }}
+            ></div>
+            </div>
           </div>
         )}
         <div className="input_slippage">
