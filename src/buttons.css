@@ -11,7 +11,7 @@
 	margin-left: 15px;
 }
 
-input[type="radio"] {
+div:has(> label>input[type="radio"]) input[type="radio"] {
 	opacity: 0;
 	/* hidden but still tabable */
 	position: absolute;
@@ -28,7 +28,7 @@ div:has(> label>input[type="radio"]) {
 	
 	transition: all 0.6s;
 	-webkit-transition: all 0.6s;
-	border:#ccc 3px outset;
+	border:#999 3px outset;
 
 }
 
