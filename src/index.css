@@ -28,10 +28,10 @@ h5{
 }
 
 .header_btns{
-  position: absolute;
+  /* position: absolute;
   top: 0;
   right: 10px;
-  z-index: 999;
+  z-index: 999; */
   display: flex;
   flex-direction: row;
   justify-content: space-between;
@@ -72,6 +72,25 @@ h5{
   font-size: 1em;
 }
 
+.infomsgdiv{
+  position: sticky;
+  top: 0;
+  z-index: 999;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  margin: auto;
+  width: 100%;
+  height: 86px;
+  max-width: 100vw;
+  background-image: linear-gradient(315deg, #fff 0%, #ccc 74%);
+  border: 1px solid #ccc;
+  border-radius: 5px;
+
+}
+
+
 .container  {
   width: 100%;
   max-width: 1000px;
@@ -97,7 +116,9 @@ h5{
 input[type=text], input[type=password], input[type=email], input[type=number] {
   border-radius: 5px;
   border: 1px solid #ccc;
-  padding: 5px;
+  padding: 12px;
+  padding-left: 0;
+  padding-right: 0;
   margin: 5px;
   margin-left: 0;
   margin-right: 15px;
@@ -106,6 +127,18 @@ input[type=text], input[type=password], input[type=email], input[type=number] {
   font-size: large;
     box-sizing: border-box;
       -moz-box-sizing: border-box;
+}
+#destination_addr, #swap_link{
+  font-stretch: ultra-condensed;
+}
+#swap_link{
+  font-family: 'Courier New', Courier, monospace;
+  width:100%;
+  margin-right: 0;
+}
+#swap_link>i{
+  padding: 10px;
+  font-size: 1em;
 }
 
 textarea {
@@ -168,6 +201,7 @@ button:disabled {
 }
 
 .div_moreinfo{
+  display:none;
   font-size: smaller;
   font-weight: normal;
   color: #000;
@@ -231,6 +265,9 @@ button.smallbutton>i{
 
 .input_slippage{
   font-size: small;
+    width: 85vw;
+    max-width: 600px;
+    margin: auto;
 }
 .input_title{
   height: 40px;
@@ -358,9 +395,9 @@ code {
   flex:auto;
 }
 
-.dest_div{
-  border: 3px dashed #fff;
-}
+
+
+
 .source_div{
   margin-top: 0px;
 }
@@ -420,6 +457,7 @@ code {
   justify-content: center;
   align-items: center;
   margin: auto;
+  margin-top: 20px;
   width: 50%;
   min-width: fit-content;
   height: 50%;
@@ -497,6 +535,32 @@ code {
   -moz-box-sizing: border-box;
 }
 
+.dest_div {
+  border: 3px dashed #fff;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  
+  margin: auto;
+  width: 100%;
+  max-width: 600px;
+  margin-top: 50px;
+  margin-bottom: 50px;
+
+}
+.dest_div>div{
+  margin-left: 5px;
+  margin-right: 5px;
+}
+
+.fixed_destination_amt{
+  font-size: large;
+  font-weight: bold;
+
+
+}
+
 @media screen and (max-width: 700px) {
   .hflex_whenwide {
 
@@ -506,6 +570,17 @@ code {
   .transfer_type {
     flex-direction: column;
   }
+
+  .dest_div {
+    flex-direction: column;
+    margin-top: 10px;
+    margin-bottom: 10px;
+  }
+.dest_div>div {
+  width: 100%;
+  margin-top: 20px;
+}
+
 
     .hflex_whenwide>div {
       max-width: 100%;
@@ -538,7 +613,9 @@ code {
 .div_transfer{
   max-width: 600px;
   margin: auto;
-  width: fit-content;
+  margin-top: 20px;
+  margin-bottom: 20px;
+  width: 100vw;
 }
 
 #send_to_msg{
@@ -553,6 +630,12 @@ width: 100%;
 .fa{
   margin: 1px;
   font-size: 1.5em;
+}
+
+.phrase_div{
+    width: 100%;
+      max-width: 600px;
+      padding-top: 20px;
 }
 
 .btn_copy{
@@ -574,7 +657,13 @@ width: 100%;
   -moz-box-sizing: border-box;
   cursor: pointer;
   background-image: linear-gradient(315deg, #fff 0%, #ccc 74%);
+  margin-top: 20px;
 
+}
+
+.bold_button{
+  
+  border: 1px solid #000;
 }
 
 .mt {

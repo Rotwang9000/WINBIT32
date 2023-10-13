@@ -516,8 +516,9 @@ function Bitx(props) {
     }
     console.log("transfertype", transferType);
     if(!transferType[1] || transferType[1].length === 0 ){
-
-      setInfo("Please choose a destination asset");
+      if(step === 2){
+        setInfo("Please choose a destination asset");
+      }
       return;
     }
 
@@ -540,11 +541,24 @@ function Bitx(props) {
       return;
     }
 
+
+
+
     if(!selectSendingWallet()){
-      setError("Please select the token you wish to pay with.");
+      //if fixed amounts then info
+      if(   document.getElementsByClassName("recieve_transfer_type")[0].style.display === "none"){
+        setInfo("Please select the token you wish to pay with.");
+        //set a green border on transfer_type
+        document.getElementById("pay_transfer_type").style.border = "1px solid #00ff00";
+      }else{
+      
+        setError("Please select the token you wish to pay with.");
+      }
+
       console.log("no sendingwallet");
       return;
     }
+    document.getElementById("pay_transfer_type").style.border = "none";
 
     if (
       lastQuoteDetails.destAmtTxt === destinationAmt &&
@@ -819,14 +833,18 @@ function Bitx(props) {
             feesUSD += feeUSD;
             destAssetFees += fee.totalFee;
             destAssetFeesNoAffilliate += fee.totalFee 
-            if(fee.affiliateFeeUSD){
+            if(fee.affiliateFee > 0){
               destAssetFeesNoAffilliate -= fee.affiliateFee;
 
 
-              //WORKAROUND THE BUG - Affilliate fee is in source asset, not dest asset. USD amt is correct.
-              //convert affiliateFeeUSD to get affiliateFee using ratio between networkFeeUSD and networkFee
-              var ratio = fee.networkFeeUSD / fee.networkFee;
-              var affiliateFee = fee.affiliateFeeUSD / ratio;
+              //WORKAROUND THE BUG - Affilliate fee is in source asset, not dest asset. USD amt is not correct eiter.
+              //convert  affiliateFee to destination asset using networkfee to networkfeeusd ratio on both sides of the fees
+              var sourcefees = feesArray.filter(f => f.type === "inbound")[0];
+              var sourceRatio = sourcefees.totalFeeUSD / sourcefees.totalFee;              
+              var destRatio = fee.networkFeeUSD / fee.networkFee;
+
+              var affiliateFee = fee.affiliateFee * sourceRatio / destRatio;
+
               console.log("corrected aff fee", affiliateFee);
               affDiff = fee.affiliateFee - affiliateFee;
 
@@ -1241,6 +1259,23 @@ function Bitx(props) {
 
 
       setSellAmount([sellAmt, outOfPocketFees * 1.2, requiresApproval]);
+      destAddr = document.getElementById("destination_addr").value;
+      if(destAddr && destAddr.length > 0){
+        //animate scroll to div_transfer plus 100px to consider infomsgdiv
+        
+        document
+          .getElementsByClassName("source_div")[0]
+          .scrollIntoView({
+            behavior: "smooth",
+            block: "start",
+            inline: "nearest",
+          });
+
+        
+
+
+      }
+
       setRoutes(routes);
 
       doSwapIf(routes);
@@ -1729,6 +1764,10 @@ function Bitx(props) {
       document.getElementsByClassName(
         "fixed_destination_amt"
       )[0].style.display = "block";
+              document.getElementsByClassName(
+                "recieve_transfer_type"
+              )[0].style.display = "none";
+
     } else {
       //show input_destination_amt
       document.getElementsByClassName(
@@ -1738,7 +1777,11 @@ function Bitx(props) {
       document.getElementsByClassName(
         "fixed_destination_amt"
       )[0].style.display = "none";
+
+        document.getElementsByClassName("recieve_transfer_type")[0].style.display = "flex";
+
     }
+
 
     const dest_type = urlParams.get("in");
     console.log("dest_type", dest_type);
@@ -2253,21 +2296,6 @@ function Bitx(props) {
   return (
     <div className="container">
       <div className={"vflex " + (step !== 1 ? "hid" : "")}>
-        <div className="header_btns">
-          <button onClick={() => window.open("https://token.bitx.cx", "_blank")}>
-            <i className="fa fa-btc"> </i> BITX Token
-          </button>
-          <button
-            onClick={() =>
-              window.open(
-                "https://github.com/Rotwang9000/bitx_live/wiki",
-                "_blank"
-              )
-            }
-          >
-            <i className="fa fa-info-circle"> </i> Info
-          </button>
-        </div>
         <h4>
           <img
             src="bitxtlogo.png"
@@ -2279,8 +2307,7 @@ function Bitx(props) {
           Pay in Bitcoin, Ethereum and more without connecting your wallet.{" "}
           <i>Simply Send!</i>
         </h4>
-        <h5>Auto Swap &amp; Send, decentralised in your browser</h5>
-        <div>
+        <div className="phrase_div">
           <b>Make a note of this phrase!</b>
           <br />
           <textarea
@@ -2311,6 +2338,16 @@ function Bitx(props) {
           <button
             className="btn_copy"
             onClick={(e) => {
+              document.getElementsByClassName("div_moreinfo")[0].style.display =
+                "flex";
+            }}
+          >
+            More Info and terms
+          </button>
+          <br />
+          <button
+            className="btn_copy"
+            onClick={(e) => {
               navigator.clipboard.writeText(phrase).then(() => {
                 setStep(2);
               });
@@ -2318,9 +2355,27 @@ function Bitx(props) {
           >
             Copy and Continue...
           </button>
-          <div className="div_moreinfo">
-            This phrase the only way to recover your funds should your
-            connection be lost or your browser reloaded.
+          <div className="div_moreinfo" style={{ display: "none" }}>
+            <h5>Auto Swap &amp; Send, decentralised in your browser</h5>
+            <div className="header_btns">
+              <button
+                onClick={() => window.open("https://token.bitx.cx", "_blank")}
+              >
+                <i className="fa fa-btc"> </i> BITX Token
+              </button>
+              <button
+                onClick={() =>
+                  window.open(
+                    "https://github.com/Rotwang9000/bitx_live/wiki",
+                    "_blank"
+                  )
+                }
+              >
+                <i className="fa fa-info-circle"> </i> Info
+              </button>
+            </div>
+            The phrase the only way to recover your funds should your connection
+            be lost or your browser reloaded.
             <br />
             This transaction is initiated inside your browser, not our servers.
             <br />
@@ -2337,21 +2392,21 @@ function Bitx(props) {
               Use of the site is acceptance of these terms.
             </i>
           </div>
+          <button
+            className="btn_copy bold_button"
+            onClick={(e) => {
+              setStep(2);
+            }}
+          >
+            Continue...
+          </button>
         </div>
-        <button
-          className="btn_copy"
-          onClick={(e) => {
-            setStep(2);
-          }}
-        >
-          Continue...
-        </button>
       </div>
-      <div className="hflex_whenwide infomsgdiv">
+      <div className={"hflex_whenwide infomsgdiv " + (step !== 2 ? "hid" : "")}>
         <div id="error_phrase" className={msgColour}>
           {msg}
         </div>
-        <div className="top_checks">
+        <div className={"top_checks " + (step !== 2 ? "hid" : "")}>
           <div>
             <input
               type="checkbox"
@@ -2380,33 +2435,7 @@ function Bitx(props) {
         </div>
       </div>
       <div className={"step " + (step !== 2 ? "hid" : "")}>
-        {swapLink !== "" && (
-          <div className="sharediv">
-            Share this request:
-            <br />{" "}
-            <button
-              className="btn_copy"
-              target="_blank"
-              onClick={(e) =>
-                e.preventDefault() &
-                navigator.clipboard.writeText(swapLink).then(() => {
-                  setInfo("Copied Share URL to clipboard");
-                })
-              }
-            >
-              {" "}
-              <i className="fa fa-clipboard" aria-hidden="true">
-                {" "}
-              </i>
-              {swapLink}
-            </button>
-          </div>
-        )}
-
-        <div
-          className="hflex_whenwide mt nmb dest_div"
-          style={{ marginTop: 0 }}
-        >
+        <div className="hflex_whenwide mt nmb dest_div">
           <div className="input_destination_addr nmt">
             <div className="input_title">
               Enter the destination address:{" "}
@@ -2492,7 +2521,7 @@ function Bitx(props) {
           <div className="fixed_destination_amt">
             {destinationAmt} {shortName(transferType[1].toUpperCase())}
           </div>
-          <div className="transfer_type">
+          <div className="transfer_type recieve_transfer_type">
             <div className="input_title receive_as">Receive as...</div>
 
             <div className="transfer_to input_destination_type">
@@ -2536,10 +2565,11 @@ function Bitx(props) {
           </div>
         </div>
         <div className="hflex_whenwide source_div">
-          <div className="transfer_type">
+          <div className="transfer_type" id="pay_transfer_type">
+            <div className="input_title"> Pay with:</div>
+
             <div className="transfer_from">
               <div style={{ marginTop: 0 }}>
-                <div className='input_title'> Pay with:</div>
                 {fromTypes.map((chainID) => {
                   return (
                     <div key={chainID}>
@@ -2608,7 +2638,7 @@ function Bitx(props) {
                 </div>
               </div>
             </div>
-            <div className="input_slippage">
+            <div className="">
               <div>
                 <label
                   htmlFor="streaming_swap"
@@ -2719,6 +2749,26 @@ function Bitx(props) {
                 {walletbalance} {differenceFromSellTxt}
               </div>
             </div>
+          </div>
+        )}
+        {swapLink !== "" && (
+          <div className="sharediv">
+            Your Paylink to request this payment from others:
+            <br />{" "}
+              <input
+                id="swap_link"
+                type="text"
+                readOnly
+                value={swapLink}
+                onClick={(e) =>{
+                  e.preventDefault();
+                  //select all
+                  e.target.select();
+                  navigator.clipboard.writeText(swapLink).then(() => {
+                    setInfo("Copied Share URL to clipboard");
+                })}
+                }
+              />
           </div>
         )}
         <div className="input_slippage">
