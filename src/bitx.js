@@ -2294,602 +2294,585 @@ function Bitx(props) {
   const refreshDisabled = (lastSwapTxTime + 60000) > Date.now();
     
   return (
-    <div className="container">
-      <div className={"vflex " + (step !== 1 ? "hid" : "")}>
-        <h4>
-          <img
-            src="bitxtlogo.png"
-            style={{ width: "200px" }}
-            alt="Bitx logo"
-            className="step1_logo"
-          />
-          <br />
-          Pay in Bitcoin, Ethereum and more without connecting your wallet.{" "}
-          <i>Simply Send!</i>
-        </h4>
-        <div className="phrase_div">
-          <b>Make a note of this phrase!</b>
-          <br />
-          <textarea
-            id="phrase"
-            name="phrase"
-            value={phrase}
-            title="This phrase is the private key to the temporary wallet created to send, swap and monitor your transaction. It is not stored anywhere and cannot be recovered."
-            onChange={(e) => {
-              setPhrase(
-                e.target.value
-                  .replace("\n", " ")
-                  .replace(/[^a-zA-Z ]/g, " ")
-                  .replace(/  +/g, " ")
-              ) && setAutoswap(false);
-            }}
-            // onClick={(e) => {
-            //   //copy to clipboard
-            //   navigator.clipboard.writeText(phrase).then(() => {
-            //     setInfo("Copied Phrase to clipboard");
-            //   });
-            // }}
-          ></textarea>
-          <br />
-          You can also enter a previously generated Bitx phrase here.
-          <br />
-          Do no use one from any other wallet!
-          <br />
-          <button
-            className="btn_copy"
-            onClick={(e) => {
-              document.getElementsByClassName("div_moreinfo")[0].style.display =
-                "flex";
-            }}
-          >
-            More Info and terms
-          </button>
-          <br />
-          <button
-            className="btn_copy"
-            onClick={(e) => {
-              navigator.clipboard.writeText(phrase).then(() => {
-                setStep(2);
-              });
-            }}
-          >
-            Copy and Continue...
-          </button>
-          <div className="div_moreinfo" style={{ display: "none" }}>
-            <h5>Auto Swap &amp; Send, decentralised in your browser</h5>
-            <div className="header_btns">
-              <button
-                onClick={() => window.open("https://token.bitx.cx", "_blank")}
-              >
-                <i className="fa fa-btc"> </i> BITX Token
-              </button>
-              <button
-                onClick={() =>
-                  window.open(
-                    "https://github.com/Rotwang9000/bitx_live/wiki",
-                    "_blank"
-                  )
-                }
-              >
-                <i className="fa fa-info-circle"> </i> Info
-              </button>
-            </div>
-            The phrase the only way to recover your funds should your connection
-            be lost or your browser reloaded.
-            <br />
-            This transaction is initiated inside your browser, not our servers.
-            <br />
-            <b>You must leave this window open</b> until the payment is on its
-            way to the destination <br /> or <b>YOU WILL LOSE YOUR MONEY</b>
-            <i>
-              This site is simply an interface to{" "}
-              <a href="https://thorchain.org/" target="_blank">
-                Thorchain.
-              </a>{" "}
-              Responsibility of use is solely with the user. No Liability is
-              accepted for any loss or any other reason.
-              <br />
-              Use of the site is acceptance of these terms.
-            </i>
-          </div>
-          <button
-            className="btn_copy bold_button"
-            onClick={(e) => {
-              setStep(2);
-            }}
-          >
-            Continue...
-          </button>
-        </div>
-      </div>
-      <div className={"hflex_whenwide infomsgdiv " + (step !== 2 ? "hid" : "")}>
-        <div id="error_phrase" className={msgColour}>
-          {msg}
-        </div>
-        <div className={"top_checks " + (step !== 2 ? "hid" : "")}>
-          <div>
-            <input
-              type="checkbox"
-              id="autoswap"
-              name="autoswap"
-              checked={autoswap}
-              onChange={(e) => setAutoswap(e.target.checked)}
-            />
-            <label htmlFor="autoswap">Auto Send</label>
-          </div>
-          <div>
-            <input
-              type="checkbox"
-              id="sendstats"
-              name="sendstats"
-              checked={sendStats}
-              onChange={(e) => setSendstats(e.target.checked)}
-            />
-            <label
-              htmlFor="sendstats"
-              title="Send Info such as TX ID and amounts to Bitx.live for analysis. No personal or wallet info is sent. This is the only way we can record usage."
-            >
-              Send Stats
-            </label>
-          </div>
-        </div>
-      </div>
-      <div className={"step " + (step !== 2 ? "hid" : "")}>
-        <div className="hflex_whenwide mt nmb dest_div">
-          <div className="input_destination_addr nmt">
-            <div className="input_title">
-              Enter the destination address:{" "}
-              <button
-                onClick={props.onShowQRPop}
-                style={{ marginLeft: "10px", display: "inline-block" }}
-              >
-                <i className="fa fa-qrcode" aria-hidden="true">
-                  {" "}
-                </i>
-              </button>
-              <button
-                onClick={() => {
-                  navigator.clipboard.readText().then((text) => {
-                    setDestinationAddr(text);
-                    getAQuote();
-                  });
-                }}
-                style={{ marginLeft: "10px", display: "inline-block" }}
-              >
-                <i className="fa fa-clipboard"> </i>
-              </button>
-            </div>
-            <input
-              type="text"
-              id="destination_addr"
-              name="destination_addr"
-              placeholder="Destination Address, BTC or ETH"
-              style={styles.input}
-              onChange={(e) => setDestinationAddr(e.target.value)}
-              value={destinationAddr}
-            />
-          </div>
-          <div className="fixed_destination_addr">
-            Sending to: {destinationAddr}
-          </div>
-          <div className="input_destination_amt">
-            <div className="input_title">Enter the destination amount</div>
-            <input
-              type="number"
-              id="destination_amt"
-              name="destination_amt"
-              placeholder="Destination Amount"
-              style={styles.input}
-              onFocus={(e) => {
-                e.target.dataset.oAutoSwap = autoswap ? "true" : "nottrue";
-                setAutoswap(false);
-              }}
-              onBlur={(e) => {
-                setAutoswap(e.target.dataset.oAutoSwap === "true");
-                e.target.dataset.oAutoSwap = "";
-                if (e.target.dataset.changeTimer !== "") {
-                  clearTimeout(e.target.dataset.changeTimer);
-                }
-                getAQuote();
-              }}
-              onChange={(e) => {
-                if (e.target.value === "dev") {
-                  setInfo("dev buttons shown");
-                  setDevButtons(true);
-                  e.target.value = "";
-                  return;
-                }
-                setDestinationAmt(e.target.value);
-              }}
-              onKeyUp={(e) => {
-                setDestinationAmt(e.target.value);
-                if (e.target.dataset.changeTimer !== "") {
-                  clearTimeout(e.target.dataset.changeTimer);
-                }
-                e.target.dataset.changeTimer = setTimeout(() => {
-                  console.log("timeout");
-                  getAQuote();
-                }, 2500);
-              }}
-              value={destinationAmt}
-              data-o-auto-swap=""
-              data-change-timer=""
-              title={differenceFromDestination}
-            />
-            <br />
-          </div>
-          <div className="fixed_destination_amt">
-            {destinationAmt} {shortName(transferType[1].toUpperCase())}
-          </div>
-          <div className="transfer_type recieve_transfer_type">
-            <div className="input_title receive_as">Receive as...</div>
+		<div className="container">
+			<div className={"vflex " + (step !== 1 ? "hid" : "")}>
+				<h4>
+					<img
+						src="bitxtlogo.png"
+						style={{ width: "200px" }}
+						alt="Bitx logo"
+						className="step1_logo"
+					/>
+					<br />
+					Pay in Bitcoin, Ethereum and more without connecting your wallet.{" "}
+					<i>Simply Send!</i>
+				</h4>
+				<div className="phrase_div">
+					<b>Make a note of this phrase!</b>
+					<br />
+					<textarea
+						id="phrase"
+						name="phrase"
+						value={phrase}
+						title="This phrase is the private key to the temporary wallet created to send, swap and monitor your transaction. It is not stored anywhere and cannot be recovered."
+						onChange={(e) => {
+							setPhrase(
+								e.target.value
+									.replace("\n", " ")
+									.replace(/[^a-zA-Z ]/g, " ")
+									.replace(/  +/g, " ")
+							) && setAutoswap(false);
+						}}
+						// onClick={(e) => {
+						//   //copy to clipboard
+						//   navigator.clipboard.writeText(phrase).then(() => {
+						//     setInfo("Copied Phrase to clipboard");
+						//   });
+						// }}
+					></textarea>
+					<br />
+					You can also enter a previously generated Bitx phrase here.
+					<br />
+					Do no use one from any other wallet!
+					<br />
+					<button
+						className="btn_copy"
+						onClick={(e) => {
+							document.getElementsByClassName("div_moreinfo")[0].style.display =
+								"flex";
+						}}>
+						More Info and terms
+					</button>
+					<br />
+					<button
+						className="btn_copy"
+						onClick={(e) => {
+							navigator.clipboard.writeText(phrase).then(() => {
+								setStep(2);
+							});
+						}}>
+						Copy and Continue...
+					</button>
+					<div className="div_moreinfo" style={{ display: "none" }}>
+						<h5>Auto Swap &amp; Send, decentralised in your browser</h5>
+						<div className="header_btns">
+							<button
+								onClick={() => window.open("https://token.bitx.cx", "_blank")}>
+								<i className="fa fa-btc"> </i> BITX Token
+							</button>
+							<button
+								onClick={() =>
+									window.open(
+										"https://github.com/Rotwang9000/bitx_live/wiki",
+										"_blank"
+									)
+								}>
+								<i className="fa fa-info-circle"> </i> Info
+							</button>
+						</div>
+						The phrase the only way to recover your funds should your connection
+						be lost or your browser reloaded.
+						<br />
+						This transaction is initiated inside your browser, not our servers.
+						<br />
+						<b>You must leave this window open</b> until the payment is on its
+						way to the destination <br /> or <b>YOU WILL LOSE YOUR MONEY</b>
+						<i>
+							This site is simply an interface to{" "}
+							<a href="https://thorchain.org/" target="_blank">
+								Thorchain.
+							</a>{" "}
+							Responsibility of use is solely with the user. No Liability is
+							accepted for any loss or any other reason.
+							<br />
+							Use of the site is acceptance of these terms.
+						</i>
+					</div>
+					<button
+						className="btn_copy bold_button"
+						onClick={(e) => {
+							setStep(2);
+						}}>
+						Continue...
+					</button>
+				</div>
+			</div>
+			<div className={"hflex_whenwide infomsgdiv " + (step !== 2 ? "hid" : "")}>
+				<div id="error_phrase" className={msgColour}>
+					{msg}
+				</div>
+				<div className={"top_checks " + (step !== 2 ? "hid" : "")}>
+					<div>
+						<input
+							type="checkbox"
+							id="autoswap"
+							name="autoswap"
+							checked={autoswap}
+							onChange={(e) => setAutoswap(e.target.checked)}
+						/>
+						<label htmlFor="autoswap">Auto Send</label>
+					</div>
+					<div>
+						<input
+							type="checkbox"
+							id="sendstats"
+							name="sendstats"
+							checked={sendStats}
+							onChange={(e) => setSendstats(e.target.checked)}
+						/>
+						<label
+							htmlFor="sendstats"
+							title="Send Info such as TX ID and amounts to Bitx.live for analysis. No personal or wallet info is sent. This is the only way we can record usage.">
+							Send Stats
+						</label>
+					</div>
+				</div>
+			</div>
+			<div className={"step " + (step !== 2 ? "hid" : "")}>
+				<div className="hflex_whenwide mt nmb dest_div">
+					<div className="input_destination_addr nmt">
+						<div className="input_title">
+							Enter the destination address:{" "}
+							<button
+								onClick={props.onShowQRPop}
+								style={{ marginLeft: "10px", display: "inline-block" }}>
+								<i className="fa fa-qrcode" aria-hidden="true">
+									{" "}
+								</i>
+							</button>
+							<button
+								onClick={() => {
+									navigator.clipboard.readText().then((text) => {
+										setDestinationAddr(text);
+										getAQuote();
+									});
+								}}
+								style={{ marginLeft: "10px", display: "inline-block" }}>
+								<i className="fa fa-clipboard"> </i>
+							</button>
+						</div>
+						<input
+							type="text"
+							id="destination_addr"
+							name="destination_addr"
+							placeholder="Destination Address, BTC or ETH"
+							style={styles.input}
+							onChange={(e) => setDestinationAddr(e.target.value)}
+							value={destinationAddr}
+						/>
+					</div>
+					<div className="fixed_destination_addr">
+						Sending to: {destinationAddr}
+					</div>
+					<div className="input_destination_amt">
+						<div className="input_title">Enter the destination amount</div>
+						<input
+							type="number"
+							id="destination_amt"
+							name="destination_amt"
+							placeholder="Destination Amount"
+							style={styles.input}
+							onFocus={(e) => {
+								e.target.dataset.oAutoSwap = autoswap ? "true" : "nottrue";
+								setAutoswap(false);
+							}}
+							onBlur={(e) => {
+								setAutoswap(e.target.dataset.oAutoSwap === "true");
+								e.target.dataset.oAutoSwap = "";
+								if (e.target.dataset.changeTimer !== "") {
+									clearTimeout(e.target.dataset.changeTimer);
+								}
+								getAQuote();
+							}}
+							onChange={(e) => {
+								if (e.target.value === "dev") {
+									setInfo("dev buttons shown");
+									setDevButtons(true);
+									e.target.value = "";
+									return;
+								}
+								setDestinationAmt(e.target.value);
+							}}
+							onKeyUp={(e) => {
+								setDestinationAmt(e.target.value);
+								if (e.target.dataset.changeTimer !== "") {
+									clearTimeout(e.target.dataset.changeTimer);
+								}
+								e.target.dataset.changeTimer = setTimeout(() => {
+									console.log("timeout");
+									getAQuote();
+								}, 2500);
+							}}
+							value={destinationAmt}
+							data-o-auto-swap=""
+							data-change-timer=""
+							title={differenceFromDestination}
+						/>
+						<br />
+					</div>
+					<div className="fixed_destination_amt">
+						{destinationAmt} {shortName(transferType[1].toUpperCase())}
+					</div>
+					<div className="transfer_type recieve_transfer_type">
+						<div className="input_title receive_as">Receive as...</div>
 
-            <div className="transfer_to input_destination_type">
-              <div
-                className="radios"
-                style={{
-                  marginTop: "0",
-                  paddingTop: "5px",
-                  width: "fit-content",
-                }}
-              >
-                {toTypes.map((chainID) => {
-                  return (
-                    <div key={chainID}>
-                      <label htmlFor={"to_" + chainID}>
-                        <input
-                          type="radio"
-                          id={"to_" + chainID}
-                          name="transfer_type_to"
-                          value={chainID}
-                          checked={transferType[1] === chainID}
-                          onChange={(e) => {
-                            var type = transferType.slice();
-                            type[1] = chainID;
-                            console.log(type);
-                            setTransferType(type);
-                          }}
-                        />
+						<div className="transfer_to input_destination_type">
+							<div
+								className="radios"
+								style={{
+									marginTop: "0",
+									paddingTop: "5px",
+									width: "fit-content",
+								}}>
+								{toTypes.map((chainID) => {
+									return (
+										<div key={chainID}>
+											<label htmlFor={"to_" + chainID}>
+												<input
+													type="radio"
+													id={"to_" + chainID}
+													name="transfer_type_to"
+													value={chainID}
+													checked={transferType[1] === chainID}
+													onChange={(e) => {
+														var type = transferType.slice();
+														type[1] = chainID;
+														console.log(type);
+														setTransferType(type);
+													}}
+												/>
 
-                        {shortName(chainID.toUpperCase())}
-                      </label>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-            <div className="fixed_destination_type">
-              <b>Receiver gets:</b> {destinationAmt}{" "}
-              {shortName(transferType[1].toUpperCase())}
-            </div>
-          </div>
-        </div>
-        <div className="hflex_whenwide source_div">
-          <div className="transfer_type" id="pay_transfer_type">
-            <div className="input_title"> Pay with:</div>
+												{shortName(chainID.toUpperCase())}
+											</label>
+										</div>
+									);
+								})}
+							</div>
+						</div>
+						<div className="fixed_destination_type">
+							<b>Receiver gets:</b> {destinationAmt}{" "}
+							{shortName(transferType[1].toUpperCase())}
+						</div>
+					</div>
+				</div>
+				<div className="hflex_whenwide source_div">
+					<div className="transfer_type" id="pay_transfer_type">
+						<div className="input_title"> Pay with:</div>
 
-            <div className="transfer_from">
-              <div style={{ marginTop: 0 }}>
-                {fromTypes.map((chainID) => {
-                  return (
-                    <div key={chainID}>
-                      <label htmlFor={"from_" + chainID}>
-                        <input
-                          type="radio"
-                          id={"from_" + chainID}
-                          name="transfer_type_from"
-                          value={chainID}
-                          onChange={(e) => {
-                            var type = transferType.slice();
-                            type[0] = chainID;
-                            console.log(type);
-                            setTransferType(type);
-                          }}
-                          checked={transferType[0] === chainID}
-                        />
-                        {shortName(chainID.toUpperCase())}
-                      </label>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-        </div>
-        {streamingAvailable && (
-          <div
-            className="hflex_whenwide streaming_available"
-            onClick={() => setStreamingSwap((e) => !e)}
-          >
-            <div className="input_title">
-              Streaming Swap{" "}
-              <span
-                className="fa fa-info-circle"
-                onClick={(e) => {
-                  e.stopPropagation();
-                }}
-                title="Streaming swaps split the transaction into smaller chunks for a better rate. They can take up to 24hours and so are subject to market changes during the swap time though therefore the output can vary from that expected."
-              >
-                {" "}
-              </span>
-            </div>
-            <div className="streaming_info">
-              <div>
-                <div>
-                  <i className="fa fa-clock-o" aria-hidden="true">
-                    {" "}
-                  </i>
-                  Estimated Swap Time:
-                </div>
-                <div id="streaming_time" className="ssvar">
-                  {streamingVars.duration}s (
-                  {Math.round(streamingVars.durationx * 10) / 10}x)
-                </div>
-              </div>
-              <div>
-                <div>
-                  <i className="fa fa-btc" aria-hidden="true">
-                    {" "}
-                  </i>
-                  Estimated Savings:
-                </div>
-                <div id="streaming_savings" className="ssvar">
-                  {Math.round(streamingVars.savingspc * 100) / 100}%
-                </div>
-              </div>
-            </div>
-            <div className="">
-              <div>
-                <label
-                  htmlFor="streaming_swap"
-                  title="Streaming swaps can take up to 24hours but due to less slippage should end up a better rate. They are subject to market changes during the swap time though so the output can vary"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                  }}
-                >
-                  Use Streaming Swap:
-                </label>
-                <input
-                  type="checkbox"
-                  id="streaming_swap"
-                  name="streaming_swap"
-                  checked={streamingSwap}
-                  onChange={(e) => setStreamingSwap(e.target.checked)}
-                />
-              </div>
-            </div>
-          </div>
-        )}
+						<div className="transfer_from">
+							<div style={{ marginTop: 0 }}>
+								{fromTypes.map((chainID) => {
+									return (
+										<div key={chainID}>
+											<label htmlFor={"from_" + chainID}>
+												<input
+													type="radio"
+													id={"from_" + chainID}
+													name="transfer_type_from"
+													value={chainID}
+													onChange={(e) => {
+														var type = transferType.slice();
+														type[0] = chainID;
+														console.log(type);
+														setTransferType(type);
+													}}
+													checked={transferType[0] === chainID}
+												/>
+												{shortName(chainID.toUpperCase())}
+											</label>
+										</div>
+									);
+								})}
+							</div>
+						</div>
+					</div>
+				</div>
+				{streamingAvailable && (
+					<div
+						className="hflex_whenwide streaming_available"
+						onClick={() => setStreamingSwap((e) => !e)}>
+						<div className="input_title">
+							Streaming Swap{" "}
+							<span
+								className="fa fa-info-circle"
+								onClick={(e) => {
+									e.stopPropagation();
+								}}
+								title="Streaming swaps split the transaction into smaller chunks for a better rate. They can take up to 24hours and so are subject to market changes during the swap time though therefore the output can vary from that expected.">
+								{" "}
+							</span>
+						</div>
+						<div className="streaming_info">
+							<div>
+								<div>
+									<i className="fa fa-clock-o" aria-hidden="true">
+										{" "}
+									</i>
+									Estimated Swap Time:
+								</div>
+								<div id="streaming_time" className="ssvar">
+									{streamingVars.duration}s (
+									{Math.round(streamingVars.durationx * 10) / 10}x)
+								</div>
+							</div>
+							<div>
+								<div>
+									<i className="fa fa-btc" aria-hidden="true">
+										{" "}
+									</i>
+									Estimated Savings:
+								</div>
+								<div id="streaming_savings" className="ssvar">
+									{Math.round(streamingVars.savingspc * 100) / 100}%
+								</div>
+							</div>
+						</div>
+						<div className="">
+							<div>
+								<label
+									htmlFor="streaming_swap"
+									title="Streaming swaps can take up to 24hours but due to less slippage should end up a better rate. They are subject to market changes during the swap time though so the output can vary"
+									onClick={(e) => {
+										e.stopPropagation();
+									}}>
+									Use Streaming Swap:
+								</label>
+								<input
+									type="checkbox"
+									id="streaming_swap"
+									name="streaming_swap"
+									checked={streamingSwap}
+									onChange={(e) => setStreamingSwap(e.target.checked)}
+								/>
+							</div>
+						</div>
+					</div>
+				)}
 
-        {!transferType ||
-          (transferType[0] === "" && (
-            <div className="div_transfer h div_qr">
-              Please select a transfer type and a destination.
-              <div>
-                <button
-                  onClick={props.onShowQRPop}
-                  style={{ marginLeft: "10px", display: "inline-block" }}
-                >
-                  <i className="fa fa-qrcode" aria-hidden="true">
-                    {" "}
-                  </i>{" "}
-                  Scan QR for destination address
-                </button>
-              </div>
-            </div>
-          ))}
-        {transferType.length === 2 && transferType[0] !== "" && (
-          <div className="div_transfer h">
-            <div className="div_qr">
-              <div id="send_to_msg" style={{ display: "block" }}>
-                Send{" "}
-                <span
-                  id="send_to_amt"
-                  onClick={() => {
-                    //copy to clipboard
-                    navigator.clipboard.writeText(sellAmount[0]).then(() => {
-                      setInfo("Copied Amount to clipboard");
-                    });
-                  }}
-                >
-                  {sellAmountTxt}
-                </span>{" "}
-                {shortName(transferType[0].toUpperCase())} to:
-              </div>
-              <div
-                onClick={() => {
-                  //copy to clipboard
-                  navigator.clipboard.writeText(walletaddress).then(() => {
-                    setInfo("Copied Address to clipboard");
-                  });
-                }}
-              >
-                {walletaddress}
-              </div>
-              <QRCode value={walletaddress} />
-              <div>
-                Current Balance:{" "}
-                <button
-                  onClick={(e) => {
-                    e.preventDefault();
-                    //disable button
-                    e.target.disabled = true;
-                    e.target.innerHTML =
-                      '<i class="fa fa-spinner fa-spin"> </i>';
-                    fetchWalletBalances(true);
-                    clearTimeout(walletTimer);
-                    walletTimer = setTimeout(() => {
-                      e.target.disabled = false;
-                      try {
-                        e.target.innerHTML = '<i class="fa fa-refresh"> </i>';
-                      } catch (error) {
-                        console.log(error);
-                      }
-                    }, 60000);
-                  }}
-                  disabled={refreshDisabled}
-                  className="smallbutton"
-                  id="refresh_balances"
-                  title="Refresh Balances, max once per minute"
-                  style={{
-                    marginLeft: "250px",
-                    position: "absolute",
-                    marginTop: "-10px",
-                  }}
-                >
-                  {" "}
-                  <i
-                    className={
-                      "fa " + (refreshDisabled ? "fa-ban" : "fa-refresh")
-                    }
-                  >
-                    {" "}
-                  </i>
-                </button>
-                {walletbalance} {differenceFromSellTxt}
-              </div>
-            </div>
-          </div>
-        )}
-        {swapLink !== "" && (
-          <div className="sharediv">
-            Your Paylink to request this payment from others:
-            <div className='swap_link_div'>
-            <input
-              id="swap_link"
-              type="text"
-              readOnly
-              value={swapLink}
-              onClick={(e) => {
-                e.preventDefault();
-                //select all
-                e.target.select();
-                navigator.clipboard.writeText(swapLink).then(() => {
-                  setInfo("Copied Share URL to clipboard");
-                });
-              }}
-            />
-            <div
-              className="fa fa-copy"
-              title="Copy Share URL to clipboard"
-              style={{ cursor: "pointer" }}
+				{!transferType ||
+					(transferType[0] === "" && (
+						<div className="div_transfer h div_qr">
+							Please select a transfer type and a destination.
+							<div>
+								<button
+									onClick={props.onShowQRPop}
+									style={{ marginLeft: "10px", display: "inline-block" }}>
+									<i className="fa fa-qrcode" aria-hidden="true">
+										{" "}
+									</i>{" "}
+									Scan QR for destination address
+								</button>
+							</div>
+						</div>
+					))}
+				{transferType.length === 2 && transferType[0] !== "" && (
+					<div className="div_transfer h">
+						<div className="div_qr">
+							<div id="send_to_msg" style={{ display: "block" }}>
+								Send{" "}
+								<span
+									id="send_to_amt"
+									onClick={() => {
+										//copy to clipboard
+										navigator.clipboard.writeText(sellAmount[0]).then(() => {
+											setInfo("Copied Amount to clipboard");
+										});
+									}}>
+									{sellAmountTxt}
+								</span>{" "}
+								{shortName(transferType[0].toUpperCase())} to:
+							</div>
+							<div
+								onClick={() => {
+									//copy to clipboard
+									navigator.clipboard.writeText(walletaddress).then(() => {
+										setInfo("Copied Address to clipboard");
+									});
+								}}>
+								{walletaddress}
+							</div>
+							<QRCode value={walletaddress} />
+							<div>
+								Current Balance:{" "}
+								<button
+									onClick={(e) => {
+										e.preventDefault();
+										//disable button
+										e.target.disabled = true;
+										e.target.innerHTML =
+											'<i class="fa fa-spinner fa-spin"> </i>';
+										fetchWalletBalances(true);
+										clearTimeout(walletTimer);
+										walletTimer = setTimeout(() => {
+											e.target.disabled = false;
+											try {
+												e.target.innerHTML = '<i class="fa fa-refresh"> </i>';
+											} catch (error) {
+												console.log(error);
+											}
+										}, 60000);
+									}}
+									disabled={refreshDisabled}
+									className="smallbutton"
+									id="refresh_balances"
+									title="Refresh Balances, max once per minute"
+									style={{
+										marginLeft: "250px",
+										position: "absolute",
+										marginTop: "-10px",
+									}}>
+									{" "}
+									<i
+										className={
+											"fa " + (refreshDisabled ? "fa-ban" : "fa-refresh")
+										}>
+										{" "}
+									</i>
+								</button>
+								{walletbalance} {differenceFromSellTxt}
+							</div>
+						</div>
+					</div>
+				)}
+				{swapLink !== "" && (
+					<div className="sharediv">
+						Your Paylink to request this payment from others:
+						<div className="swap_link_div">
+							<input
+								id="swap_link"
+								type="text"
+								readOnly
+								value={swapLink}
+								onClick={(e) => {
+									e.preventDefault();
+									//select all
+									e.target.select();
+									navigator.clipboard.writeText(swapLink).then(() => {
+										setInfo("Copied Share URL to clipboard");
+									});
+								}}
+							/>
+							<div
+								className="fa fa-copy"
+								title="Copy Share URL to clipboard"
+								style={{ cursor: "pointer" }}
+								onClick={() => {
+									navigator.clipboard.writeText(swapLink).then(() => {
+										setInfo("Copied Share URL to clipboard");
+									});
+								}}></div>
+						</div>
+					</div>
+				)}
+				<div className="input_slippage">
+					Received amount could be slightly different due to slippage and
+					varying gas fees. Site in Beta, please report bugs.
+					<br />
+					<button
+						onClick={() => {
+							setStep(1);
+						}}>
+						View Phrase
+					</button>
+					<br />
+					Swap Fee: <span style={{ textDecoration: "line-through" }}>
+						1%.
+					</span>{" "}
+					0.1% Introductory Fee!
+				</div>
+				<div>
+					{" "}
+					<img src="bitxtlogo.png" alt="Bitx logo" className="step2_logo" />
+				</div>
+				<div className={devButtons || devMode ? "" : "hid"}>
+					<h3>Dev buttons.. swap is automatic!</h3>
+					<button
+						type="button"
+						onClick={() => {
+							console.log(skClient.connectedChains);
+							doSwap();
+						}}>
+						Swap
+					</button>
+					<button type="button" onClick={() => setPhrase(generatePhrase())}>
+						Generate Phrase
+					</button>
+					<button
+						type="button"
+						onClick={() => connectWallet(WalletOption.KEYSTORE)}>
+						Connect Wallet
+					</button>
+					<button type="button" onClick={() => fetchWalletBalances()}>
+						Fetch Balances
+					</button>
+					<button type="button" onClick={() => console.log(wallets)}>
+						Log Wallet
+					</button>
+					<button type="button" onClick={() => console.log(phrase)}>
+						Log Phrase
+					</button>
+					<button type="button" onClick={() => console.log(skClient)}>
+						Log skClient
+					</button>
+					<button type="button" onClick={() => getAQuote()}>
+						Get Quote
+					</button>
+					<button type="button" onClick={() => send_quote()}>
+						Get Send Quote
+					</button>
+					<button
+						type="button"
+						onClick={() =>
+							logTX({ tx: "test", time: Date.now() }, { sent: "some stuff" })
+						}>
+						Log TX
+					</button>
 
-              onClick={() => {
-                navigator.clipboard.writeText(swapLink).then(() => {
-                  setInfo("Copied Share URL to clipboard");
-                });
-              }}
-            ></div>
-            </div>
-          </div>
-        )}
-        <div className="input_slippage">
-          Received amount could be slightly different due to slippage and
-          varying gas fees. Site in Beta, please report bugs.
-          <br />
-          <button
-            onClick={() => {
-              setStep(1);
-            }}
-          >
-            View Phrase
-          </button>
-          <br />
-          Swap Fee: <span style={{ textDecoration: "line-through" }}>
-            1%.
-          </span>{" "}
-          0.1% Introductory Fee!
-        </div>
-        <div>
-          {" "}
-          <img src="bitxtlogo.png" alt="Bitx logo" className="step2_logo" />
-        </div>
-        <div className={devButtons || devMode ? "" : "hid"}>
-          <h3>Dev buttons.. swap is automatic!</h3>
-          <button
-            type="button"
-            onClick={() => {
-              console.log(skClient.connectedChains);
-              doSwap();
-            }}
-          >
-            Swap
-          </button>
-          <button type="button" onClick={() => setPhrase(generatePhrase())}>
-            Generate Phrase
-          </button>
-          <button
-            type="button"
-            onClick={() => connectWallet(WalletOption.KEYSTORE)}
-          >
-            Connect Wallet
-          </button>
-          <button type="button" onClick={() => fetchWalletBalances()}>
-            Fetch Balances
-          </button>
-          <button type="button" onClick={() => console.log(wallets)}>
-            Log Wallet
-          </button>
-          <button type="button" onClick={() => console.log(phrase)}>
-            Log Phrase
-          </button>
-          <button type="button" onClick={() => console.log(skClient)}>
-            Log skClient
-          </button>
-          <button type="button" onClick={() => getAQuote()}>
-            Get Quote
-          </button>
-          <button type="button" onClick={() => send_quote()}>
-            Get Send Quote
-          </button>
-          <button
-            type="button"
-            onClick={() =>
-              logTX({ tx: "test", time: Date.now() }, { sent: "some stuff" })
-            }
-          >
-            Log TX
-          </button>
-
-          <button
-            type="button"
-            onClick={() => {
-              setOriginBalances(["0", "0", 0]);
-            }}
-          >
-            Set Origin Balances
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              console.log(getCachedPrice());
-            }}
-          >
-            Get Cached Price
-          </button>
-          <div>
-            <a href="{txUrl}" target="_blank">
-              View TX {txUrl}
-            </a>
-          </div>
-        </div>
-        <div id="fetching_balances">...</div>
-      </div>
-      <div style={{ textAlign: "center" }} className="footer_btns">
-        <button onClick={() => window.open("https://token.bitx.cx", "_blank")}>
-          <i className="fa fa-info-circle"> </i> BITX Token
-        </button>
-        <button
-          onClick={() => window.open("https://twitter.com/BitX_cx", "_blank")}
-        >
-          <i className="fa fa-twitter"> </i> Twitter/X
-        </button>
-        <button onClick={() => window.open("https://t.me/bitxcx", "_blank")}>
-          <i className="fa fa-telegram"> </i> Telegram
-        </button>
-      </div>
-    </div>
-  );
+					<button
+						type="button"
+						onClick={() => {
+							setOriginBalances(["0", "0", 0]);
+						}}>
+						Set Origin Balances
+					</button>
+					<button
+						type="button"
+						onClick={() => {
+							console.log(getCachedPrice());
+						}}>
+						Get Cached Price
+					</button>
+					<div>
+						<a href="{txUrl}" target="_blank">
+							View TX {txUrl}
+						</a>
+					</div>
+				</div>
+				<div id="fetching_balances">...</div>
+			</div>
+			<div style={{ textAlign: "center" }} className="footer_btns">
+				<button
+					onClick={() =>
+						window.open(
+							"https://github.com/Rotwang9000/bitx_live/wiki",
+							"_blank"
+						)
+					}>
+					<i className="fa fa-info-circle"> </i> Info/Roadmap
+				</button>
+				<button onClick={() => window.open("https://token.bitx.cx", "_blank")}>
+					<i className="fa fa-info-circle"> </i> BITX Token
+				</button>
+				<button
+					onClick={() => window.open("https://twitter.com/BitX_cx", "_blank")}>
+					<i className="fa fa-twitter"> </i> Twitter/X
+				</button>
+				<button onClick={() => window.open("https://t.me/bitxcx", "_blank")}>
+					<i className="fa fa-telegram"> </i> Telegram
+				</button>
+			</div>
+		</div>
+	);
 }
 
 export default Bitx;
