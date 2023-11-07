@@ -165,12 +165,12 @@ function Bitx(props) {
     }
     //if msg includes [ThornodeService.fetchQuote] 
     if (msg.includes('[ThornodeService.fetchQuote]')){
-      msg = <>Failed to fetch quote. Please <button 
+      msg = <>Failed to fetch quote. Fee may be higher than output. Increase the amount and  <button 
       onClick={() => {
         getAQuote(true);
       }}  className="link">
       Try Again
-      </button> later.</>;
+      </button></>;
     }
     if (msg === "Failed to fetch") {
       msg = <>Service Provider Error. Please try again later.<br />As long as you remember <button 
