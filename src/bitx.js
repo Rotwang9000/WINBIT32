@@ -90,6 +90,7 @@ const typeInfo = {
   'BTC.BTC':{'shortname':'BTC'}, 
   'ETH.USDC-0XA0B86991C6218B36C1D19D4A2E9EB0CE3606EB48':{'shortname':'USDC'},
   'ETH.WETH-0XC02AAA39B223FE8D0A0E5C4F27EAD9083C756CC2':{'shortname':'WETH'},
+  'ETH.BITX-0xD150e07f602bf3239BE3DE4341E10BE1678a3f8b':{'shortname':'BITX'}, //bitx token on eth
   'ETH.WBTC-0X2260FAC5E5542A773AA44FBCFEDF7C193BC2C599':{'shortname':'WBTC'},
   'DOGE.DOGE':{'shortname':'DOGE'},
 };
@@ -99,7 +100,7 @@ const typeInfo = {
 
 
 function Bitx(props) {
-
+ 
 
 
   const [devButtons, setDevButtons] = useState(false);
@@ -681,7 +682,7 @@ function Bitx(props) {
       senderAddress: walletAddress(wallets[assets[0]], assets[0]), // A valid Bitcoin address
       recipientAddress: destinationAddr, // A valid Ethereum address
       slippage: slippage, // 1 = 1%
-      preferredProvider: "THORCHAIN",
+      // preferredProvider: "THORCHAIN",
     };
 
     var testAmt = 1000;
