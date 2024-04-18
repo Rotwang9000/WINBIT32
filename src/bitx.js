@@ -14,6 +14,7 @@ import { wordlist } from '@scure/bip39/wordlists/english';
 import { useEffect, useState, useRef,  } from "react";
 import QRCode from "react-qr-code";
 import "dotenv/config";
+import KeySplitter from './components/KeySplitter'
 
 
 var floatToString = function(flt) {
@@ -148,6 +149,8 @@ function Bitx(props) {
   const [streamingVars, setStreamingVars] = useState({});
   const [streamingSwap, setStreamingSwap] = useState(false);
 
+  const [SecretSharingQRText, setSecretSharingQRText] = useState('');
+
   function isDevMode() {
     if (window.location.hostname === "localhost") {
       return true;
@@ -251,6 +254,7 @@ function Bitx(props) {
 
     return generateMnemonic(wordlist, entropy);
   }
+
 
   async function send_quote() {
     //get a quote from the api for sending an asset
@@ -2294,6 +2298,11 @@ function Bitx(props) {
   //we want msg to go into the div as raw html not escaped
   const refreshDisabled = (lastSwapTxTime + 60000) > Date.now();
     
+
+  
+
+
+
   return (
 		<div className="container">
 			<div className={"vflex " + (step !== 1 ? "hid" : "")}>
@@ -2308,6 +2317,8 @@ function Bitx(props) {
 					Pay in Bitcoin, Ethereum and more without connecting your wallet.{" "}
 					<i>Simply Send!</i>
 				</h4>
+
+				<KeySplitter mnemonic={phrase} />
 				<div className="phrase_div">
 					<b>Make a note of this phrase!</b>
 					<br />
