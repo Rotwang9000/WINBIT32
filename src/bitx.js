@@ -15,6 +15,7 @@ import { useEffect, useState, useRef,  } from "react";
 import QRCode from "react-qr-code";
 import "dotenv/config";
 import KeySplitter from './components/KeySplitter'
+import KeyManagementApp from './components/KeyManagementApp'
 
 
 var floatToString = function(flt) {
@@ -2073,9 +2074,6 @@ function Bitx(props) {
       // }
     }
 
-
-
-
     console.log("Bestroute", bestRoute);
 
     var _streamSwap = bestRoute.meta.hasStreamingSwap;
@@ -2314,11 +2312,9 @@ function Bitx(props) {
 						className="step1_logo"
 					/>
 					<br />
-					Pay in Bitcoin, Ethereum and more without connecting your wallet.{" "}
-					<i>Simply Send!</i>
+					Pay in Bitcoin, Ethereum and more without connecting a browser wallet.{" "}
 				</h4>
-
-				<KeySplitter mnemonic={phrase} />
+        <KeyManagementApp />
 				<div className="phrase_div">
 					<b>Make a note of this phrase!</b>
 					<br />
@@ -2342,20 +2338,7 @@ function Bitx(props) {
 						//   });
 						// }}
 					></textarea>
-					<br />
-					You can also enter a previously generated Bitx phrase here.
-					<br />
-					Do no use one from any other wallet!
-					<br />
-					<button
-						className="btn_copy"
-						onClick={(e) => {
-							document.getElementsByClassName("div_moreinfo")[0].style.display =
-								"flex";
-						}}>
-						More Info and terms
-					</button>
-					<br />
+
 					<button
 						className="btn_copy"
 						onClick={(e) => {
@@ -2365,6 +2348,9 @@ function Bitx(props) {
 						}}>
 						Copy and Continue...
 					</button>
+
+					<KeySplitter mnemonic={phrase} />
+
 					<div className="div_moreinfo" style={{ display: "none" }}>
 						<h5>Auto Swap &amp; Send, decentralised in your browser</h5>
 						<div className="header_btns">
@@ -2408,6 +2394,15 @@ function Bitx(props) {
 						Continue...
 					</button>
 				</div>
+				<button
+					className="btn_copy"
+					onClick={(e) => {
+						document.getElementsByClassName("div_moreinfo")[0].style.display =
+							"flex";
+					}}>
+					More Info and terms
+				</button>
+				<br />
 			</div>
 			<div className={"hflex_whenwide infomsgdiv " + (step !== 2 ? "hid" : "")}>
 				<div id="error_phrase" className={msgColour}>
