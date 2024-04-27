@@ -5,6 +5,11 @@ const MenuBar = ({ menu, window, onMenuClick }) => {
 
 	const handleMenuClick = (item, window) => {
 		if (item.submenu) {
+			//if submenu exists and already open, close it
+			if (openMenu === item.label) {
+				setOpenMenu(null);
+				return;
+			}
 			// Toggle submenu visibility
 			setOpenMenu(openMenu === item.label ? null : item.label);
 		} else {
@@ -32,7 +37,8 @@ const MenuBar = ({ menu, window, onMenuClick }) => {
 						</div>
 					)}
 				</div>
-			))}
+			))} 
+			<div style={{flexGrow: 1}} onClick={() => setOpenMenu(null)}> </div> 
 		</div>
 	);
 };

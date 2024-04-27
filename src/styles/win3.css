@@ -44,7 +44,7 @@ html,body {
 	padding: 3px;
 	min-width: fit-content;
 	min-height: fit-content;
-	z-index: 999999999999;
+	z-index: 999999999;
 }
 
 .window, .dialog-box {
@@ -53,7 +53,7 @@ html,body {
 	width: 100%;
 	position: relative;
 	border: 1px solid #000;
-	z-index: 999999999999;
+	z-index: 99999999999;
 	display: flex;
 	flex-direction: column;
 }
@@ -335,12 +335,18 @@ html,body {
 }
 
 .dialog-box .content{
-	padding: 20px;
 	min-width: 300px;
 	min-height: 50px;
 	display: flex;
 	flex-direction: row;
 
+}
+
+.dialog-box .content .message {
+	flex-grow: 1;
+	padding: 10px;
+	margin-right: 2vw;
+	text-align: justify;
 }
 
 .dialog-box .icon {
@@ -351,6 +357,7 @@ html,body {
 	align-items: center;
 	font-size: 200%;
 	margin-right: 2vw;
+	margin-left: 2vw;
 }
 
 .dialog-buttons {

@@ -1,6 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './styles/win3.css';
+import './styles/main.css';
 
 import App from './App';
 
@@ -11,6 +12,10 @@ const root = ReactDOM.createRoot(document.getElementById('root'));
 //random number between 0 and 9 inclusive
 const rdm = Math.floor(Math.random() * 10).toString();
 
+//hide loading_overlay after 3 seconds
+setTimeout(() => {
+  document.getElementById("loading_overlay").style.display = "none";
+}, 1500);
 
 
 root.render(
@@ -23,8 +28,7 @@ root.render(
         document.getElementById("loading_overlay").style.display = "none";
       }}
     >
-      <div>Loading...</div>
-      <div><img src={process.env.PUBLIC_URL + "/bglogos/logo"+ rdm  +".png"} alt="logo" /></div>
+      <div><img src={process.env.PUBLIC_URL + "/winlogo.png"} alt="logo" /></div>
       
       
     </div>

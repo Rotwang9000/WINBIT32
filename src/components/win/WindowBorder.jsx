@@ -64,7 +64,7 @@ const WindowBorder = ({
 	return (
 
 		<Draggable handle={".title-text"} defaultPosition={{ x: initialPosition.x, y: initialPosition.y }} bounds="parent" >
-			<div className="window-border" style={{ zIndex: zIndex }}	onMouseDownCapture={onClick}
+			<div className="window-border" style={{ zIndex: zIndex, 'width': 'fit-content' }}	onMouseDownCapture={onClick}
 			>			<ResizableBox
 				width={initialPosition.width}
 				height={initialPosition.height}

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { saveAs } from 'file-saver';
 
-const Notepad = ({ onMenuAction }) => {
+const Notepad = ({ onMenuAction, windowA }) => {
 	const [text, setText] = useState('');
 	const textRef = useRef(''); // Use `useRef` for real-time text tracking
 
@@ -13,6 +13,7 @@ const Notepad = ({ onMenuAction }) => {
 			submenu: [
 				{ label: 'Open...', action: 'open' },
 				{ label: 'Save', action: 'save' },
+				{ label: 'Exit', action: 'exit' },
 			],
 		},
 		{
@@ -36,6 +37,9 @@ const Notepad = ({ onMenuAction }) => {
 		const currentText = textRef.current;
 
 		switch (action) {
+			case 'exit':
+				windowA.close();
+				break;
 			case 'open':
 				document.getElementById('fileInput').click(); // Trigger file input
 				break;
@@ -62,11 +66,11 @@ const Notepad = ({ onMenuAction }) => {
 	useEffect(() => {
 		if (onMenuAction) {
 			console.log('Notepad menu:', menu);
-			onMenuAction(menu, handleMenuClick);
+			onMenuAction(menu, windowA, handleMenuClick);
 		}else{
 			console.log('No menu action');
 		}
-	}, [onMenuAction, menu]);
+	}, []);
 
 	return (
 		<>
