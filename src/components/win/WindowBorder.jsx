@@ -22,18 +22,17 @@ const WindowBorder = ({
 
 	const MyHandle = React.forwardRef((props, ref) => {
 		const { handleAxis, ...restProps } = props;
-		return <div ref={ref} className={`handle handle-${handleAxis}`} {...restProps} />;
+		return <div ref={ref} className={`handle handle-${handleAxis}`}  {...restProps} />;
 	});
-
 
 
 	if (maximised) {
 
 
 		return (
-
-			<div className='maximised' style={{ zIndex: zIndex }}>
-				<div className="window-border">
+			
+			<div className='maximised' style={{ zIndex: zIndex, display: 'flex', position:'relative' }}>
+				<div className="window-border" style={{flexGrow: 1}}>
 					{/* Pass down props to ensure Window has required data */}
 					<Window
 						title={title}
@@ -53,17 +52,23 @@ const WindowBorder = ({
 	}
 
 	if (!initialPosition || !initialPosition.x || !initialPosition.y) {
+		console.log('Initial position not set for window ' + title);
 		initialPosition = {
-			x: 15,
-			y: 15,
+			x: 15 + zIndex * 10,
+			y: 15 + zIndex * 10,
 			width: 250,
 			height: 400
 		};
 	}
 
+	const handleStart = (e, data) => {
+		e.stopPropagation();
+	}
+
 	return (
 
-		<Draggable handle={".title-text"} defaultPosition={{ x: initialPosition.x, y: initialPosition.y }} bounds="parent" >
+		<Draggable handle={"div>span>div>div.title>div"} defaultPosition={{ x: initialPosition.x, y: initialPosition.y }} bounds="parent" onStart={handleStart}
+>
 			<div className="window-border" style={{ zIndex: zIndex, 'width': 'fit-content' }}	onMouseDownCapture={onClick}
 			>			<ResizableBox
 				width={initialPosition.width}

@@ -103,7 +103,7 @@
 				return;
 			}
 
-		const { windows, highestZIndex } = state;
+		//const { windows, highestZIndex } = state;
 
 
 
@@ -153,10 +153,20 @@
 		}));
 	};
 
-	export const closeWindow = (setState) => (id) => {
+	export const closeWindow = (setState) => (window) => {
+		const { id } = window;
+		if(window.unCloseable) {
+			console.log(`Window ${id} is uncloseable`);
+			return;
+		}
+		console.log(`Closing window ${id}`);
 		setState((prevState) => ({
-			windows: prevState.windows.filter((w) => w.id !== id), // Remove the window
-			windowHistory: prevState.windowHistory.filter((w) => w !== id), // Remove from history
+			windows: prevState.windows.filter(
+				(w) => w.id !== id 
+			), // Remove the window
+			windowHistory: prevState.windowHistory.filter(
+				(w) => w !== id 
+			), // Remove from history
 		}));
 	};
 

@@ -1,9 +1,10 @@
 import React from 'react';
-import Notepad from './Notepad';
 
 const ProgramManager = ({ params, programs }) => {
 
 	const onOpenWindow = params.onOpenWindow;
+
+	console.log('Programs:', params);
 
 	return (
 		<div className="program-manager" style={{ display: 'flex', flexWrap: 'wrap' }}>

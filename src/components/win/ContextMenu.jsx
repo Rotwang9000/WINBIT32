@@ -6,7 +6,10 @@ const ContextMenu = ({ menuItems = [], position, onAction }) => {
 		<div
 			key={index}
 			className="context-item"
-			onClick={() => onAction(item.label.toLowerCase())} // Action handler
+			//if item.disabled make grey text and no onclick
+			style={{ color: item.disabled ? '#888' : '#000' }}
+
+			onClick={() => !item.disabled && onAction(item.label.toLowerCase())} // Action handler
 		>
 			{item.label}
 		</div>
@@ -18,7 +21,7 @@ const ContextMenu = ({ menuItems = [], position, onAction }) => {
 			style={{
 				left: position.x,
 				top: position.y,
-				display: 'block' // Visible when context menu is active
+				display: 'block', // Visible when context menu is active
 			}}
 		>
 			{contextItems}

@@ -47,6 +47,32 @@ html,body {
 	z-index: 999999999;
 }
 
+.window-manager {
+	position: relative;
+	width: 100%;
+	height: 100%;
+	display: flex;
+}
+
+
+.desk {
+	height: 100%;
+	overflow: hidden;
+	position: relative;
+}
+
+.window-content .window-manager>.maximised>.window-border>.maximised{
+	top: 30px;
+	left: 3px;
+	width: calc(100% - 8px);
+	height: calc(100% - 36px);
+
+}
+
+.window-content .program-icon{
+	color: #000;
+}
+
 .window, .dialog-box {
 	background: #fff;
 	height: 100%;
@@ -232,17 +258,18 @@ html,body {
 	position: absolute;
 	padding: 2px 4px 4px 2px;
 	border: 1px solid #000;
+	display: flex;
 
 }
 
 .maximize, .maximised {
 	position: fixed;
-	top: 0px;
-	right: 0px;
-	left: 0px;
-	bottom: 0px;
-	width: auto;
-	height: auto;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	z-index: 999999999999;
+	
 }
 
 .ui-draggable-dragging>* {
