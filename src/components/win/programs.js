@@ -67,6 +67,24 @@ export const getPrograms = () => {
 		icon: "💰",
 		progName: "winbit32.exe",
 		component: Desk,
+		isContainer: true,
+		programs: [
+			{
+				progID: 0,
+				title: "Wallet",
+				icon: "💼",
+				progName: "wallet.exe", // Added name for "Calculator"
+				component: Calculator,
+			},
+			{
+				progID: 1,
+				title: "Swap",
+				icon: "🔄",
+				progName: "swap.exe", // Added name for "File Manager"
+				component: Clock,
+				defaultOpen: false,
+			},
+		],
 	},
 ];
 

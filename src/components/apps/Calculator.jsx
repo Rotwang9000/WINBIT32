@@ -1,16 +1,17 @@
 import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import './styles/Calculator.css';
+import { evaluate } from 'mathjs';
+import { useIsolatedState, useIsolatedRef, useArrayState } from '../win/includes/customHooks';
 
-const Calculator = ({ onMenuAction, windowA }) => {
-	const [input, setInput] = useState(''); // Current calculator input
-	const [history, setHistory] = useState([]); // History of calculations
+const Calculator = ({ onMenuAction, windowA, windowId}) => {
+	const [input, setInput] = useIsolatedState(windowId, 'input', ''); // Calculator input
+	const { array: history, appendItem: appendHistory } = useArrayState(windowId, 'history');
 
-	const currentRef = useRef(input); // Use `useRef` for real-time input tracking
+	const currentRef = useIsolatedRef(windowId, 'input', ''); // Use `useRef` for real-time input tracking
 
 	currentRef.current = input; // Update `useRef` when `input` changes
 
 	useEffect(() => {
-		console.log('input:', input);
 		currentRef.current = input; // Update `useRef` when `input` changes
 	}, [input]);
 
@@ -54,9 +55,10 @@ const Calculator = ({ onMenuAction, windowA }) => {
 
 	// Evaluate the calculator expression
 	const evaluateExpression = () => {
+		const currentInput = currentRef.current; // Get the current input from `useRef`
 		try {
-			const result = eval(input); // Be cautious with `eval`
-			setHistory((prevHistory) => [...prevHistory, `${input} = ${result}`]); // Add to history
+			const result = evaluate(currentInput); // Use `evaluate` function from `mathjs` library for safer evaluation
+			appendHistory( `${input} = ${result}`);
 			setInput(result.toString()); // Update input with the result
 		} catch (e) {
 			console.error("Error evaluating expression:", e);
@@ -64,9 +66,14 @@ const Calculator = ({ onMenuAction, windowA }) => {
 		}
 	};
 
+	const appendInput = (value) => {
+		setInput((prevInput) => prevInput + value); // Append the value to the input
+	}
+	
+
 	// Handle button clicks for numbers and operators
 	const handleButtonClick = (value) => {
-		setInput((prevInput) => prevInput + value); // Append value to input
+		appendInput(value); // Append the clicked value to the input
 	};
 
 	const clearInput = () => {

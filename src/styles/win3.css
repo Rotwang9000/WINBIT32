@@ -55,10 +55,16 @@ html,body {
 }
 
 
-.desk {
+.desk, .desk-style {
 	height: 100%;
 	overflow: hidden;
 	position: relative;
+}
+.window-container{
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+	flex-grow: 1;
 }
 
 .window-content .window-manager>.maximised>.window-border>.maximised{
@@ -68,6 +74,7 @@ html,body {
 	height: calc(100% - 36px);
 
 }
+
 
 .window-content .program-icon{
 	color: #000;

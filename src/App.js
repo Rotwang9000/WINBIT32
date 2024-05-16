@@ -4,6 +4,7 @@ import DOSPrompt from "./components/win/DOSPrompt";
 import WelcomeWarning from "./components/WelcomeWarning";
 import { getPrograms } from "./components/win/programs";
 import WindowManager from "./components/win/WindowManager";
+import { WindowDataProvider } from "./components/win/includes/WindowContext";
 
 const programs = getPrograms();
 
@@ -12,9 +13,6 @@ class App extends Component {
 		super(props);
 
 		// Function to replace string with function references
-
-
-
 
 		this.state = {
 			qrResult: null,
@@ -28,7 +26,10 @@ class App extends Component {
 			highestZIndex: 1, // Track the highest z-index in use
 		};
 	}
-
+	
+	handleExit = () => {
+		this.setState({ showDOSPrompt: true });
+	};
 
 	render() {
 		return (
@@ -41,7 +42,9 @@ class App extends Component {
 				) : (
 					<>
 						<WelcomeWarning onExit={this.handleExit} />
-						<WindowManager programs={programs} windowName={'desktop'} />
+						<WindowDataProvider>
+							<WindowManager programs={programs} windowName={"desktop"} />
+						</WindowDataProvider>
 					</>
 				)}
 			</>

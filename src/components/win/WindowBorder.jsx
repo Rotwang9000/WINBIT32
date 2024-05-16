@@ -2,8 +2,11 @@ import React from 'react';
 import Draggable from 'react-draggable';
 import { ResizableBox } from 'react-resizable';
 import Window from './Window';
+import { useWindowData } from './includes/WindowContext';
+
 
 const WindowBorder = ({
+	windowId,
 	title, // Pass title down to Window
 	onMinimize,
 	onMaximize,
@@ -16,6 +19,10 @@ const WindowBorder = ({
 	zIndex,
 	children
 }) => {
+	const { getWindowContent } = useWindowData();
+	const content = getWindowContent(windowId);
+
+
 	if (minimised) {
 		return null;
 	}
@@ -52,7 +59,7 @@ const WindowBorder = ({
 	}
 
 	if (!initialPosition || !initialPosition.x || !initialPosition.y) {
-		console.log('Initial position not set for window ' + title);
+		// console.log('Initial position not set for window ' + title);
 		initialPosition = {
 			x: 15 + zIndex * 10,
 			y: 15 + zIndex * 10,

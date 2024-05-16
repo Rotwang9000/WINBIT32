@@ -5,7 +5,7 @@ import ContextMenu from './ContextMenu';
 import MenuBar from './MenuBar';
 import WindowContainer from './WindowContainer';
 import * as HandleFunctions from './includes/HandleFunctions';
-import { loadWindowState, saveWindowState, initializeWindows, updateWindowData } from './includes/StateFunctions';
+import { loadWindowState, saveWindowState, initializeWindows, updateWindowData, restoreWindowsFromSavedState } from './includes/StateFunctions';
 
 
 class WindowManager extends Component {
@@ -15,7 +15,7 @@ class WindowManager extends Component {
 		const windowName = props.windowName;
 		// Bind context to avoid undefined errors
 		// this.bindFunctions();
-		
+
 		this.handleQRRead = HandleFunctions.handleQRRead(this.setState.bind(this));
 		this.toggleQRPop = HandleFunctions.toggleQRPop(this.setState.bind(this));
 		this.handleExit = HandleFunctions.handleExit(this.setState.bind(this));
@@ -41,6 +41,9 @@ class WindowManager extends Component {
 			this.setState.bind(this)
 		);
 
+		if (props.handleOpenFunction) {
+			props.handleOpenFunction(this.handleOpenWindow.bind(this));
+		}
 
 		this.functionMap = {
 			handleOpenWindow: this.handleOpenWindow.bind(this),
@@ -99,9 +102,9 @@ class WindowManager extends Component {
 
 
 		const initialWindows = this.initializeWindows(programs);
-
+		const loadedWindows = loadWindowState(windowName);
 		this.state = {
-			windows: loadWindowState() || initialWindows.windows,
+			windows: loadedWindows ? [] : initialWindows.windows,
 			minimizedWindows: [],
 			contextMenuVisible: false,
 			contextMenuPosition: { x: 0, y: 0 },
@@ -111,7 +114,9 @@ class WindowManager extends Component {
 			windowName: windowName,
 		};
 
-		console.log(this.state);
+
+
+		console.log("state constructor", this.state);
 
 	}
 
@@ -138,6 +143,7 @@ class WindowManager extends Component {
 				id: index + 1,
 				zIndex: highestZIndex++,
 				unCloseable: program.unCloseable || false,
+				metadata: program.metadata || {},
 				...program,
 			}));
 		return { windows, highestZIndex };
@@ -169,27 +175,33 @@ class WindowManager extends Component {
 		}));
 	};
 
-	closeWindow = (window) => {
-		const id = window.id;
-		if (window.unClosable) {
-			return;
-		}
-		this.setState((prevState) => ({
-			windows: prevState.windows.filter((w) => (w.id !== id && !w.unCloseable)),
-		}));
-	};
+	// closeWindow = (window) => {
+	// 	const id = window.id;
+	// 	if (window.unClosable) {
+	// 		return;
+	// 	}
+	// 	if (window.windowName && window.windowName !== '') {
 
-	bringToFront = (id) => {
-		this.setState((prevState) => {
-			const newZIndex = prevState.highestZIndex + 1;
-			return {
-				windows: prevState.windows.map((w) =>
-					w.id === id ? { ...w, zIndex: newZIndex } : w
-				),
-				highestZIndex: newZIndex,
-			};
-		});
-	};
+	// 	}
+
+	// 	this.setState((prevState) => ({
+	// 		windows: prevState.windows.filter((w) => (w.id !== id && !w.unCloseable)),
+	// 	}), () => saveWindowState(this.state.windowName, this.state.windows));
+	// };
+
+	// bringToFront = (id) => {
+	// 	return;
+	// 	this.setState((prevState) => {
+	// 		const newZIndex = prevState.highestZIndex + 1;
+	// 		return {
+	// 			windows: prevState.windows.map((w) =>
+	// 				w.id === id ? { ...w, zIndex: newZIndex } : w
+	// 			),
+	// 			highestZIndex: newZIndex,
+	// 			windowHistory: [...prevState.windowHistory, id],
+	// 		};
+	// 	});
+	// };
 
 	openWindowByProgName = (progName) => {
 		const { windows } = this.state;
@@ -208,9 +220,14 @@ class WindowManager extends Component {
 	};
 
 
-	handleOpenWindow = (program) => {
+	handleOpenWindow = (program, metadata = {}, save = true) => {
+		if (!program || !program.progName) {
+			console.log("No program name found");
+			return;
+		}
 		console.log(`Opening window for ${program.title} in ${this.state.windowName}`);
 		console.log(this.state);
+
 		this.setState((prevState) => ({
 			windows: [
 				...prevState.windows,
@@ -219,11 +236,19 @@ class WindowManager extends Component {
 					zIndex: prevState.highestZIndex + 1,
 					//put in a close function that calls 					this.closeWindow(window.id);
 					close: this.closeWindow.bind(this, { id: prevState.windows.length + 1 }),
+					//set windowId to some random string
+					windowId: Math.random().toString(36).substring(7),
 					...program,
 				},
 			],
 			highestZIndex: prevState.highestZIndex + 1,
-		}));
+			windowHistory: [...prevState.windowHistory, prevState.windows.length + 1],
+			hash: program.progID === 0 ? "" : program.progName, // Update hash if it has changed
+		}), () => {
+			saveWindowState(this.state.windowName, this.state.windows, save)
+
+		}
+		); // Save window state after opening
 	};
 
 	syncHashToState() {
@@ -242,8 +267,16 @@ class WindowManager extends Component {
 
 	componentDidMount() {
 		console.log("componentDidMount");
+		const loadedWindows = loadWindowState(this.state.windowName);
 
-		if (!this.state.windows.length) {
+		if (loadedWindows) {
+			console.log("Restoring windows from saved state");
+			//convert from json to array
+			const arrLoadedWindows = JSON.parse(loadedWindows);
+
+			console.log(arrLoadedWindows);
+			restoreWindowsFromSavedState(arrLoadedWindows, this.state.programs, this.handleOpenWindow, this.state, this.setState.bind(this));
+		} else if (!this.state.windows.length) {
 			this.setState({
 				windows: initializeWindows(this.props.programs),
 			});
@@ -252,12 +285,13 @@ class WindowManager extends Component {
 		// Add a hashchange event listener to respond to changes in the URL hash
 		window.addEventListener("hashchange", this.handleHashChange);
 		// Open a specific window if the URL has a hash
-		this.syncHashToState();
+		//this.syncHashToState();
 	}
 
 	componentWillUnmount() {
 		// Remove the hashchange event listener to avoid memory leaks
 		window.removeEventListener("hashchange", this.handleHashChange);
+		console.log("componentWillUnmount");
 	}
 
 	getCurrentFrontWindow = () => {
@@ -269,32 +303,31 @@ class WindowManager extends Component {
 	};
 
 	componentDidUpdate(prevProps, prevState) {
-		
+
 		const currentWindow = this.getCurrentFrontWindow();
+
+		//if windowname not desktop, return
+		if (this.state.windowName !== "desktop") {
+			return;
+		}
+
+
+
+		console.log("componentDidUpdate " + this.state.windowName);
 
 		if (currentWindow) {
 			// Check if the hash needs to be updated
-			const currentHash =
-				currentWindow.progID === 0 ? "" : currentWindow.progName;
-			if (window.location.hash !== `#${currentHash}`) {
-				window.location.hash = currentHash; // Update hash if it has changed
+			if (window.location.hash !== this.state.hash) {
+				window.location.hash = this.state.hash || "";
 			}
 
-			// Check for other conditions that might cause unnecessary state changes
-			if (
-				prevState.windowHistory[prevState.windowHistory.length - 1] !==
-				currentWindow.id
-			) {
-				this.setState((prevState) => ({
-					windowHistory: [...prevState.windowHistory, currentWindow.id], // Add to history if not already there
-				}));
-			}
 
 			// If no windows are open, ensure the Program Manager is opened
 			if (
 				this.state.windows.length === 0 &&
 				!this.state.windows.find((w) => w.progName === "progman.exe")
 			) {
+				console.log("Opening Program Manager");
 				this.handleOpenWindow(this.state.programs[0]); // Ensure Program Manager is open
 			}
 		}
@@ -353,74 +386,104 @@ class WindowManager extends Component {
 	};
 
 
-	handleStateChange = (windowId, newData) => {
-		updateWindowData(windowId, newData, this.state, this.setState.bind(this));
+	handleStateChange = (window, newData) => {
+		updateWindowData(window, this.state, this.setState.bind(this));
 	};
 
 
 	render() {
 		const { windows, minimizedWindows, contextMenuVisible, contextMenuPosition } = this.state;
-		console.log(windows);
+		console.log("windows on render", windows);
+		console.log("State", this.state)
+
 		return (
 			<div className="window-manager">
-				{windows.map((window) => (
-					<WindowBorder
-						key={window.id} // Ensure unique keys for each WindowBorder
-						title={window.title} // Pass title prop
-						onMinimize={() => this.minimizeWindow(window)} // Minimize handler
-						onMaximize={
-							(isMaximized) => {
-								console.log(`Maximized: ${isMaximized}`);
-								if (isMaximized) {
-									this.maximizeWindow(window); // Maximize handler
-								} else {
-									this.restoreWindow(window); // Restore handler
-								}
-							} // Maximize handler
-						}
-						onClose={() => console.log(`Closed ${window.title}`)} // Close handler
-						onClick={() => this.bringToFront(window.id, this.state)} // Bring to front on click
-						onContextMenu={(position) =>
-							this.handleContextMenu(position, window)
-						} // Context menu handler
-						minimised={window.minimized} // Pass minimized state
-						maximised={window.maximized} // Pass maximized state
-						initialPosition={window.initialPosition} // Initial position
-						zIndex={window.zIndex} // Z-index
-						{...window}
-					>
-						{/* Pass menu and content to WindowBorder if window has a menu */}
-						{/* Otherwise, pass only content */}
-						{window.menu && ( // Check if window has a menu
-							<MenuBar
-								menu={window.menu} // Pass menu structure
-								window={window} // Pass window data
-								onMenuClick={(action) => {
-									this.handleMenuClick(action, window); // Pass individual callback
-								}}
-							/>
-						)}
-						{window.component && (
-							<>
-								{window.component.menu && (
-									<MenuBar
-										menu={window.component.menu} // Pass menu structure
-										window={window} // Pass window data
-										onMenuClick={(action) => {
-											this.handleMenuClick(action, window); // Pass individual callback
-										}}
-									/>
-								)}
-								{window.isContainer ? (
-									<WindowContainer
-										controlComponent={window.controlComponent}
-										subPrograms={window.subPrograms}
-										initialSubWindows={window.subWindows}
-										onWindowDataChange={newData => this.handleStateChange(window.id, newData)}
+				{windows.map((window) => {
+					let windowId = this.state.windowName + '_' + window.windowId;
+
+					return (
+						<WindowBorder
+							key={windowId} // Ensure unique keys for each WindowBorder
+							windowId={windowId}
+							title={window.title} // Pass title prop
+							onMinimize={() => this.minimizeWindow(window)} // Minimize handler
+							onMaximize={
+								(isMaximized) => {
+									console.log(`Maximized: ${isMaximized}`);
+									if (isMaximized) {
+										this.maximizeWindow(window); // Maximize handler
+									} else {
+										this.restoreWindow(window); // Restore handler
+									}
+								} // Maximize handler
+							}
+							onClose={() => console.log(`Closed ${window.title}`)} // Close handler
+							onClick={() => this.bringToFront(window.id, this.state)} // Bring to front on click
+							onContextMenu={(position) =>
+								this.handleContextMenu(position, window)
+							} // Context menu handler
+							minimised={window.minimized} // Pass minimized state
+							maximised={window.maximized} // Pass maximized state
+							initialPosition={window.initialPosition} // Initial position
+							zIndex={window.zIndex} // Z-index
+							{...window}
+						>
+							{/* Pass menu and content to WindowBorder if window has a menu */}
+							{/* Otherwise, pass only content */}
+							{window.menu && ( // Check if window has a menu
+								<MenuBar
+									menu={window.menu} // Pass menu structure
+									window={window} // Pass window data
+									onMenuClick={(action) => {
+										this.handleMenuClick(action, window); // Pass individual callback
+									}}
+								/>
+							)}
+							{window.component && (
+								<>
+									{window.component.menu && (
+										<MenuBar
+											menu={window.component.menu} // Pass menu structure
+											window={window} // Pass window data
+											onMenuClick={(action) => {
+												this.handleMenuClick(action, window); // Pass individual callback
+											}}
+										/>
+									)}
+									{window.isContainer ? (
+										<WindowContainer
+											controlComponent={window.controlComponent}
+											subPrograms={window.programs}
+											initialSubWindows={window.subWindows}
+											onWindowDataChange={newData => this.handleStateChange(window.id, newData)}
+											windowId={window.id}
 										>
 
+											<div className="window-content">
+												<window.component
+													windowId={windowId}
+													key={this.state.windowName + '_component_' + window.id}
+													windowName={window.progName.replace('.exe', '')+'-'+window.id}
+													onStateChange={(newData) => this.handleStateChange(window.id, newData)}
+													initialSubWindows={window.subWindows}
+													data={window.data}
+													metadata={window.metadata || {}}
+													onMenuAction={(menu, window, menuHandler) => {
+														this.handleMenuAction(menu, window, menuHandler); // Pass the correct handler
+													}}
+													windowA={window}
+													programs={this.state.programs}
+													params={window.params}
+												/>{" "}
+											</div>
+										</WindowContainer>
+
+									) : (
 										<div className="window-content">
 											<window.component
+												key={this.state.windowName + '_component_' + window.id}
+												windowId={windowId}
+												windowName={window.progName.replace('.exe', '') + '-' + window.id}
 
 												onStateChange={(newData) => this.handleStateChange(window.id, newData)}
 												initialSubWindows={window.subWindows}
@@ -434,33 +497,19 @@ class WindowManager extends Component {
 												params={window.params}
 											/>{" "}
 										</div>
-									</WindowContainer>
-									
-								) : (
-								<div className="window-content">
-									<window.component
+									)}
+								</>
+							)}
+							{
+								window.content && <div>{window.content}</div>
 
-										onStateChange={(newData) => this.handleStateChange(window.id, newData)}
-										initialSubWindows={window.subWindows}
-										data={window.data}
+							}
 
-										onMenuAction={(menu, window, menuHandler) => {
-											this.handleMenuAction(menu, window, menuHandler); // Pass the correct handler
-										}}
-										windowA={window}
-										programs={this.state.programs}
-										params={window.params}
-									/>{" "}
-								</div>
-								)}
-							</>
-						)}
-						{
-							window.content && <div>{window.content}</div>
+						</WindowBorder>
+					)
+				} // Render each window
+				)}
 
-					}
-				</WindowBorder>
-				))}
 
 				{contextMenuVisible && (
 					<ContextMenu

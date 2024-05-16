@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import WindowManager from '../win/WindowManager';
 import { getPrograms } from '../win/programs';
 
-const Desk = ({ onStateChange }) => {
+const Desk = ({ onStateChange, windowId, windowName }) => {
 
 	// Filter out "Desk" itself to avoid recursion
 	const filteredPrograms = getPrograms().filter((p) => p.progName !== 'desk.exe');
@@ -11,7 +11,7 @@ const Desk = ({ onStateChange }) => {
 
 	return (
 		<div className="desk">
-			<WindowManager programs={filteredPrograms} windowName={'desk'} onStateChange={onStateChange} />
+			<WindowManager programs={filteredPrograms} windowName={windowName} onStateChange={onStateChange} />
 		</div>
 	);
 };

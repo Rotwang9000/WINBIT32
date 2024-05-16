@@ -1,13 +1,16 @@
 import React, { useRef, useEffect, useState, useMemo, useCallback } from 'react';
 import { saveAs } from 'file-saver';
+import { useIsolatedState, useIsolatedRef, useArrayState } from '../win/includes/customHooks';
 
-const Paintbrush = ({ onMenuAction, windowA }) => {
-	const canvasRef = useRef(null);
-	const contextRef = useRef(null);
-	const isDrawingRef = useRef(false); // Use ref for real-time behavior
+const Paintbrush = ({ onMenuAction, windowA, windowId }) => {
+	const [canvasUrl, setCanvasUrl] = useIsolatedState(windowId, 'canvasUrl', null);
+
+	const canvasRef = useRef( null);
+	const contextRef = useRef( null);
+	const isDrawingRef = useIsolatedRef(windowId, 'isDrawingRef', false); // Use ref for real-time behavior
 
 
-	const [selectedColour, setSelectedColour] = useState('#000000'); // Default to black
+	const [selectedColour, setSelectedColour] = useIsolatedState(windowId, 'selectedColour', '#000000'); // Default to black
 	const colourPalette = [
 		'#000000', '#FF0000', '#00FF00', '#0000FF',
 		'#FFFF00', '#FF00FF', '#00FFFF', '#FFFFFF',
@@ -115,23 +118,37 @@ const Paintbrush = ({ onMenuAction, windowA }) => {
 	const stopDrawing = () => {
 		isDrawingRef.current = false; // Update ref immediately
 		contextRef.current.closePath(); // End the drawing path
+		setCanvasUrl(canvasRef.current.toDataURL('image/png'));
+
 	};
 
 	useEffect(() => {
-		const canvas = canvasRef.current;
+			const canvas = canvasRef.current;
+			if (!canvas) return;  // Ensure canvas is present
 
-		if (!contextRef.current) { // Initialize only if context is not set
+			console.log('canvas:', canvas);
+			//if (!contextRef.current) { // Initialize only if context is not set
 
-			const w = window.innerWidth > 400 ? 400 : window.innerWidth;
-			const h = window.innerHeight > 400 ? 400 : window.innerHeight;
-			console.log(window)
-			
-			canvas.width = w;
-			canvas.height = h;
+				const w = window.innerWidth > 400 ? 400 : window.innerWidth;
+				const h = window.innerHeight > 400 ? 400 : window.innerHeight;
+				console.log(window)
+				
+				canvas.width = w;
+				canvas.height = h;
 
-		}
+			//}
 
 			const context = canvas.getContext('2d');
+
+			if (canvasUrl) {
+				const image = new Image();
+				image.onload = () => {
+					context.drawImage(image, 0, 0, canvas.width, canvas.height);
+				};
+				image.src = canvasUrl;
+			}
+
+
 			context.strokeStyle = selectedColour;
 			context.lineWidth = 2;
 			context.lineCap = 'round';

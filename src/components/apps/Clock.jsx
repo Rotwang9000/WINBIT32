@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './styles/Clock.css';
+import { useIsolatedState } from '../win/includes/customHooks';
 
 // List of common time zones (simplified for brevity)
 const timeZones = [
@@ -12,20 +13,22 @@ const timeZones = [
 	'Australia/Sydney',
 ];
 
-const Clock = ({ onTimeZoneChange }) => {
-	const [currentTime, setCurrentTime] = useState(new Date());
-	const [selectedTimeZone, setSelectedTimeZone] = useState('UTC'); // Default time zone
+const Clock = ({ onTimeZoneChange, windowId }) => {
+
+	const [currentTime, setCurrentTime] = useIsolatedState(windowId, 'currentTime',new Date());
+	const [selectedTimeZone, setSelectedTimeZone] = useIsolatedState(windowId, 'selectedTimeZone', 'UTC'); // Default time zone
 
 	useEffect(() => {
 		const timer = setInterval(() => {
 			setCurrentTime(new Date()); // Update the time every second
 		}, 1000);
 
-		// Clean up the timer on component unmount
+		// Clean up the timer on component unmount or when `selectedTimeZone` changes
 		return () => {
 			clearInterval(timer); // Prevent memory leaks
 		};
-	}, []);
+	}, [selectedTimeZone]); // Add `selectedTimeZone` to dependency array
+
 
 	// Convert the time to the selected time zone
 	const timeInTimeZone = new Date(

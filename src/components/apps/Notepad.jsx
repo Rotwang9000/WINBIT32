@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { saveAs } from 'file-saver';
+import { useIsolatedState, useIsolatedRef } from '../win/includes/customHooks';
 
-const Notepad = ({ onMenuAction, windowA }) => {
-	const [text, setText] = useState('');
-	const textRef = useRef(''); // Use `useRef` for real-time text tracking
+const Notepad = ({ onMenuAction, windowA, windowId }) => {
+	const [text, setText] = useIsolatedState(windowId,  'text', '');
+	const textRef = useIsolatedRef(windowId, 'text', ''); // Use `useRef` for real-time text tracking
 
 	textRef.current = text;
 	// Menu structure defined within the component

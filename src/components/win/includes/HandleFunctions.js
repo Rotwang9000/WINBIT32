@@ -1,3 +1,4 @@
+import { resetState } from "./StateFunctions";
 
 	export const handleQRRead = (setState) => (data) => {
 		setState({ qrResult: data, showQRPop: false });
@@ -106,7 +107,6 @@
 		//const { windows, highestZIndex } = state;
 
 
-
 		setState((prevState) => {
 			
 			//if context menu is visible, hide it
@@ -135,8 +135,10 @@
 				),
 				highestZIndex: newZIndex, // Update the highest z-index
 				windowHistory: [...prevState.windowHistory, id], // Update window history
+				hash: window.progID === 0 ? "" : window.progName, // Update hash if it has changed
 			};
-		});
+		}
+			);
 	};
 
 	export const handleOpenWindow = (setState) => (program) => {
@@ -168,5 +170,8 @@
 				(w) => w !== id 
 			), // Remove from history
 		}));
+		if (window.windowName){
+			resetState(window.windowName); // Reset the window state
+		}
 	};
 
