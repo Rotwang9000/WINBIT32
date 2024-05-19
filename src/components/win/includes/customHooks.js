@@ -1,6 +1,16 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useWindowData } from "./WindowContext";
 
+function isEqual(a, b) {
+	if (typeof a !== typeof b) return false;
+	if (typeof a === "object" && a !== null && b !== null) {
+		const keysA = Object.keys(a);
+		const keysB = Object.keys(b);
+		if (keysA.length !== keysB.length) return false;
+		return keysA.every((key) => isEqual(a[key], b[key]));
+	}
+	return a === b;
+}
 
 export function useIsolatedState(windowId, key, defaultValue) {
 	const { getWindowContent, setWindowContent } = useWindowData();
@@ -11,33 +21,43 @@ export function useIsolatedState(windowId, key, defaultValue) {
 		return storedValue !== undefined ? storedValue : defaultValue;
 	});
 
-	console.log('useIsolatedState: '+key, value);
+	const updateCounterRef = useRef([0,0]); // Counter to track updates
 
 	// Updates both local state and the context, handling function updates correctly
 	const setStoredValue = useCallback(
 		(newValue) => {
-			setValue(prevValue => {
+			setValue((prevValue) => {
+				const resolvedNewValue =
+					typeof newValue === "function" ? newValue(prevValue) : newValue;
 
-				const resolvedNewValue = typeof newValue === 'function' ? newValue(prevValue) : newValue;
-				    console.log(
-							`Updating state for key=${key} from ${prevValue} to ${resolvedNewValue}`
-						);
-
-				// Immediately update the context with the resolved value
+				// Update the context with the resolved value
 				setWindowContent(windowId, (prevState) => ({
 					...prevState,
 					[key]: resolvedNewValue,
 				}));
+
+				updateCounterRef.current[0]++;
 				return resolvedNewValue;
 			});
 		},
 		[windowId, key, setWindowContent]
 	);
-	console.log("getStoredValue: " +windowId + ' ' + key, getWindowContent(windowId)[key]);
+
+	useEffect(() => {
+		// Only update context if the value has actually changed to avoid infinite loops
+		if (updateCounterRef.current[0] !== updateCounterRef.current[1]) {
+			setWindowContent(windowId, (prevState) => ({
+				...prevState,
+				[key]: value,
+			}));
+			updateCounterRef.current[1] = updateCounterRef.current[0];
+			// } else {
+			// 	updateCounterRef.current = 0; // Reset the counter after the update cycle
+		}
+	}, [windowId, key, value, setWindowContent, getWindowContent]);
 
 	return [value, setStoredValue];
 }
-
 
 export function useIsolatedRef(windowId, key, defaultValue) {
 	const { getWindowContent, setWindowContent } = useWindowData();
@@ -46,7 +66,6 @@ export function useIsolatedRef(windowId, key, defaultValue) {
 	useEffect(() => {
 		const storedValue = getWindowContent(windowId)[key];
 		if (storedValue !== undefined && storedValue !== ref.current) {
-			console.log('gotStoredValueForRef: '+key, storedValue);
 			ref.current = storedValue;
 		}
 
@@ -62,6 +81,7 @@ export function useIsolatedRef(windowId, key, defaultValue) {
 
 	return ref;
 }
+
 export function useArrayState(windowId, key) {
 	const { getWindowContent, setWindowContent } = useWindowData();
 	const [localArray, setLocalArray] = useState(

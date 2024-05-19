@@ -2,7 +2,13 @@
 
 
 export const loadWindowState = (windowName) => {
-	//resetState();
+	if(!windowName) return;
+	if(!localStorage.getItem("windowState-"+windowName)) return;
+	if(windowName === "desktop") {
+		resetState(windowName);
+
+		return false;
+	}
 	const savedState = localStorage.getItem("windowState-"+windowName);
 	console.log("savedstate", savedState);
 	return savedState;
@@ -13,7 +19,15 @@ export const resetState = (windowName) => {
 };
 
 export const restoreWindowsFromSavedState = (savedState, programs, hOW) => {
+	return;
 	console.log("Restoring windows from saved state:", savedState);
+	//convert savedState to something that has forEach
+	if(!savedState) return;
+	if(savedState === "[]") return;
+	if(savedState === "null") return;
+	if(savedState === "") return;
+	if(typeof savedState === "string")
+		savedState = JSON.parse(savedState);
 	savedState.forEach((windowState) => {
 		const program = findProgramByName(programs, windowState.progName);
 		if (program) {

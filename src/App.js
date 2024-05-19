@@ -31,6 +31,11 @@ class App extends Component {
 		this.setState({ showDOSPrompt: true });
 	};
 
+	setStateAndSave = (newState) => {
+		this.setState(newState);
+	};
+
+
 	render() {
 		return (
 			<>
@@ -43,7 +48,7 @@ class App extends Component {
 					<>
 						<WelcomeWarning onExit={this.handleExit} />
 						<WindowDataProvider>
-							<WindowManager programs={programs} windowName={"desktop"} />
+							<WindowManager programs={programs} windowName={"desktop"} setStateAndSave={this.setStateAndSave} />
 						</WindowDataProvider>
 					</>
 				)}
