@@ -19,6 +19,11 @@ export const WindowDataProvider = ({ children }) => {
 			//log function caller
 			console.trace();
 
+			//if currentWindowData == resolvedNewData, do nothing
+			if (currentWindowData === resolvedNewData) {
+				return prevData;
+			}
+
 			if (resolvedNewData === null) {
 				if (!currentWindowData) {
 								// Window data is already null, do nothing

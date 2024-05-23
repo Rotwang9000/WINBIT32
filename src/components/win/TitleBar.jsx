@@ -25,7 +25,7 @@ const TitleBar = ({ title = "Program Manager", showMinMax = true, onContextMenu,
 			>
 				&#8212;
 			</div>
-			<div className='title-text'>{title}</div> {/* Display title */}
+			<div className='title-text' onDoubleClick={handleMaximize}  >{title}</div> {/* Display title */}
 			{showMinMax && (
 				<div className='maxmin'>
 					<div

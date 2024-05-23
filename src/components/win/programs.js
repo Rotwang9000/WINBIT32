@@ -4,6 +4,7 @@ import Calculator from "../apps/Calculator";
 import Clock from "../apps/Clock";
 import Paintbrush from "../apps/Paintbrush";
 import Desk from "../apps/Desk";
+import Winbit32 from "../apps/Wallet";
 
 export const getPrograms = () => {
 	return [
@@ -66,8 +67,8 @@ export const getPrograms = () => {
 		title: "Money Manager",
 		icon: "💰",
 		progName: "winbit32.exe",
-		component: Desk,
-		isContainer: true,
+		component: Winbit32,
+		//isContainer: true,
 		programs: [
 			{
 				progID: 0,

@@ -27,6 +27,7 @@ const WindowManager = ({ programs, windowName, handleOpenFunction, setStateAndSa
 
 	// Update the ref whenever highestZIndex changes
 	useEffect(() => {
+		if(highestZIndex !== highestZIndexRef.current)
 		highestZIndexRef.current = highestZIndex;
 	}, [highestZIndex]);
 
@@ -122,6 +123,7 @@ const WindowManager = ({ programs, windowName, handleOpenFunction, setStateAndSa
 	}, [setWindows]);
 
 	const bringToFront = useCallback((id) => {
+		
 		setWindows(prevState => {
 			const newZIndex = highestZIndexRef.current + 1;
 			const updatedWindows = prevState.map(w => w.id === id ? { ...w, zIndex: newZIndex } : w);
@@ -281,11 +283,11 @@ const WindowManager = ({ programs, windowName, handleOpenFunction, setStateAndSa
 		};
 	}, [ windowName]);
 
-	// useEffect(() => {
-	// 	if (handleOpenFunction) {
-	// 		handleOpenFunction(handleOpenWindow);
-	// 	}
-	// }, [handleOpenFunction, handleOpenWindow]);
+	useEffect(() => {
+		if (handleOpenFunction) {
+			handleOpenFunction(handleOpenWindow);
+		}
+	}, [handleOpenFunction, handleOpenWindow]);
 
 
 	// useEffect(() => {
@@ -350,17 +352,19 @@ const WindowManager = ({ programs, windowName, handleOpenFunction, setStateAndSa
 								)}
 								{window.isContainer ? (
 									<WindowContainer
+										key={windowName + '_container_' + windowId}
 										controlComponent={window.controlComponent}
 										subPrograms={window.programs}
+										windowName={window.progName.replace('.exe', '') + '-' + windowId}
 										initialSubWindows={window.subWindows}
 										onWindowDataChange={newData => handleStateChange(window.id, newData)}
-										windowId={window.id}
+										windowId={windowId}
 									>
 										<div className="window-content">
 											<window.component
+												key={windowName + '_component_' + windowId}
 												windowId={windowId}
-												key={windowName + '_component_' + window.id}
-												windowName={window.progName.replace('.exe', '') + '-' + window.id}
+												windowName={window.progName.replace('.exe', '') + '-' + windowId}
 												onStateChange={newData => handleStateChange(window.id, newData)}
 												initialSubWindows={window.subWindows}
 												data={window.data}
@@ -376,17 +380,24 @@ const WindowManager = ({ programs, windowName, handleOpenFunction, setStateAndSa
 								) : (
 									<div className="window-content">
 										<window.component
-											key={windowName + '_component_' + window.id}
+											key={windowName + '_component_' + windowId}
 											windowId={windowId}
-											windowName={window.progName.replace('.exe', '') + '-' + window.id}
+											windowName={window.progName.replace('.exe', '') + '-' + windowId}
 											onStateChange={newData => handleStateChange(window.id, newData)}
 											initialSubWindows={window.subWindows}
 											data={window.data}
+											metadata={window.metadata || {}}
 											onMenuAction={(menu, window, menuHandler) => functionMap.handleMenuAction(menu, window, menuHandler)}
 											windowA={window}
 											programs={programList}
 											params={window.params}
 											setStateAndSave={setStateAndSave}
+
+											subPrograms={window.programs}
+											onWindowDataChange={newData => handleStateChange(window.id, newData)}
+											controlComponent={window.controlComponent}
+
+
 										/>
 									</div>
 								)}

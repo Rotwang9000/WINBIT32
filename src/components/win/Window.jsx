@@ -10,7 +10,7 @@ const Window = ({ title, onMinimize, onMaximize, onClose, onContextMenu,  maximi
 	}
 
 	return (
-		<div className={"window " + maximisedClass}> 
+		<div className={"window " + maximisedClass} 	{...rest}> 
 			{/* Pass props to TitleBar, especially if they're required */}
 			<TitleBar
 				title={title}
@@ -19,7 +19,7 @@ const Window = ({ title, onMinimize, onMaximize, onClose, onContextMenu,  maximi
 				onMaximize={onMaximize}
 				onClose={onClose}
 				isMaximized={maximised}
-				{...rest}
+			
 			/>
 			{children} {/* Any additional content */}
 		</div>

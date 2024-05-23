@@ -15,7 +15,7 @@ const timeZones = [
 
 const Clock = ({ onTimeZoneChange, windowId }) => {
 
-	const [currentTime, setCurrentTime] = useIsolatedState(windowId, 'currentTime',new Date());
+	const [currentTime, setCurrentTime] = useState(new Date());
 	const [selectedTimeZone, setSelectedTimeZone] = useIsolatedState(windowId, 'selectedTimeZone', 'UTC'); // Default time zone
 
 	useEffect(() => {

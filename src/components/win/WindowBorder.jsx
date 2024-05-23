@@ -76,7 +76,7 @@ const WindowBorder = ({
 
 		<Draggable handle={"div>span>div>div.title>div"} defaultPosition={{ x: initialPosition.x, y: initialPosition.y }} bounds="parent" onStart={handleStart}
 >
-			<div className="window-border" style={{ zIndex: zIndex, 'width': 'fit-content' }}	onMouseDownCapture={onClick}
+			<div className="window-border" style={{ zIndex: zIndex, 'width': 'fit-content' }}	
 			>			<ResizableBox
 				width={initialPosition.width}
 				height={initialPosition.height}
@@ -85,7 +85,7 @@ const WindowBorder = ({
 				resizeHandles={['se', 'ne', 'nw', 'sw']}
 				handle={<MyHandle />}
 			>
-				<span style={{width: '100%', height: '100%'}}>
+					<span style={{ width: '100%', height: '100%' }} onMouseDownCapture={onClick}>
 					{/* Pass down props to ensure Window has required data */}
 					<Window
 						title={title}
@@ -94,6 +94,7 @@ const WindowBorder = ({
 						onClose={onClose}
 						onContextMenu={onContextMenu}
 						maximised={maximised}
+						
 					>
 						{children} {/* Additional content */}
 					</Window>

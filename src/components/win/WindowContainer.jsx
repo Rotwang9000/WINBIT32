@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import WindowManager from './WindowManager';
 import Toolbar from './Toolbar';
+import { rest } from 'lodash';
 
-const WindowContainer = ({  subPrograms, initialSubWindows, onWindowDataChange, windowId, children }) => {
+const WindowContainer = ({  subPrograms, initialSubWindows, onWindowDataChange, windowId, children, windowName, setStateAndSave, ...rest }) => {
 	const [currentSubWindows, setCurrentSubWindows] = useState(initialSubWindows || []);
 	const [handleSubProgramClick, setHandleSubProgramClick] = useState(() => {});
 	// Effect to propagate changes in sub-windows up to the parent window
@@ -17,7 +18,9 @@ const WindowContainer = ({  subPrograms, initialSubWindows, onWindowDataChange, 
 	const handleSetSubProgramClick = (handle) => {
 		setHandleSubProgramClick(() => handle);
 	};
-
+	// <div className="desk">
+	// 	<WindowManager programs={filteredPrograms} windowName={windowName} onStateChange={onStateChange} setStateAndSave={setStateAndSave} />
+	// </div>
 
 
 	return (
@@ -26,15 +29,18 @@ const WindowContainer = ({  subPrograms, initialSubWindows, onWindowDataChange, 
 			<div className="control-area">
 				<Toolbar subPrograms={subPrograms} onSubProgramClick={handleSubProgramClick} />
 				{children}
+
 			</div>
 			{/* Internal sub-window area */}
 			<div className={"desk-style sub-window-area-"+windowId}>
 
 				<WindowManager
 					programs={currentSubWindows}
-					windowName={"sub-window-area-" + windowId}
+					windowName={"sub-window-area-" + windowName}
 					onStateChange={onWindowDataChange}
 					handleOpenFunction={handleSetSubProgramClick}
+					setStateAndSave={setStateAndSave}
+					{...rest}	
 				/>
 			
 			</div>
