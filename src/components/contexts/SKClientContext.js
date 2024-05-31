@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useMemo } from "react";
+import React, { createContext, useContext, useMemo, useState } from "react";
 import { createSwapKit } from "@swapkit/sdk";
+import { Chain } from "@swapkit/sdk";
 
 const SKClientContext = createContext();
 
@@ -23,6 +24,9 @@ const createLoggingProxy = (skClient) => {
 };
 
 export const SKClientProvider = ({ children }) => {
+	const [wallets, setWallets] = useState([]);
+
+
 	const skClient = useMemo(() => {
 		const client = createSwapKit({
 			config: {
@@ -35,9 +39,12 @@ export const SKClientProvider = ({ children }) => {
 
 		return createLoggingProxy(client);
 	}, []);
+	const connectChains = Chain;
+
 
 	return (
-		<SKClientContext.Provider value={skClient}>
+		<SKClientContext.Provider
+			value={{ skClient, wallets, setWallets, connectChains }}>
 			{children}
 		</SKClientContext.Provider>
 	);

@@ -1,18 +1,21 @@
-import React from 'react';
+import React, { useEffect } from 'react';
+import ReactDOM from 'react-dom';
 import TitleBar from './TitleBar';
 import Draggable from 'react-draggable'; // For draggable dialogs
-import Resizable from 'react-resizable'; // For resizable dialogs
 
 const DialogBox = ({
 	title = 'Dialog',
 	content,
-	modal = false,
-	icon = 'info', // Can be 'info', 'question', 'exclamation', etc.
+	modal = true,
+	icon = '', // Can be 'info', 'question', 'exclamation', etc.
 	buttons = [], // Custom button configuration
+	buttonClass = '', // Optional class for buttons
+	dialogClass = '', // Optional class for dialog
 	onConfirm = () => { },
 	onCancel = () => { },
 	onClose = () => { }, // Handle close action
-	showMinMax = false // Optional minimize and maximize buttons
+	showMinMax = false, // Optional minimize and maximize buttons
+	children
 }) => {
 	const icons = {
 		info: 'ℹ️',
@@ -20,57 +23,83 @@ const DialogBox = ({
 		exclamation: '❗'
 	};
 
-	const iconSymbol = icons[icon];
+	const iconSymbol = (icon && icons[icon]) ? <div className="icon">{icons[icon]}</div> : null;
 
-	return (
+	const handleStart = (e, data) => {
+		e.stopPropagation();
+	}
+
+	if (!content) {
+		content = children;
+	} else {
+		content = <div className='message'>{content}</div>;
+	}
+
+	// Create a div that will be used as the portal container
+	const portalContainer = document.createElement('div');
+	portalContainer.id = 'dialog-portal-container';
+
+	useEffect(() => {
+		// Append the portal container to the body
+		document.body.appendChild(portalContainer);
+		return () => {
+			// Cleanup the portal container when the component unmounts
+			document.body.removeChild(portalContainer);
+		};
+	}, [portalContainer]);
+
+	// The dialog box content
+	const dialogContent = (
 		<div className={`dialog-wrapper ${modal ? 'modal' : ''}`}>
 			{modal && <div className="dialog-backdrop" onClick={onCancel} />} {/* Dimming background */}
-
-			<div>
-					<div className='dialog-border'>
-						<div className="dialog-box">
-							<TitleBar
-								title={title}
-								onClose={onClose} // Handle close action
-								showMinMax={showMinMax} // Optional minimize/maximize buttons
-							/>
-							<div className="content">
-								<div className="icon">{iconSymbol}</div> {/* Display the appropriate icon */}
-								<div className="message">{content}</div> {/* Dialog content */}
-							</div>
-							<div className="dialog-buttons">
-								{buttons.length > 0 ? (
-									buttons.map((btn, idx) => (
-										<button key={idx} onClick={btn.onClick}>
-											{btn.label}
-										</button>
-									))
-								) : (
-									<>
-										{icon === 'question' ? (
-											<>
-												<button onClick={onConfirm}>Yes</button>
-												<button onClick={onCancel}>No</button>
-											</>
-										) : (
-											<>
-												<button onClick={onConfirm}>OK</button>
-												<button onClick={onCancel}>Cancel</button>
-											</>
-										)}
-									</>
-								)}
-							</div>
+			<Draggable handle={"div div.title>div.title-text"} defaultPosition={{ x: 0, y: 0 }} positionOffset={{ x: '-50%', y: '-50%' }} onStart={handleStart}>
+				<div className='dialog-border'>
+					<TitleBar
+						title={title}
+						onClose={onClose} // Handle close action
+						showMinMax={showMinMax} // Optional minimize/maximize buttons
+					/>
+					<div className={`dialog-box ${dialogClass}`}>
+						<div className="content">
+							{iconSymbol} {/* Display the appropriate icon */}
+							{content}
 						</div>
-						{/* Resizing handles */}
-						<div className="bottomright handle"></div>
-						<div className="topright handle"></div>
-						<div className="topleft handle"></div>
-						<div className="bottomleft handle"></div>
+						<div className={'dialog-buttons ' + buttonClass}>
+							{buttons.length > 0 ? (
+								buttons.map((btn, idx) => (
+									<button key={idx} onClick={btn.onClick}>
+										{btn.label}
+									</button>
+								))
+							) : (
+								<>
+									{icon === 'question' ? (
+										<>
+											<button onClick={onConfirm}>Yes</button>
+											<button onClick={onCancel}>No</button>
+										</>
+									) : (
+										<>
+											<button onClick={onConfirm}>OK</button>
+											<button onClick={onCancel}>Cancel</button>
+										</>
+									)}
+								</>
+							)}
+						</div>
 					</div>
+					{/* Resizing handles */}
+					<div className="bottomright handle"></div>
+					<div className="topright handle"></div>
+					<div className="topleft handle"></div>
+					<div className="bottomleft handle"></div>
 				</div>
+			</Draggable>
 		</div>
 	);
+
+	// Render the dialog box into the portal container
+	return ReactDOM.createPortal(dialogContent, portalContainer);
 };
 
 export default DialogBox;

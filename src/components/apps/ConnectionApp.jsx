@@ -1,10 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { useSKClient } from '../contexts/SKClientContext';
+import { useWindowSKClient } from '../contexts/SKClientProviderManager';
 import './styles/ConnectionApp.css';
-import { Chain } from '@thorswap-lib/swapkit-sdk';
+import { Chain } from '@swapkit/sdk';
 import { generateMnemonic } from '@scure/bip39';
 import { wordlist } from '@scure/bip39/wordlists/english';
 import { useIsolatedState, useIsolatedRef } from '../win/includes/customHooks';
+import { QRCodeSVG } from 'qrcode.react';
+import { renderToString, renderToStaticMarkup } from 'react-dom/server'
+import { JSONParse, JSONStringify } from 'json-with-bigint';
+
+
 
 // Function to generate a random phrase
 function generatePhrase(size = 12) {
@@ -13,10 +18,13 @@ function generatePhrase(size = 12) {
 }
 
 
-function ConnectionApp({ windowId }) {
-	const skClient = useSKClient();
+function ConnectionApp({ windowId, providerKey }) {
+
+	const { skClient, setWallets, connectChains } = useWindowSKClient(providerKey);
+
 	const [phrase, setPhrase] = useIsolatedState(windowId, 'phrase', generatePhrase());
-	const [connectionStatus, setConnectionStatus] = useState('disconnected'); // 'disconnected', 'connecting', 'connected'
+	const [connectionStatus, setConnectionStatus] = useIsolatedState(windowId, 'connectionStatus', 'disconnected');
+	// 'disconnected', 'connecting', 'connected'
 	const [statusMessage, setStatusMessage] = useState('');
 
 	const currentPhraseRef = useIsolatedRef(windowId, 'phrase', '');
@@ -30,17 +38,42 @@ function ConnectionApp({ windowId }) {
 	const handleConnect = async () => {
 		setConnectionStatus('connecting');
 		setStatusMessage('Connecting...');
-		const connectChains = [Chain.Ethereum, Chain.Bitcoin, Chain.THORChain]
 
 		const phrase = currentPhraseRef.current;
 		console.log('Connecting with phrase:', phrase.trim());
 		console.log('connecting with skClient:', skClient);
 		try {
 			// Simulate connecting with a phrase (you can add real connection logic here)
-			const conn = skClient.connectKeystore(connectChains, phrase);
-			console.log('Connected successfully:', conn);
-			setConnectionStatus('connected');
-			setStatusMessage('Connected successfully.');
+			skClient.connectKeystore(connectChains, phrase)
+			.then(async (wallet) => {
+				console.log('Connected successfully', wallet);
+				skClient.getWalletByChain(Chain.Ethereum).then(async (result) => {
+
+					const wallets = await Promise.all(connectChains.map(skClient.getWalletByChain));
+
+					//add a qr image to each wallet
+					wallets.forEach((wallet) => {
+						wallet.qrimage = renderToStaticMarkup(<QRCodeSVG renderAs='svg' value={wallet.address} />).toString();
+
+					});
+
+					setWallets(wallets);
+
+
+					console.log('Connected successfully', wallets);
+					console.log('Connected successfully', wallets[0].balance[0]);
+
+					setConnectionStatus('connected');
+					setStatusMessage('Connected successfully.');
+				});
+			})
+			.catch((error) => {
+				console.error('Connection failed', error);
+				setConnectionStatus('disconnected');
+				setStatusMessage(`Connection failed: ${error.message}`);
+			})
+			;
+
 		} catch (error) {
 			console.error('Connection failed', error);
 			setConnectionStatus('disconnected');
@@ -58,6 +91,8 @@ function ConnectionApp({ windowId }) {
 				return 'red';
 		}
 	};
+
+
 
 	return (
 		<div className="connection-app">

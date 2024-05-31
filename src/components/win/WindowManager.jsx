@@ -9,8 +9,9 @@ import { loadWindowState, saveWindowState, initializeWindows, updateWindowData, 
 import { useIsolatedState, useIsolatedRef } from './includes/customHooks';
 import { getPrograms } from './programs';
 import { useWindowData } from './includes/WindowContext';
+import  './styles/scrollbar.css'
 
-const WindowManager = ({ programs, windowName, handleOpenFunction, setStateAndSave }) => {
+const WindowManager = ({ programs, windowName, handleOpenFunction, setStateAndSave, providerKey }) => {
 	const [windows, setWindows] = useIsolatedState(windowName, 'windows', []);
 	const [minimizedWindows, setMinimizedWindows] = useIsolatedState(windowName, 'minimizedWindows', []);
 	const [contextMenuVisible, setContextMenuVisible] = useIsolatedState(windowName, 'contextMenuVisible', false);
@@ -75,10 +76,16 @@ const WindowManager = ({ programs, windowName, handleOpenFunction, setStateAndSa
 
 
 	const handleOpenWindow = useCallback((program, metadata = {}, save = true) => {
-		console.log('Opening window', program, highestZIndexRef.current);
-		setWindows(prevState => {
+		if (highestZIndexRef.current === undefined) {
+			setHighestZIndex(1);
+			highestZIndexRef.current = 1;
+		}
+
+		console.log('Opening window in ' + windowName, program, highestZIndexRef.current);
+
+		setWindows((prevState = []) => {
 			console.log('Opening window', program, highestZIndexRef.current, prevState);
-			if (prevState === undefined) (prevState = []);
+
 			const newZIndex = highestZIndexRef.current + 1;
 			const newWindow = {
 				id: prevState.length + 1,
@@ -88,23 +95,29 @@ const WindowManager = ({ programs, windowName, handleOpenFunction, setStateAndSa
 				...program,
 			};
 
-			console.log('Opening new window with zIndex', newZIndex, highestZIndex, newWindow);
+			console.log('Opening new window with zIndex', newZIndex, highestZIndexRef.current, newWindow);
 			setHighestZIndex(newZIndex);
+			highestZIndexRef.current = newZIndex;
 
 			const updatedWindows = [...prevState, newWindow];
-			// Update window history here if needed
 			return updatedWindows;
 		});
-	}, [highestZIndex, closeWindow, setWindows]);
+	}, [setWindows, windowName, closeWindow]);
+
+
 
 	const handleStateChange = useCallback((windowId, newData) => {
-		updateWindowData(windowId, newData, setWindows);
+		//updateWindowData(windowId, newData, setWindows);
 	}, [setWindows]);
 
 	const handleContextMenu = useCallback((position, windowId) => {
-		setContextMenuPosition(position);
-		setContextMenuVisible(true);
-		contextWindowId.current = windowId;
+		if(contextMenuVisible) {
+			setContextMenuVisible(false);
+		}else{
+			setContextMenuPosition(position);
+			setContextMenuVisible(true);
+			contextWindowId.current = windowId;
+		}
 	}, [setContextMenuPosition, setContextMenuVisible]);
 
 
@@ -123,8 +136,17 @@ const WindowManager = ({ programs, windowName, handleOpenFunction, setStateAndSa
 	}, [setWindows]);
 
 	const bringToFront = useCallback((id) => {
-		
+		if(highestZIndexRef.current === undefined) {
+			setHighestZIndex(1);
+			highestZIndexRef.current = 1;
+		}
+		if( id === undefined) return;
+		//if already at the top, do nothing
+		if( windows.find(w => w.id === id).zIndex === highestZIndexRef.current) return;
+		console.log('Bringing to front', id);
+
 		setWindows(prevState => {
+		
 			const newZIndex = highestZIndexRef.current + 1;
 			const updatedWindows = prevState.map(w => w.id === id ? { ...w, zIndex: newZIndex } : w);
 			setHighestZIndex(newZIndex);
@@ -185,7 +207,7 @@ const WindowManager = ({ programs, windowName, handleOpenFunction, setStateAndSa
 	const convertToFunction = (input, functionMap) => {
 		if (typeof input === "string" && input.startsWith("!!")) {
 			const functionName = input.slice(2); // Remove "!!" prefix
-			console.log(`Converting ${input} to function in window ${windowName}`);
+			// console.log(`Converting ${input} to function in window ${windowName}`);
 			return functionMap[functionName]; // Return the function reference
 		}
 		return input; // Return the original input if not a special case
@@ -201,7 +223,64 @@ const WindowManager = ({ programs, windowName, handleOpenFunction, setStateAndSa
 		handleMenuAction: HandleFunctions.handleMenuAction(setWindowManagerState),
 	};
 
-	
+	function convertObjectFunctions(obj, functionMap) {
+		// Base case: if the object is not really an object (or is null), return it unchanged
+		if (obj === null || typeof obj !== 'object') {
+			return obj;
+		}
+
+		// Iterate over each key in the object
+		Object.keys(obj).forEach(key => {
+			const value = obj[key];
+
+			// If the value is a string and it matches a key in the functionMap, convert it
+			if (typeof value === 'string' && value.startsWith("!!")) {
+				// console.log('converting', value);
+
+				if (key.startsWith("_")) {
+					key = key.slice(1);
+				}
+
+
+				obj[key] = convertToFunction(
+					value,
+					functionMap
+				);
+
+			} else if (typeof value === 'object') {
+				// If the value is an object, recursively process it
+				convertObjectFunctions(value, functionMap);
+			}
+		});
+
+		return obj;
+	}
+
+	useEffect(() => {
+		if (handleOpenFunction) {
+			handleOpenFunction(handleOpenWindow);
+		}
+		const functionMap = {
+			handleOpenWindow,
+			handleStateChange,
+			handleQRRead: HandleFunctions.handleQRRead(setStateAndSave),
+			toggleQRPop: HandleFunctions.toggleQRPop(setStateAndSave),
+			handleExit: HandleFunctions.handleExit(setWindowManagerState),
+			handleMenuClick: HandleFunctions.handleMenuClick(setWindowManagerState),
+			handleMenuAction: HandleFunctions.handleMenuAction(setWindowManagerState),
+		};
+
+		// Iterate through programs to replace specific strings with function references
+
+
+		programs.forEach(program => convertObjectFunctions(program, functionMap));
+
+
+
+
+
+	}, [handleOpenFunction, handleOpenWindow, programs, functionMap]);
+
 	useEffect(() => {
 		const initialize = async () => {
 			const loadedWindows = loadWindowState(windowName);
@@ -231,36 +310,8 @@ const WindowManager = ({ programs, windowName, handleOpenFunction, setStateAndSa
 					onStateChange: program.onStateChange ? handleStateChange : undefined
 				}));
 
+				programs.forEach(program => convertObjectFunctions(program, functionMap));
 
-				// Iterate through programs to replace specific strings with function references
-				programs.forEach((program) => {
-					// Cycle through keys in the program object
-					Object.keys(program).forEach((key) => {
-						// If the key's value is a string, convert to function if applicable
-						program[key] = convertToFunction(program[key], functionMap);
-						// If it's an object, recursively check for conversions
-						if (typeof program[key] === "object") {
-							//console.log(`Checking: ${key} for conversions`);
-							Object.keys(program[key]).forEach((subKey) => {
-								// If it's an object, recursively check for conversions
-								//console.log(`Checking:: ${subKey} for conversions ` + program[key][subKey]);
-
-								const val = program[key][subKey];
-
-								if (subKey.startsWith("_")) {
-									subKey = subKey.slice(1);
-								}
-
-
-								program[key][subKey] = convertToFunction(
-									val,
-									functionMap
-								);
-							}
-							);
-						}
-					});
-				});
 
 				setProgramList(mappedPrograms);
 
@@ -268,10 +319,13 @@ const WindowManager = ({ programs, windowName, handleOpenFunction, setStateAndSa
 				defaultProgramsInitialized.current = true;
 				const defaultPrograms = programs.filter(program => program.defaultOpen);
 				defaultPrograms.forEach(program => handleOpenWindow(program, {}, false));
-				console.log('defaultProgramsInitialized.current.donefresh', defaultProgramsInitialized.current);
+				console.log('defaultProgramsInitialized!.current.donefresh', defaultProgramsInitialized.current, defaultPrograms);
 			} else {
-				console.log('defaultProgramsInitialized.current', defaultProgramsInitialized.current);
+				console.log('defaultProgramsInitialized!.current', defaultProgramsInitialized.current);
 			}
+
+
+
 		};
 
 		initialize();
@@ -283,11 +337,6 @@ const WindowManager = ({ programs, windowName, handleOpenFunction, setStateAndSa
 		};
 	}, [ windowName]);
 
-	useEffect(() => {
-		if (handleOpenFunction) {
-			handleOpenFunction(handleOpenWindow);
-		}
-	}, [handleOpenFunction, handleOpenWindow]);
 
 
 	// useEffect(() => {
@@ -308,6 +357,7 @@ const WindowManager = ({ programs, windowName, handleOpenFunction, setStateAndSa
 	const handleMenuAction = HandleFunctions.handleMenuAction(setWindows);
 
 	return (
+		<>
 		<div className="window-manager">
 			{Array.isArray(windows) && windows.map(window => {
 				const windowId = windowName + '_' + window.windowId;
@@ -350,34 +400,7 @@ const WindowManager = ({ programs, windowName, handleOpenFunction, setStateAndSa
 										onMenuClick={(action) => handleMenuClick(action, window)}
 									/>
 								)}
-								{window.isContainer ? (
-									<WindowContainer
-										key={windowName + '_container_' + windowId}
-										controlComponent={window.controlComponent}
-										subPrograms={window.programs}
-										windowName={window.progName.replace('.exe', '') + '-' + windowId}
-										initialSubWindows={window.subWindows}
-										onWindowDataChange={newData => handleStateChange(window.id, newData)}
-										windowId={windowId}
-									>
-										<div className="window-content">
-											<window.component
-												key={windowName + '_component_' + windowId}
-												windowId={windowId}
-												windowName={window.progName.replace('.exe', '') + '-' + windowId}
-												onStateChange={newData => handleStateChange(window.id, newData)}
-												initialSubWindows={window.subWindows}
-												data={window.data}
-												metadata={window.metadata || {}}
-												onMenuAction={(menu, window, menuHandler) => functionMap.handleMenuAction(menu, window, menuHandler)}
-												windowA={window}
-												programs={programList}
-												params={window.params}
-												setStateAndSave={setStateAndSave}
-											/>
-										</div>
-									</WindowContainer>
-								) : (
+
 									<div className="window-content">
 										<window.component
 											key={windowName + '_component_' + windowId}
@@ -396,34 +419,40 @@ const WindowManager = ({ programs, windowName, handleOpenFunction, setStateAndSa
 											subPrograms={window.programs}
 											onWindowDataChange={newData => handleStateChange(window.id, newData)}
 											controlComponent={window.controlComponent}
+											providerKey={providerKey}
 
+											onOpenWindow={handleOpenWindow}
 
 										/>
 									</div>
-								)}
+								
 							</>
 						)}
 						{window.content && <div>{window.content}</div>}
 					</WindowBorder>
 				);
 			})}
-			{contextMenuVisible && (
-				<ContextMenu
-					menuItems={[
-						{ label: 'Close', shortcut: 'O' },
-						{ label: 'Restore', shortcut: 'R' },
-						{ label: 'Minimize', shortcut: 'N' },
-						{ label: 'Maximize', shortcut: 'X' },
-					]}
-					position={contextMenuPosition}
-					onAction={handleContextMenuAction}
-				/>
-			)}
+
 			<Taskbar
 				minimizedWindows={minimizedWindows}
 				onRestore={restoreWindow}
 			/>
 		</div>
+					{
+		contextMenuVisible && (
+			<ContextMenu
+				menuItems={[
+					{ label: 'Close', shortcut: 'O' },
+					{ label: 'Restore', shortcut: 'R' },
+					{ label: 'Minimize', shortcut: 'N' },
+					{ label: 'Maximize', shortcut: 'X' },
+				]}
+				position={contextMenuPosition}
+				onAction={handleContextMenuAction}
+			/>
+		)
+	}
+	</>
 	);
 };
 

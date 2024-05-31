@@ -1,8 +1,8 @@
 import React from 'react';
 
-const ProgramManager = ({ params, programs }) => {
+const ProgramManager = ({ params, programs, onOpenWindow }) => {
 
-	const onOpenWindow = params.onOpenWindow;
+	//const onOpenWindow = params.onOpenWindow;
 
 	//console.log('Programs:', params);
 

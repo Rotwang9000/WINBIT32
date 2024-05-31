@@ -26,11 +26,13 @@ export function useIsolatedState(windowId, key, defaultValue) {
 
 	// Updates both local state and the context, handling function updates correctly
 	const setStoredValue = useCallback(
+				
 		(newValue) => {
+			//console.log("setStoredValue: ", windowId, key, newValue, value, updateCounterRef.current[0]);
+
 			setValue((prevValue) => {
 				const resolvedNewValue =
 					typeof newValue === "function" ? newValue(prevValue) : newValue;
-
 				// Update the context with the resolved value, if it has changed
 				if (isEqual(resolvedNewValue, prevValue)) return prevValue;
 

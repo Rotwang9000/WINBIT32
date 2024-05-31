@@ -1,60 +1,81 @@
-import React, { Component } from "react";
+import React, { useState, useEffect } from "react";
 import QRpop from "./qrpop";
 import DOSPrompt from "./components/win/DOSPrompt";
 import WelcomeWarning from "./components/WelcomeWarning";
 import { getPrograms } from "./components/win/programs";
 import WindowManager from "./components/win/WindowManager";
 import { WindowDataProvider } from "./components/win/includes/WindowContext";
-
+import { SKClientProviderManager } from "./components/contexts/SKClientProviderManager";
 const programs = getPrograms();
 
-class App extends Component {
-	constructor(props) {
-		super(props);
+const App = () => {
+	const [qrResult, setQrResult] = useState(null);
+	const [showQRPop, setShowQRPop] = useState(false);
+	const [showDOSPrompt, setShowDOSPrompt] = useState(false);
+	const [minimizedWindows, setMinimizedWindows] = useState([]);
+	const [windowHistory, setWindowHistory] = useState([]);
+	const [windows, setWindows] = useState([]);
+	const [contextMenuVisible, setContextMenuVisible] = useState(false);
+	const [contextMenuPosition, setContextMenuPosition] = useState({
+		x: 0,
+		y: 0,
+	});
+	const [highestZIndex, setHighestZIndex] = useState(1);
 
-		// Function to replace string with function references
-
-		this.state = {
-			qrResult: null,
-			showQRPop: false,
-			showDOSPrompt: false, // To manage "exit"
-			minimizedWindows: [], // State to track minimized windows
-			windowHistory: [], // History of accessed windows
-			windows: [], // Array to store open windows
-			contextMenuVisible: false,
-			contextMenuPosition: { x: 0, y: 0 },
-			highestZIndex: 1, // Track the highest z-index in use
-		};
-	}
-	
-	handleExit = () => {
-		this.setState({ showDOSPrompt: true });
+	const handleExit = () => {
+		setShowDOSPrompt(true);
 	};
 
-	setStateAndSave = (newState) => {
-		this.setState(newState);
+	const setStateAndSave = (newState) => {
+		setQrResult(newState.qrResult || qrResult);
+		setShowQRPop(newState.showQRPop || showQRPop);
+		setShowDOSPrompt(newState.showDOSPrompt || showDOSPrompt);
+		setMinimizedWindows(newState.minimizedWindows || minimizedWindows);
+		setWindowHistory(newState.windowHistory || windowHistory);
+		setWindows(newState.windows || windows);
+		setContextMenuVisible(newState.contextMenuVisible || contextMenuVisible);
+		setContextMenuPosition(newState.contextMenuPosition || contextMenuPosition);
+		setHighestZIndex(newState.highestZIndex || highestZIndex);
 	};
 
+	const toggleQRPop = () => {
+		setShowQRPop(!showQRPop);
+	};
 
-	render() {
-		return (
-			<>
-				{this.state.showQRPop && (
-					<QRpop onQRRead={this.handleQRRead} closeQrPop={this.toggleQRPop} />
-				)}
-				{this.state.showDOSPrompt ? (
-					<DOSPrompt />
-				) : (
-					<>
-						<WelcomeWarning onExit={this.handleExit} />
-						<WindowDataProvider>
-							<WindowManager programs={programs} windowName={"desktop"} setStateAndSave={this.setStateAndSave} />
-						</WindowDataProvider>
-					</>
-				)}
-			</>
-		);
-	}
-}
+	const handleQRRead = (result) => {
+		setQrResult(result);
+		setShowQRPop(false);
+	};
+
+	// const { addProvider } = useSKClientProviderManager();
+
+	// const handleAddProvider = (windowId) => {
+	// 	const newKey = `provider-${windowId}`;
+	// 	addProvider(newKey);
+	// 	return newKey;
+	// };
+
+
+	return (
+		<SKClientProviderManager>
+			{showQRPop && <QRpop onQRRead={handleQRRead} closeQrPop={toggleQRPop} />}
+			{showDOSPrompt ? (
+				<DOSPrompt />
+			) : (
+				<>
+					<WelcomeWarning onExit={handleExit} />
+					<WindowDataProvider>
+						<WindowManager
+							programs={programs}
+							windowName={"desktop"}
+							setStateAndSave={setStateAndSave}
+							providerKey={"desktop"}
+						/>
+					</WindowDataProvider>
+				</>
+			)}
+		</SKClientProviderManager>
+	);
+};
 
 export default App;

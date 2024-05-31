@@ -3,13 +3,13 @@ import './styles/Calculator.css';
 import { evaluate } from 'mathjs';
 import { useIsolatedState, useIsolatedRef, useArrayState } from '../win/includes/customHooks';
 import WindowContainer from '../win/WindowContainer';
-import { SKClientProvider } from '../contexts/SKClientContext';
 import ConnectionApp from './ConnectionApp';
 
+const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave, handleStateChange }) => {
 
-const Wallet = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave, handleStateChange }) => {
 	const [input, setInput] = useIsolatedState(windowId, 'input', ''); // Calculator input
 	const { array: history, appendItem: appendHistory } = useArrayState(windowId, 'history');
+	 	
 
 	const currentRef = useIsolatedRef(windowId, 'input', ''); // Use `useRef` for real-time input tracking
 
@@ -32,7 +32,6 @@ const Wallet = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave, 
 
 	// Handle menu actions (Copy/Paste)
 	const handleMenuClick = useCallback((action) => {
-
 		const currentInput = currentRef.current; // Get the current input from `useRef`
 
 		switch (action) {
@@ -55,25 +54,11 @@ const Wallet = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave, 
 		if (onMenuAction) {
 			onMenuAction(menu, windowA, handleMenuClick); // Pass menu and click handler
 		}
-	}, []);
-
-	// Evaluate the calculator expression
-	const evaluateExpression = () => {
-		const currentInput = currentRef.current; // Get the current input from `useRef`
-		try {
-			const result = evaluate(currentInput); // Use `evaluate` function from `mathjs` library for safer evaluation
-			appendHistory(`${input} = ${result}`);
-			setInput(result.toString()); // Update input with the result
-		} catch (e) {
-			console.error("Error evaluating expression:", e);
-			setInput('Error'); // Handle invalid expressions
-		}
-	};
+	}, [onMenuAction, menu, windowA, handleMenuClick]);
 
 	const appendInput = (value) => {
 		setInput((prevInput) => prevInput + value); // Append the value to the input
-	}
-
+	};
 
 	// Handle button clicks for numbers and operators
 	const handleButtonClick = (value) => {
@@ -84,24 +69,22 @@ const Wallet = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave, 
 		setInput(''); // Clear calculator input
 	};
 
+
 	return (
-		
 		<WindowContainer
 			key={windowName + '_container_' + windowId}
 			controlComponent={windowA.controlComponent}
 			subPrograms={windowA.programs}
 			windowName={windowA.progName.replace('.exe', '') + '-' + windowId}
-			initialSubWindows={windowA.subWindows}
+			initialSubWindows={windowA.programs}
 			onWindowDataChange={newData => handleStateChange(windowA.id, newData)}
 			windowId={windowId}
 			setStateAndSave={setStateAndSave}
-			
+			providerKey={windowName}
 		>
-		<SKClientProvider>
-			<ConnectionApp windowId={windowId} />
-		</SKClientProvider>
+			<ConnectionApp windowId={windowId} providerKey={windowName} />
 		</WindowContainer>
 	);
 };
 
-export default Wallet;
+export default Winbit32;

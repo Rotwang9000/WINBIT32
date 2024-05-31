@@ -1,0 +1,153 @@
+
+
+.irc-window {
+	display: flex;
+	flex-direction: row;
+	height: 100vh;
+	width: 100vw;
+	background-color: #ccc
+}
+
+.channel-list-container {
+	display: flex;
+	flex-direction: row;
+	width: 30%;
+	background-color: #fff;
+	border-right: 1px solid #444;
+	overflow-y: auto;
+}
+
+.channel-categories {
+	width: 50%;
+	border-right: 1px solid #444;
+	overflow-y: auto;
+}
+
+.channel-list {
+	width: 50%;
+	overflow-y: auto;
+}
+
+.channel-categories h3,
+.channel-list h3 {
+	margin: 0;
+	padding: 5px 10px;
+	font-size: 1.1em;
+	border-bottom: 1px solid #444;
+}
+
+.channel-categories ul,
+.channel-list ul {
+	list-style: none;
+	padding: 0;
+	margin: 0;
+}
+
+.channel-categories li,
+.channel-list li {
+	padding: 5px 10px;
+	cursor: pointer;
+}
+
+.channel-categories li:hover,
+.channel-list li:hover {
+	background-color: #fff;
+}
+
+.channel-list .channel-item {
+	display: flex;
+	justify-content: space-between;
+	padding: 5px 10px;
+	cursor: pointer;
+}
+
+.channel-list .channel-item:hover {
+	background-color: #ccc;
+}
+
+.message-panel {
+	display: flex;
+	flex-direction: column;
+	width: 50%;
+	background-color: #fff;
+	overflow-y: auto;
+	border-right: 1px solid #444;
+	padding: 10px;
+	width: 100%;
+}
+
+.message-panel .message {
+	padding: 5px;
+	border-bottom: 1px solid #444;
+}
+
+.message-panel .message p {
+	margin: 0 0 5px;
+}
+
+.message-panel .message small {
+	color: #888;
+}
+
+.user-list {
+	width: 20%;
+	background-color: #2a2a2a;
+	overflow-y: auto;
+	border-left: 1px solid #444;
+}
+
+.user-list .user {
+	padding: 5px 10px;
+	border-bottom: 1px solid #444;
+}
+
+.user-list .user p {
+	margin: 0;
+}
+
+
+.channel-list-container {
+	display: flex;
+	font-family: 'Courier New', monospace;
+	font-size: 14px;
+	color: #000;
+	width: 100%	;
+}
+
+.group-column {
+	width: 30%;
+	border-right: 1px solid #ccc;
+	padding: 10px;
+}
+
+.group-column .group-heading {
+	cursor: pointer;
+	padding: 5px 0;
+	color: darkblue;
+	/* mIRC-like blue for group names */
+}
+
+.group-column .group-heading:hover {
+	text-decoration: underline;
+}
+
+.channel-column {
+	width: 70%;
+	padding: 10px;
+}
+
+.channel-column ul {
+	list-style-type: none;
+	padding-left: 0;
+}
+
+.channel-column li {
+	cursor: pointer;
+	color: darkgreen;
+	/* mIRC-like green for channels */
+	padding: 5px 0;
+}
+
+.channel-column li:hover {
+	text-decoration: underline;
+}

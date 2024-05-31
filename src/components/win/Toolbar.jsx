@@ -2,6 +2,9 @@ import React from 'react';
 
 const Toolbar = ({ subPrograms, onSubProgramClick }) => {
 
+	if (!subPrograms) {
+		return null;
+	}
 
 
 	return (
@@ -11,7 +14,7 @@ const Toolbar = ({ subPrograms, onSubProgramClick }) => {
 					key={index}
 					onClick={() => onSubProgramClick(program)}
 				>
-					{program.title + ' ' + program.progName}
+					{ program.icon + ' ' +  program.title }
 				</button>
 			))}
 		</div>

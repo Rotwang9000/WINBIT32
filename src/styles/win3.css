@@ -14,6 +14,7 @@ html,body {
 	overflow: hidden;
 }
 
+
 #root {
 	position: relative;
 	width: 100%;
@@ -48,7 +49,7 @@ html,body {
 }
 
 .window-manager {
-	position: relative;
+	position: absolute;
 	width: 100%;
 	height: 100%;
 	display: flex;
@@ -66,6 +67,7 @@ html,body {
 	flex-direction: column;
 	overflow: hidden;
 	flex-grow: 1;
+	position: relative;
 }
 
 .window-content .window-manager>.maximised>.window-border>.maximised{
@@ -92,7 +94,69 @@ html,body {
 	flex-direction: column;
 }
 
-.window .title, .dialog-box .title {
+.dialog-wrapper {
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100vw;
+	height: 100vh;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	z-index: 1000;
+	/* Ensure it's above other elements */
+}
+
+.dialog-backdrop {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background: rgba(0, 0, 0, 0.5);
+}
+
+
+.dialog-box-row {
+	display: flex;
+	flex-direction: row;
+	flex-grow: 1;
+}
+
+.dialog-box-row-adapt{
+	display: flex;
+	flex-direction: row;
+	flex-grow: 1;
+	aspect-ratio: 466/218;
+	min-width: fit-content;
+	min-height: fit-content;
+	height: 100%;
+		overflow-x: visible;
+			overflow-y: visible;
+			overflow: visible!important;
+
+}
+.dialog-box-row-adapt .content{
+	flex-grow: 1;
+	overflow-x: visible;
+	overflow-y: visible;
+	overflow: visible!important;	
+	min-height: fit-content!important;
+	height: 100% !important;
+}
+
+
+
+
+@media screen and (max-width: 600px) {
+	.dialog-box-row-adapt {
+		flex-direction: column;
+			aspect-ratio: 218/466;
+	}
+}
+
+
+.window .title, .dialog-border .title {
 	background: #000080;
 	color: #fff;
 	text-align: center;
@@ -109,18 +173,18 @@ html,body {
 
 }
 
-.window .title-text, .dialog-box .title-text {
+.window .title-text, .dialog-border .title-text {
 	width: 100%;	
 }
 
-.window .maxmin, .dialog-box .maxmin {
+.window .maxmin, .dialog-border .maxmin {
 	display: flex;
 	margin: 0px;
 
 }
 
 
-.window .title .button, .dialog-box .title .button, .dialog-buttons button {
+.window .title .button, .dialog-border .title .button, .dialog-buttons button {
 	background: #c0c0c0;
 	color: #000;
 	display: inline-block;
@@ -134,11 +198,11 @@ html,body {
 	z-index: 5555;
 }
 
-.window .title .button:active, .dialog-box .title .button:active, .dialog-buttons button:active {
+.window .title .button:active, .dialog-border .title .button:active, .dialog-buttons button:active {
 	border: inset 3px;
 }
 
-.window .title .close, .dialog-box .title .close{
+.window .title .close, .dialog-border .title .close{
 	float: left;
 	color: #fff;
 	font-weight: 800;
@@ -172,6 +236,7 @@ html,body {
 	background: #fff;
 	border: solid 1px #000080;
 	margin-left: -7px;
+	z-index: 1000000;
 }
 
 .menubar .menuitem {
@@ -354,6 +419,7 @@ html,body {
 	padding: 3px;
 	min-width: fit-content;
 	min-height: fit-content;
+	z-index: 999999999;
 }
 
 .dialog-border{
@@ -415,6 +481,13 @@ html,body {
 	padding: 10px;
 }
 
+.dialog-buttons-column {
+	display: flex;
+	flex-direction: column;
+	justify-content: flex-start;
+	padding: 10px;
+}
+
 .dialog-buttons button {
 	padding: 5px;
 	cursor: pointer;
@@ -423,4 +496,47 @@ html,body {
 	font-size: 14px;
 	line-height: normal;
 	font-weight: 600;
+}
+
+.dialog-buttons-column button {
+	padding: 0px;
+	cursor: pointer;
+	min-width: 100px;
+	height: 26px;
+	font-size: 14px;
+	line-height: normal;
+	font-weight: 600;
+	margin-bottom: 10px;
+	border-radius: 2px;
+	/* narrow shadow */
+	box-shadow: 0 0 0 1px #000;
+}
+
+
+.no-icon{
+
+	/* width: '20px', height: '20px', marginRight: '8px', backgroundColor: 'orange', borderRadius: '5px', overflow: 'hidden', fontSize: '12px', display: 'inline-block' */
+	width: 20px;
+	height: 20px;
+	margin-right: 8px;
+	background-color: orange;
+	border-radius: 5px;
+	overflow: hidden;
+	font-size: 16px;
+	display: inline-block;
+	text-align: center;
+	vertical-align: middle;
+
+}
+
+.token-icon{
+	width: 20px;
+	height: 20px;
+	margin-right: 8px;
+	border-radius: 5px;
+	overflow: hidden;
+	font-size: 12px;
+	display: inline-block;
+	text-align: center;
+	vertical-align: middle;
 }

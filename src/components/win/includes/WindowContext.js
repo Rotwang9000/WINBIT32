@@ -15,9 +15,7 @@ export const WindowDataProvider = ({ children }) => {
 			const resolvedNewData =
 				typeof newData === "function" ? newData(currentWindowData) : newData;
 
-			console.log("setWindowContent!: ", windowId, currentWindowData, resolvedNewData);
-			//log function caller
-			console.trace();
+	
 
 			//if currentWindowData == resolvedNewData, do nothing
 			if (currentWindowData === resolvedNewData) {
@@ -33,7 +31,15 @@ export const WindowDataProvider = ({ children }) => {
 				const { [windowId]: _, ...remainingData } = prevData;
 				return remainingData;
 			}
-
+			
+			console.log(
+				"setWindowContent!: ",
+				windowId,
+				currentWindowData,
+				resolvedNewData
+			);
+			//log function caller
+			console.trace();
 
 			return {
 				...prevData,

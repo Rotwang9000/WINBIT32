@@ -1,0 +1,207 @@
+/* General styling for the dialog */
+.token-chooser-dialog {
+	font-family: "play", fixedsys, consolas, monospace;
+	font-weight: 600;
+	font-size: 12px;
+	color: #000000;
+	background-color: #ffffff;
+	display: grid;
+	flex-direction: row;
+	overflow: visible;
+	justify-content: space-between;
+	/* 2x3 grid, top and bottom fixed height 35px, centre stretch, down then accross */
+	grid-template-rows: 35px auto 45px;
+	grid-template-columns: 1fr 1fr;
+	/* Down then across grid like 
+	"file-text-box chains-for"
+		"token-list chain-list"
+		"category-dd providers-dd";*/
+	grid-auto-flow: column;
+	min-width: 600px;
+	grid-row-gap: 15px;
+	grid-column-gap: 30px;
+	padding: 10px;
+	box-sizing: border-box;
+	
+}
+
+.token-chooser-dialog>div {
+	height: 100%;
+	width: 100%;
+	position: relative;
+	box-sizing: border-box;
+	/* margin: 20px; */
+}
+
+.token-chooser-dialog ul, .token-chooser-dialog input, .token-chooser-dialog select {
+	height: 100%;
+	width: 100%;
+	position: absolute;
+}
+
+.file-text-box input{
+	position: relative;
+}
+
+.token-chooser-dialog .file-text-box {
+	padding-right: 15px;
+}
+
+.token-chooser-dialog .label {
+	font-weight: bold;
+	margin-bottom: 3px;
+}
+
+@media (max-width: 600px) {
+	.token-chooser-dialog {
+		flex-direction: column;
+		min-width: 274px;
+		min-height: 375px;
+		width: 100%;
+	}
+}
+
+/* Style for the left and right panels */
+.left-panel,
+.right-panel {
+	display: inline-block;
+	vertical-align: top;
+	margin: 10px;
+	flex: 1 1 0px;
+	width: 50%;
+}
+
+.panel {
+	display: flex;
+	flex-direction: column;
+	width: 100%;
+	margin-bottom: 8px;
+}
+
+.panel label {
+	margin-bottom: 5px;
+	font-weight: bold;
+}
+
+/* Style for dropdowns and input fields */
+.token-chooser-dialog select,
+.token-chooser-dialog input[type="text"] {
+	background-color: #ffffff;
+	border: 1px solid #000;
+	font-size: 12px;
+	color: #000000;
+	padding: 2px 6px;
+	margin-bottom: 8px;
+	height: 22px; /* Adjusted height for alignment */
+		font-family: "play", fixedsys, consolas, monospace;
+			font-weight: 600;
+}
+.select-dropdown-button {
+	appearance: none;
+	background-color: #f0f0f0;
+	border: 2px outset #d4d4d4;
+	color: black;
+	font-family: 'Tahoma', 'MS Sans Serif', sans-serif;
+	font-size: 12px;
+	padding: 2px 20px 2px 6px;
+	/* Adjust for space for the arrow */
+	position: relative;
+	/* Needed for absolute positioning of the arrow */
+	cursor: pointer;
+}
+
+.select-dropdown-button-wrapper::after {
+	content: "🠻";
+	position: absolute;
+	font-size: 18px;
+	
+font-stretch: ultra-condensed;
+	text-underline-offset: -2px;
+	line-height: 12px;
+	height: 14px;
+	width: 12px;
+	padding-left: 2px;
+	padding-right: 2px;
+	right: 1px;
+	/* Adjust as needed */
+	bottom: 7px;
+	/* Center vertically */
+	text-decoration: underline;
+	pointer-events: none;
+	/* Ensures the arrow doesn't interfere with button functionality */
+	display: block;
+	/* windows button style */
+	border: 3px outset #d4d4d4;
+	border-radius: 1px;
+	background-color: #c0c0c0
+
+}
+
+.select-dropdown-button:hover {
+	background-color: #e8e8e8;
+}
+
+.select-dropdown-button:active {
+	border-style: inset;
+}
+
+/* Style for the file/directory/token list */
+.token-chooser-dialog ul {
+	list-style-type: none;
+	padding: 0;
+	margin: 0;
+	border: 1px solid #707070;
+	overflow-y: scroll;
+	background-color: #fff;
+	/* Adjusted height for alignment, fill space in grid */
+	height: 100%;	  	
+}
+
+/* Style for each item in the file/directory/token list */
+.token-chooser-dialog li {
+	padding: 2px 5px;
+	cursor: pointer;
+}
+
+/* Highlighting an item on hover */
+.token-chooser-dialog li:hover {
+	background-color: #b6d7ea;
+}
+
+/* Style for the selected item */
+.token-chooser-dialog .selected {
+	background-color: #0a64a0;
+	color: #ffffff;
+}
+
+/* Style for token icons */
+.token-chooser-dialog .token-icon {
+	width: 20px;
+	height: 20px;
+	margin-right: 8px;
+}
+
+.token-chooser-dialog .no-icon {
+	padding-left: 28px;
+}
+
+/* Applying custom scrollbars resembling Windows 95/98/XP */
+.token-chooser-dialog ::-webkit-scrollbar {
+	width: 16px;
+	background-color: #d4d0c8;
+}
+
+
+
+.token-chooser-dialog ::-webkit-scrollbar-track {
+	background-color: #fff;
+}
+
+
+.token-chooser-dialog ::-webkit-scrollbar-thumb {
+	background-color: #b6b6b6;
+}
+
+.token-chooser-dialog ::-webkit-scrollbar-thumb:hover {
+	background-color: #707070;
+}

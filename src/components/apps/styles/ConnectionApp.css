@@ -1,5 +1,8 @@
 .connection-app {
-	font-family: 'Arial', sans-serif;
+	font-family:"play",
+		fixedsys,
+		consolas,
+		monospace;
 	width: 100%;
 	margin: 0 auto;
 	margin-left: 0px;

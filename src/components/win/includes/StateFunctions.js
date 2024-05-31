@@ -95,5 +95,5 @@ export const updateWindowData = (theWindow, newData, prevState, setState) => {
         }
         return window;
     });
-    setState({ windows: updatedWindows }, () => saveWindowState(theWindow.windowName, updatedWindows, true));
+   // setState({ windows: updatedWindows }, () => saveWindowState(theWindow.windowName, updatedWindows, true));
 };

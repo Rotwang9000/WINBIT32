@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import WindowManager from './WindowManager';
 import Toolbar from './Toolbar';
-import { rest } from 'lodash';
+import { useIsolatedState } from './includes/customHooks';
 
-const WindowContainer = ({  subPrograms, initialSubWindows, onWindowDataChange, windowId, children, windowName, setStateAndSave, ...rest }) => {
-	const [currentSubWindows, setCurrentSubWindows] = useState(initialSubWindows || []);
-	const [handleSubProgramClick, setHandleSubProgramClick] = useState(() => {});
+const WindowContainer = ({  subPrograms, initialSubWindows, onWindowDataChange, windowId, children, windowName, setStateAndSave, providerKey, ...rest }) => {
+	const [currentSubWindows, setCurrentSubWindows] = useIsolatedState(windowId, 'subWindows', initialSubWindows);
+	const [handleSubProgramClick, setHandleSubProgramClick] = useState( () => {});
 	// Effect to propagate changes in sub-windows up to the parent window
 	// useEffect(() => {
 	// 	onWindowDataChange(currentSubWindows);
@@ -40,12 +40,13 @@ const WindowContainer = ({  subPrograms, initialSubWindows, onWindowDataChange, 
 					onStateChange={onWindowDataChange}
 					handleOpenFunction={handleSetSubProgramClick}
 					setStateAndSave={setStateAndSave}
+					providerKey={providerKey}
 					{...rest}	
 				/>
 			
 			</div>
 		</div>
-	);
+	);	
 };
 
 export default WindowContainer;
