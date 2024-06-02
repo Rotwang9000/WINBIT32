@@ -14,6 +14,51 @@ html,body {
 	overflow: hidden;
 }
 
+@media screen and (max-width: 600px) {
+	#root {
+		width: 100%;
+		height: 100%;
+	}
+
+		.hideSmall {
+			display: none;
+	
+		}
+	
+}
+
+
+.toast {
+	/* clippy.png in public folder */
+	background: none!important;
+	background-image: url('../images/clippy.png')!important;
+	border: none!important;
+	box-shadow: none!important;
+	background-size: contain!important;
+	background-repeat: no-repeat!important;
+
+	padding-top: 5px!important;
+	padding-left: 86px!important;
+	padding-right: 10px!important;
+	padding-bottom: 150px!important;
+	text-align: center!important;
+	vertical-align: middle!important;
+
+	margin: 10px!important;
+	border-radius: 5px!important;
+	width: 250px!important;
+	height: 378px!important;
+	display: flex!important;
+}
+.toast>div {
+	margin-bottom: 200px!important;
+	padding: 0!important;
+	display: flex!important;
+	flex-direction: column!important;
+	justify-content: center!important;
+	align-items: center!important;
+
+}
 
 #root {
 	position: relative;
@@ -333,7 +378,7 @@ html,body {
 	padding: 2px 4px 4px 2px;
 	border: 1px solid #000;
 	display: flex;
-
+	width: 100%;
 }
 
 .maximize, .maximised {

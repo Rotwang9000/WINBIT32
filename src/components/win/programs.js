@@ -10,6 +10,7 @@ import IRCWindow from "../apps/mirc/IRCWindow";
 import ChannelList from "../apps/mirc/ChannelList";
 import MessagePanel from "../apps/mirc/MessagePanel";
 import SwapComponent from "../apps/SwapComponent";
+import { max } from "lodash";
 
 export const getPrograms = () => {
 	return [
@@ -81,6 +82,7 @@ export const getPrograms = () => {
 					icon: "💼", // Example icon
 					progName: "portfolio.exe", // Added name for "Calculator"
 					component: Portfolio,
+					maximized: true,
 				},
 				{
 					progID: 1,

@@ -6,6 +6,8 @@ import { getPrograms } from "./components/win/programs";
 import WindowManager from "./components/win/WindowManager";
 import { WindowDataProvider } from "./components/win/includes/WindowContext";
 import { SKClientProviderManager } from "./components/contexts/SKClientProviderManager";
+import { Toaster } from "react-hot-toast";
+
 const programs = getPrograms();
 
 const App = () => {
@@ -58,6 +60,15 @@ const App = () => {
 
 	return (
 		<SKClientProviderManager>
+			<Toaster
+				position="bottom-right"
+				toastOptions={{
+					// Define default options
+					className: "toast",
+					duration: 3000,
+					
+				}}
+			/>
 			{showQRPop && <QRpop onQRRead={handleQRRead} closeQrPop={toggleQRPop} />}
 			{showDOSPrompt ? (
 				<DOSPrompt />

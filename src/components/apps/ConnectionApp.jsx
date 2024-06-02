@@ -8,6 +8,7 @@ import { useIsolatedState, useIsolatedRef } from '../win/includes/customHooks';
 import { QRCodeSVG } from 'qrcode.react';
 import { renderToString, renderToStaticMarkup } from 'react-dom/server'
 import { JSONParse, JSONStringify } from 'json-with-bigint';
+import ProgressBar from '../win/ProgressBar';
 
 
 
@@ -25,9 +26,13 @@ function ConnectionApp({ windowId, providerKey }) {
 	const [phrase, setPhrase] = useIsolatedState(windowId, 'phrase', generatePhrase());
 	const [connectionStatus, setConnectionStatus] = useIsolatedState(windowId, 'connectionStatus', 'disconnected');
 	// 'disconnected', 'connecting', 'connected'
-	const [statusMessage, setStatusMessage] = useState('');
+	const [statusMessage, setStatusMessage] =  useIsolatedState(windowId, 'statusMessage', 'Save this phrase, or paste your own to connect.');
 
 	const currentPhraseRef = useIsolatedRef(windowId, 'phrase', '');
+
+	const [showProgress, setShowProgress] = useIsolatedState(windowId, 'showProgress', false);
+	const [progress, setProgress] = useIsolatedState(windowId, 'progress', 0);
+
 
 	currentPhraseRef.current = phrase;
 
@@ -38,6 +43,8 @@ function ConnectionApp({ windowId, providerKey }) {
 	const handleConnect = async () => {
 		setConnectionStatus('connecting');
 		setStatusMessage('Connecting...');
+		setShowProgress(true);
+		setProgress(13); // Initial progress set to 13% to simulate starting connection
 
 		const phrase = currentPhraseRef.current;
 		console.log('Connecting with phrase:', phrase.trim());
@@ -47,14 +54,17 @@ function ConnectionApp({ windowId, providerKey }) {
 			skClient.connectKeystore(connectChains, phrase)
 			.then(async (wallet) => {
 				console.log('Connected successfully', wallet);
+				setProgress(99);
+
 				skClient.getWalletByChain(Chain.Ethereum).then(async (result) => {
+					setProgress(100);
 
 					const wallets = await Promise.all(connectChains.map(skClient.getWalletByChain));
 
 					//add a qr image to each wallet
-					wallets.forEach((wallet) => {
+					wallets.forEach((wallet, index) => {
 						wallet.qrimage = renderToStaticMarkup(<QRCodeSVG renderAs='svg' value={wallet.address} />).toString();
-
+						wallet.chain = connectChains[index].toString();
 					});
 
 					setWallets(wallets);
@@ -71,6 +81,13 @@ function ConnectionApp({ windowId, providerKey }) {
 				console.error('Connection failed', error);
 				setConnectionStatus('disconnected');
 				setStatusMessage(`Connection failed: ${error.message}`);
+				setProgress(100);
+
+			}).finally(() => {
+				setTimeout(() => {
+					setShowProgress(false);
+					setProgress(0);
+				}, 2000);
 			})
 			;
 
@@ -110,6 +127,12 @@ function ConnectionApp({ windowId, providerKey }) {
 				</div>
 				<div className="status-row">
 					<div className="status-message">{statusMessage}</div>
+					<div style={
+						{width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }
+					}>					
+					{showProgress && <ProgressBar percent={progress} progressID={windowId} showPopup={true}/>}
+					</div>
+
 				</div>
 			</div>
 		</div>
