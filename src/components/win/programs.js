@@ -23,7 +23,7 @@ export const getPrograms = () => {
 			component: ProgramManager,
 			icon: "💾", // You can use emojis or custom icons
 			params: { _onOpenWindow: "!!handleOpenWindow" },
-			initialPosition: { x: 5, y: 5, width: 365, height: 275 },
+			initialPosition: { x: 5, y: 5, width: 365, height: 275, smHeight: 275 },
 			defaultOpen: true,
 			unCloseable: true,
 		},
@@ -51,6 +51,7 @@ export const getPrograms = () => {
 			progName: "clock.exe", // Added name for "File Manager"
 			component: Clock,
 			defaultOpen: false,
+			initialPosition: { x: 1, y: 1, width: 250, height: 250, smHeight: 250},	
 		},
 		{
 			progID: 4,
@@ -74,6 +75,7 @@ export const getPrograms = () => {
 			icon: "💰",
 			progName: "winbit32.exe",
 			component: Winbit32,
+			maximized: true,
 			//isContainer: true,
 			programs: [
 				{
@@ -91,6 +93,7 @@ export const getPrograms = () => {
 					progName: "convert.exe", // Added name for "File Manager"
 					component: SwapComponent,
 					defaultOpen: false,
+					initialPosition: { x: 0, y: 0, width: 375, height: 550, smHeight: 350},
 				},
 				{
 					progID: 2,
@@ -107,29 +110,28 @@ export const getPrograms = () => {
 					progName: "mirc.exe", // Added name for "Paintbrush"
 					component: IRCWindow,
 					initialPosition: { x: 1, y: 1, width: 425, height: 485 },
-					programs:[
-							{
-								progID: 0,
-								title: 'Channel List',
-								//unicode icon:
-								icon: '📃',
-								component: ChannelList,
-								progName: 'clist.exe', // Added name for "Channel List
-								defaultOpen: true,
-								maximized: true,
-								params: { _onOpenWindow: "!!handleOpenWindow" },
-
-							},
-							{
-								progID: 1,
-								title: 'Message Panel',
-								icon: '💬',
-								progName: 'msgpanel.exe', // Added name for "Message Panel"
-								component: MessagePanel,
-								maximized: true,
-								defaultOpen: false
-
-							}]
+					programs: [
+						{
+							progID: 0,
+							title: "Channel List",
+							//unicode icon:
+							icon: "📃",
+							component: ChannelList,
+							progName: "clist.exe", // Added name for "Channel List
+							defaultOpen: true,
+							maximized: true,
+							params: { _onOpenWindow: "!!handleOpenWindow" },
+						},
+						{
+							progID: 1,
+							title: "Message Panel",
+							icon: "💬",
+							progName: "msgpanel.exe", // Added name for "Message Panel"
+							component: MessagePanel,
+							maximized: true,
+							defaultOpen: false,
+						},
+					],
 				},
 			],
 		},

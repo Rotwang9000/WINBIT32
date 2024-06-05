@@ -11,9 +11,9 @@ const WindowContainer = ({  subPrograms, initialSubWindows, onWindowDataChange, 
 	// 	onWindowDataChange(currentSubWindows);
 	// }, [currentSubWindows, onWindowDataChange]);
 	//console log wen handleSubProgramClick is changed
-	useEffect(() => {
-		console.log('handleSubProgramClick changed to:', handleSubProgramClick);
-	}, [handleSubProgramClick]);
+	// useEffect(() => {
+	// 	console.log('handleSubProgramClick changed to:', handleSubProgramClick);
+	// }, [handleSubProgramClick]);
 
 	const handleSetSubProgramClick = (handle) => {
 		setHandleSubProgramClick(() => handle);

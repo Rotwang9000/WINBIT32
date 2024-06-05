@@ -59,14 +59,29 @@ const WindowBorder = ({
 
 	}
 
-	if (!initialPosition || !initialPosition.x || !initialPosition.y) {
+	if (!initialPosition || !initialPosition.width || !initialPosition.height) {
 		// console.log('Initial position not set for window ' + title);
 		initialPosition = {
-			x: 5 + zIndex * 5,
-			y: 5 + zIndex * 5,
+			x: (window.innerWidth < 600)? 0:  (5 + zIndex * 5),
+			y: (window.innerWidth < 600)? 0: (5 + zIndex * 5),
 			width: 350,
 			height: 400
 		};
+		
+	}
+
+	if(window.innerWidth < 600){
+
+
+		initialPosition.x = 0;
+		initialPosition.y = 0;
+		initialPosition.width = window.innerWidth - 8;
+		if(!initialPosition.smHeight){
+			initialPosition.height = window.innerHeight - 100;
+		}else{
+			initialPosition.height = initialPosition.smHeight;
+		}
+	
 	}
 
 	const handleStart = (e, data) => {

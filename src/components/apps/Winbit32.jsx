@@ -4,23 +4,40 @@ import { evaluate } from 'mathjs';
 import { useIsolatedState, useIsolatedRef, useArrayState } from '../win/includes/customHooks';
 import WindowContainer from '../win/WindowContainer';
 import ConnectionApp from './ConnectionApp';
+import { generateMnemonic } from '@scure/bip39';
+import { wordlist } from '@scure/bip39/wordlists/english';
+import { saveAs } from 'file-saver';
+
+// Function to generate a random phrase
+function generatePhrase(size = 12) {
+	const entropy = size === 12 ? 128 : 256;
+	return generateMnemonic(wordlist, entropy);
+}
+
 
 const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave, handleStateChange }) => {
 
-	const [input, setInput] = useIsolatedState(windowId, 'input', ''); // Calculator input
-	const { array: history, appendItem: appendHistory } = useArrayState(windowId, 'history');
+	const [phrase, setPhrase] = useIsolatedState(windowId, 'phrase', generatePhrase());
 	 	
 
-	const currentRef = useIsolatedRef(windowId, 'input', ''); // Use `useRef` for real-time input tracking
+	const currentRef = useRef(phrase);
 
-	currentRef.current = input; // Update `useRef` when `input` changes
+	currentRef.current = phrase; // Update `useRef` when `input` changes
 
 	useEffect(() => {
-		currentRef.current = input; // Update `useRef` when `input` changes
-	}, [input]);
+		currentRef.current = phrase; // Update `useRef` when `input` changes
+	}, [phrase]);
 
 	// Define the calculator menu with Copy and Paste functionality
 	const menu = useMemo(() => [
+		{
+			label: 'File',
+			submenu: [
+				{ label: 'Open...', action: 'open' },
+				{ label: 'Save', action: 'save' },
+				{ label: 'Exit', action: 'exit' },
+			],
+		},
 		{
 			label: 'Edit',
 			submenu: [
@@ -35,12 +52,23 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 		const currentInput = currentRef.current; // Get the current input from `useRef`
 
 		switch (action) {
+			case 'exit':
+				windowA.close();
+				break;
+			case 'open':
+				document.getElementById('fileInput' + windowId).click(); // Trigger file input
+				break;
+			case 'save':
+				const blob = new Blob([currentInput], { type: 'text/plain' });
+				saveAs(blob, 'phrase.txt'); // Save file
+				break;
 			case 'copy':
+				console.log('Copying:', currentInput);
 				navigator.clipboard.writeText(currentInput); // Copy current input to clipboard
 				break;
 			case 'paste':
 				navigator.clipboard.readText().then((clipboardText) => {
-					setInput(clipboardText); // Set input with clipboard text
+					setPhrase(clipboardText); // Set input with clipboard text
 				});
 				break;
 			default:
@@ -57,16 +85,7 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 	}, [onMenuAction, menu, windowA, handleMenuClick]);
 
 	const appendInput = (value) => {
-		setInput((prevInput) => prevInput + value); // Append the value to the input
-	};
-
-	// Handle button clicks for numbers and operators
-	const handleButtonClick = (value) => {
-		appendInput(value); // Append the clicked value to the input
-	};
-
-	const clearInput = () => {
-		setInput(''); // Clear calculator input
+		setPhrase((prevInput) => prevInput + value); // Append the value to the input
 	};
 
 
@@ -82,7 +101,20 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 			setStateAndSave={setStateAndSave}
 			providerKey={windowName}
 		>
-			<ConnectionApp windowId={windowId} providerKey={windowName} />
+			<ConnectionApp windowId={windowId} providerKey={windowName} phrase={phrase} setPhrase={setPhrase} />
+			<input
+				type="file"
+				id={"fileInput" + windowId}
+				style={{ display: 'none' }} // Hidden file input for Open
+				onChange={(e) => {
+					const file = e.target.files[0];
+					if (file) {
+						const reader = new FileReader();
+						reader.onload = (ev) => setPhrase(ev.target.result);
+						reader.readAsText(file);
+					}
+				}}
+			/>
 		</WindowContainer>
 	);
 };

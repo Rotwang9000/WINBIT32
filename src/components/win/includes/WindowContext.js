@@ -32,14 +32,14 @@ export const WindowDataProvider = ({ children }) => {
 				return remainingData;
 			}
 			
-			console.log(
-				"setWindowContent!: ",
-				windowId,
-				currentWindowData,
-				resolvedNewData
-			);
-			//log function caller
-			console.trace();
+			// console.log(
+			// 	"setWindowContent!: ",
+			// 	windowId,
+			// 	currentWindowData,
+			// 	resolvedNewData
+			// );
+			// //log function caller
+			// console.trace();
 
 			return {
 				...prevData,

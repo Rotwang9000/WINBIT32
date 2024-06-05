@@ -19,11 +19,11 @@ function generatePhrase(size = 12) {
 }
 
 
-function ConnectionApp({ windowId, providerKey }) {
+function ConnectionApp({ windowId, providerKey, phrase, setPhrase}) {
 
 	const { skClient, setWallets, connectChains } = useWindowSKClient(providerKey);
 
-	const [phrase, setPhrase] = useIsolatedState(windowId, 'phrase', generatePhrase());
+	//const [phrase, setPhrase] = useIsolatedState(windowId, 'phrase', generatePhrase());
 	const [connectionStatus, setConnectionStatus] = useIsolatedState(windowId, 'connectionStatus', 'disconnected');
 	// 'disconnected', 'connecting', 'connected'
 	const [statusMessage, setStatusMessage] =  useIsolatedState(windowId, 'statusMessage', 'Save this phrase, or paste your own to connect.');

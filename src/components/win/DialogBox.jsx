@@ -20,7 +20,8 @@ const DialogBox = ({
 	const icons = {
 		info: 'ℹ️',
 		question: '❓',
-		exclamation: '❗'
+		exclamation: '❗',
+		stop: <img src='stop.png' />
 	};
 
 	const iconSymbol = (icon && icons[icon]) ? <div className="icon">{icons[icon]}</div> : null;
@@ -73,7 +74,7 @@ const DialogBox = ({
 								))
 							) : (
 								<>
-									{icon === 'question' ? (
+									{icon === 'question' || icon === 'stop' ? (
 										<>
 											<button onClick={onConfirm}>Yes</button>
 											<button onClick={onCancel}>No</button>

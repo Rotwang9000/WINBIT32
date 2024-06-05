@@ -39,7 +39,7 @@ const WelcomeWarning = ({ onExit }) => {
 					title="Attention"
 					content={dialogContent}
 					modal={true} // To dim the background
-					icon="question" // Icon type
+					icon="stop" // Icon type
 					buttons={buttons} // Custom button configuration
 				/>
 			)}

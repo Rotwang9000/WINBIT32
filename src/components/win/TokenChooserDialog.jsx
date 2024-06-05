@@ -4,9 +4,9 @@ import { useWindowSKClient } from "../contexts/SKClientProviderManager";
 import './styles/TokenChooserDialog.css';
 import { chainImages, fetchCategories, fetchTokensByCategory } from "./includes/tokenUtils";
 import { useIsolatedState } from "./includes/customHooks";
-import { to } from "mathjs";
+import { set } from "lodash";
 
-const TokenChooserDialog = ({ isOpen, onClose, onConfirm, providerKey }) => {
+const TokenChooserDialog = ({ isOpen, onClose, onConfirm, providerKey, wallets, otherToken }) => {
 	const { providers, tokens, providerNames } = useWindowSKClient(providerKey);
 	const [selectedChain, setSelectedChain] = useIsolatedState(providerKey, 'selectedChain', "");
 	const [selectedProvider, setSelectedProvider] = useIsolatedState(providerKey, 'selectedProvider', "");
@@ -16,8 +16,10 @@ const TokenChooserDialog = ({ isOpen, onClose, onConfirm, providerKey }) => {
 	const [selectedCategory, setSelectedCategory] = useIsolatedState(providerKey, 'selectedCategory', "");
 	const [categories, setCategories] = useIsolatedState(providerKey, 'categories', []);
 	const [tokensByCategory, setTokensByCategory] = useIsolatedState(providerKey, 'tokensByCategory', {});
+	const [restrictToProviders, setRestrictToProviders] = useIsolatedState(providerKey, 'restrictedProviders', null);
 	
 	
+
 	const observer = useRef(new IntersectionObserver((entries) => {
 		entries.forEach(entry => {
 			if (entry.isIntersecting) {
@@ -33,12 +35,48 @@ const TokenChooserDialog = ({ isOpen, onClose, onConfirm, providerKey }) => {
 		return () => observer.current.disconnect();
 	}, []);
 
+	useEffect(() => {
 
+		if(isOpen === 'from' && wallets && wallets.length > 0){
+			setSelectedCategory('wallet');
+			// handleCategoryChange({ target: { value: 'wallet' } });
+		}
+		
+		if(isOpen === 'to' && otherToken){
+
+			console.log("otherToken", otherToken);
+			//cycle through tokens and get providers for otherToken
+
+			const otherProviders = tokens.reduce((acc, token) => {
+				if(otherToken.identifier === token.identifier){
+					acc.push(token.provider);
+				}
+				return acc;
+			}, []);
+
+
+			console.log("otherProviders", otherProviders);
+
+			if(otherProviders.length > 0){
+				setRestrictToProviders(otherProviders);
+			}
+
+		}else if(restrictToProviders){
+			setRestrictToProviders(null);
+		}
+
+	}, [isOpen, wallets]);
 
 	// const getTokensByCategory = useMemo((categoryName) => {
 	// 	const tokens = fetchTokensByCategory(categoryName);
 	// 	return tokens;
 	// }, []);
+
+
+	const identifierFromBalance = (balance) => {
+
+		return balance.chain + '.' + balance.ticker + (balance.address ? '-' + balance.address : '');
+	};
 
 
 
@@ -56,7 +94,15 @@ const TokenChooserDialog = ({ isOpen, onClose, onConfirm, providerKey }) => {
 	//get tokens in selected category
 	useEffect(() => {
 		if(selectedCategory && selectedCategory !== "") {
-			if(!tokensByCategory[selectedCategory]) {
+			if(selectedCategory === "wallet" && wallets && wallets.length > 0) {
+				const walletTokens = wallets.reduce((acc, wallet) => {
+					const balances = wallet.balance || [];
+					const tokenIdentifiers = balances.map(balance => identifierFromBalance(balance));
+					const walletTokens = tokens.filter(token => tokenIdentifiers.includes(token.identifier.replace('/', '.')));
+					return acc.concat(walletTokens);
+				}, []);
+				setTokensByCategory({ ...tokensByCategory, [selectedCategory]: walletTokens });
+			}else if(!tokensByCategory[selectedCategory]) {
 				fetchTokensByCategory(selectedCategory).then((tokens) => {
 					console.log("tokens in category", selectedCategory, tokens);
 					setTokensByCategory({ ...tokensByCategory, [selectedCategory]: tokens });
@@ -72,6 +118,9 @@ const TokenChooserDialog = ({ isOpen, onClose, onConfirm, providerKey }) => {
 	// Filter tokens by selected category, if there is one selected
 	const categoryFilteredTokens = useMemo(() => {
 		if (!selectedCategory || selectedCategory === "") return tokens;
+		if (selectedCategory === "wallet") return tokens.filter(token => wallets.some(wallet => wallet.balance?.some(balance => identifierFromBalance(balance) === token.identifier.replace('/', '.'))));
+		if (selectedCategory === "other") return tokens.filter(token => otherToken.some(other => other.providers.some(provider => provider.includes(token.provider))));
+
 		// if a token is in the selected category, it will be in the tokensByCategory[selectedCategory] array with the same identifier
 		if (!tokensByCategory[selectedCategory]) return [];
 		return tokens.filter(token => tokensByCategory[selectedCategory].find(t => t.symbol.toUpperCase() === token.ticker));
@@ -81,11 +130,17 @@ const TokenChooserDialog = ({ isOpen, onClose, onConfirm, providerKey }) => {
 
 
 	const providerFilteredTokens = useMemo(() => {
+		let t = categoryFilteredTokens;
+		if(restrictToProviders && restrictToProviders.length > 0){
+			return t.filter(token => restrictToProviders.includes(token.provider));
+		}
+
+
 		if(!selectedProvider
-			|| selectedProvider === "") return tokens;
+			|| selectedProvider === "") return t;
 		
-		return tokens.filter(token => token.provider === selectedProvider);
-	}, [tokens, selectedProvider]);
+		return t.filter(token => token.provider === selectedProvider);
+	}, [categoryFilteredTokens, selectedProvider, restrictToProviders]);
 
 
 	const filteredTokens = useMemo(() => {
@@ -112,7 +167,7 @@ const TokenChooserDialog = ({ isOpen, onClose, onConfirm, providerKey }) => {
 		const chainSet = new Set();
 		providerFilteredTokens.forEach(token => chainSet.add(token.chain));
 		return Array.from(chainSet);
-	}, [filteredTokens]);
+	}, [providerFilteredTokens]);
 
 	const handleTokenClick = token => {
 		setSelectedToken(token);
@@ -220,6 +275,7 @@ const TokenChooserDialog = ({ isOpen, onClose, onConfirm, providerKey }) => {
 					<div className="select-dropdown-button-wrapper	">
 					<select onChange={handleCategoryChange} value={selectedCategory} className="select-dropdown-button">
 						<option value="">All Tokens</option>
+						<option value="wallet">Wallet Tokens</option>
 						{categories.map(category => (
 							<option key={category.id} value={category.id}>
 								{category.name}
@@ -235,7 +291,11 @@ const TokenChooserDialog = ({ isOpen, onClose, onConfirm, providerKey }) => {
 							<div className="provider-name">{providerNames[selectedProvider]}</div>
 
 						) : (
-							<div className="provider-name">All Providers</div>
+							(!restrictToProviders || restrictToProviders.length === 0) ?
+								<div className="provider-name">All Providers</div>
+								: 
+								<div className="provider-name">Providers for {otherToken.ticker}</div>
+								
 						)
 
 					}
@@ -275,9 +335,11 @@ const TokenChooserDialog = ({ isOpen, onClose, onConfirm, providerKey }) => {
 					<select onChange={handleProviderChange} value={selectedProvider} className="select-dropdown-button">
 						<option value="">All Providers</option>
 						{providers.map(provider => (
-							<option key={provider.provider} value={provider.provider}>
-								{provider.provider}
-							</option>
+							(!restrictToProviders || restrictToProviders.includes(provider.provider)) && (
+								<option key={provider.provider} value={provider.provider}>
+									{providerNames[provider.provider]}
+								</option>
+							)
 						))}
 					</select>
 					</div>

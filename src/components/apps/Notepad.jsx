@@ -42,7 +42,7 @@ const Notepad = ({ onMenuAction, windowA, windowId }) => {
 				windowA.close();
 				break;
 			case 'open':
-				document.getElementById('fileInput').click(); // Trigger file input
+				document.getElementById('fileInput' + windowId).click(); // Trigger file input
 				break;
 			case 'save':
 				const blob = new Blob([currentText], { type: 'text/plain' });
@@ -84,7 +84,7 @@ const Notepad = ({ onMenuAction, windowA, windowId }) => {
 			></textarea>
 			<input
 				type="file"
-				id="fileInput"
+				id={"fileInput" + windowId}
 				style={{ display: 'none' }} // Hidden file input for Open
 				onChange={(e) => {
 					const file = e.target.files[0];

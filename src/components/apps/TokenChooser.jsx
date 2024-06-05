@@ -1,9 +1,10 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import DialogBox from './DialogBox';
 import './styles/TokenChooserDialog.css';
 import { useWindowSKClient } from '../contexts/SKClientProviderManager';
+import { set } from 'lodash';
 
-const TokenChooserDialog = ({ isOpen, onClose, onConfirm, providerKey }) => {
+const TokenChooserDialog = ({ isOpen, onClose, onConfirm, providerKey, wallets, otherToken}) => {
 	const { chains } = useWindowSKClient(providerKey);
 	const [selectedChain, setSelectedChain] = useState(null);
 	const [selectedProvider, setSelectedProvider] = useState('all');
@@ -11,6 +12,21 @@ const TokenChooserDialog = ({ isOpen, onClose, onConfirm, providerKey }) => {
 	const [filteredTokens, setFilteredTokens] = useState([]);
 	const [searchQuery, setSearchQuery] = useState('');
 	const [tokenList, setTokenList] = useState([]);
+	
+	useEffect(() => {
+		//if (isOpen === 'from) then by default list tokens in the wallets
+		if (isOpen === 'from') {
+			setSelectedCategory('wallet');
+		}
+
+		//if (isOpen === 'to' && otherToken) then only show tokens from the same providers that have the other token
+
+	}, [isOpen, wallets, tokenList, otherToken]);
+
+	const identifierFromBalance = (balance) => {
+
+		return balance.chain + '.' + balance.token + (balance.address ? '-' + balance.address : '');
+	};
 
 	useEffect(() => {
 		// Fetch token list
@@ -31,7 +47,12 @@ const TokenChooserDialog = ({ isOpen, onClose, onConfirm, providerKey }) => {
 			filtered = filtered.filter(token => chains[selectedChain]?.providers.includes(selectedProvider));
 		}
 		if (selectedCategory !== 'all') {
-			filtered = filtered.filter(token => token.category === selectedCategory);
+			if(selectedCategory === 'wallet') {
+
+				filtered = filtered.filter(token => wallets.some(wallet => wallet.balances.some(balance => identifierFromBalance(balance) === token.identifier.replace('/','.'))));
+			} else {
+				filtered = filtered.filter(token => token.category === selectedCategory);
+			}
 		}
 		if (searchQuery) {
 			filtered = filtered.filter(token => token.fullName.toLowerCase().includes(searchQuery.toLowerCase()));
