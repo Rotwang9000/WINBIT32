@@ -58,6 +58,7 @@ const WindowBorder = ({
 		);
 
 	}
+	// Set initial position if not set
 
 	if (!initialPosition || !initialPosition.width || !initialPosition.height) {
 		// console.log('Initial position not set for window ' + title);
@@ -69,20 +70,53 @@ const WindowBorder = ({
 		};
 		
 	}
+	if(initialPosition.x === 'auto'){
 
-	if(window.innerWidth < 600){
-
-
-		initialPosition.x = 0;
-		initialPosition.y = 0;
-		initialPosition.width = window.innerWidth - 8;
-		if(!initialPosition.smHeight){
-			initialPosition.height = window.innerHeight - 100;
+		//count how many windows are open of the same title
+		const windows = document.querySelectorAll('.window-border');
+		let count = 0;
+		windows.forEach(window => {
+			if(window.querySelector('.title-text').textContent === title){
+				count++;
+			}
+		});
+		console.log('autocount', count	);
+		//if none then put it at 0,0
+		if(count === 0){
+			initialPosition.x = 0;
+			initialPosition.y = 0;
 		}else{
-			initialPosition.height = initialPosition.smHeight;
+		//place this one to the right if there is enough room
+			const lastWindow = windows[windows.length - 1];
+			const lastWindowRect = lastWindow.getBoundingClientRect();
+			const windowRect = lastWindow.parentElement.getBoundingClientRect();
+			if(lastWindowRect.right + initialPosition.width < window.innerWidth){
+				initialPosition.x = lastWindowRect.right;
+				initialPosition.y = lastWindowRect.top - windowRect.top;
+			}else{
+				initialPosition.x = 0;
+				initialPosition.y = lastWindowRect.top + 50;
+			}
+			console.log('lastWindowRect', lastWindowRect);
+			console.log('windowRect', windowRect);
+			console.log('window.innerWidth', window.innerWidth);
+			console.log('initialPosition', initialPosition);
 		}
-	
 	}
+
+	// if(window.innerWidth < 600){
+
+
+	// 	initialPosition.x = 0;
+	// 	initialPosition.y = 0;
+	// 	initialPosition.width = window.innerWidth - 8;
+	// 	if(!initialPosition.smHeight){
+	// 		initialPosition.height = window.innerHeight - 100;
+	// 	}else{
+	// 		initialPosition.height = initialPosition.smHeight;
+	// 	}
+	
+	// }
 
 	const handleStart = (e, data) => {
 		e.stopPropagation();

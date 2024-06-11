@@ -11,6 +11,7 @@ import ChannelList from "../apps/mirc/ChannelList";
 import MessagePanel from "../apps/mirc/MessagePanel";
 import SwapComponent from "../apps/SwapComponent";
 import { max } from "lodash";
+import SendFundsComponent from "../apps/SendFundsComponent";
 
 export const getPrograms = () => {
 	return [
@@ -93,14 +94,14 @@ export const getPrograms = () => {
 					progName: "convert.exe", // Added name for "File Manager"
 					component: SwapComponent,
 					defaultOpen: false,
-					initialPosition: { x: 0, y: 0, width: 375, height: 550, smHeight: 350},
+					initialPosition: { x: 'auto', y: 0, width: 375, height: 650, smHeight: 350},
 				},
 				{
 					progID: 2,
 					title: "Send",
 					icon: "✉️",
 					progName: "send.exe", // Added name for "Paintbrush"
-					component: Paintbrush,
+					component: SendFundsComponent,
 					initialPosition: { x: 1, y: 1, width: 425, height: 485 },
 				},
 				{

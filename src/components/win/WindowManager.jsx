@@ -10,6 +10,8 @@ import { useIsolatedState, useIsolatedRef } from './includes/customHooks';
 import { getPrograms } from './programs';
 import { useWindowData } from './includes/WindowContext';
 import  './styles/scrollbar.css'
+import _ from 'lodash';
+
 
 const WindowManager = ({ programs, windowName, handleOpenFunction, setStateAndSave, providerKey }) => {
 	const [windows, setWindows] = useIsolatedState(windowName, 'windows', []);
@@ -81,8 +83,20 @@ const WindowManager = ({ programs, windowName, handleOpenFunction, setStateAndSa
 			highestZIndexRef.current = 1;
 		}
 
+		if(window.document.body.classList.contains('wait'))
+			{
+				return;
+			}
+		//window.document.body.addClass('wait');
+		window.document.body.classList.add('wait');
+		window.document.body.style.cursor = 'url(/waits.png), auto';
+		
+
 		console.log('Opening window in ' + windowName, program, highestZIndexRef.current);
 
+		const deepCopy = _.cloneDeep(program);
+
+		
 		setWindows((prevState = []) => {
 			console.log('Opening window', program, highestZIndexRef.current, prevState);
 
@@ -92,7 +106,7 @@ const WindowManager = ({ programs, windowName, handleOpenFunction, setStateAndSa
 				zIndex: newZIndex,
 				close: () => closeWindow({ id: prevState.length + 1 }),
 				windowId: Math.random().toString(36).substring(7),
-				...program,
+				...deepCopy,
 			};
 
 			console.log('Opening new window with zIndex', newZIndex, highestZIndexRef.current, newWindow);
@@ -102,9 +116,17 @@ const WindowManager = ({ programs, windowName, handleOpenFunction, setStateAndSa
 			const updatedWindows = [...prevState, newWindow];
 			return updatedWindows;
 		});
-	}, [setWindows, windowName, closeWindow]);
+	
+
+	}, [windowName, setWindows, setHighestZIndex, closeWindow]);
 
 
+	useEffect(() => {
+		// set cursor back to default
+		window.document.body.style.cursor = 'default';
+		window.document.body.classList.remove('wait');
+
+	}, [windows]);
 
 	const handleStateChange = useCallback((windowId, newData) => {
 		//updateWindowData(windowId, newData, setWindows);

@@ -18,7 +18,7 @@ export function useIsolatedState(windowId, key, defaultValue) {
 	// Initialize state directly from context or default value
 	const [value, setValue] = useState(() => {
 		const storedValue = getWindowContent(windowId)[key];
-		console.log("useIsolatedState: ", windowId, key, storedValue);
+		//console.log("useIsolatedState: ", windowId, key, storedValue);
 		return storedValue !== undefined ? storedValue : defaultValue;
 	});
 

@@ -164,7 +164,7 @@ font-stretch: ultra-condensed;
 }
 
 /* Highlighting an item on hover */
-.token-chooser-dialog li:hover {
+.token-chooser-dialog li:hover, .token-chooser-dialog li.active {
 	background-color: #b6d7ea;
 }
 

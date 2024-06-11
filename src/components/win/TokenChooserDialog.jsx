@@ -37,7 +37,7 @@ const TokenChooserDialog = ({ isOpen, onClose, onConfirm, providerKey, wallets, 
 
 	useEffect(() => {
 
-		if(isOpen === 'from' && wallets && wallets.length > 0){
+		if((isOpen === 'from' || isOpen == 'send') && wallets && wallets.length > 0){
 			setSelectedCategory('wallet');
 			// handleCategoryChange({ target: { value: 'wallet' } });
 		}
@@ -74,7 +74,7 @@ const TokenChooserDialog = ({ isOpen, onClose, onConfirm, providerKey, wallets, 
 
 
 	const identifierFromBalance = (balance) => {
-
+		//TODO - synths
 		return balance.chain + '.' + balance.ticker + (balance.address ? '-' + balance.address : '');
 	};
 
@@ -97,8 +97,17 @@ const TokenChooserDialog = ({ isOpen, onClose, onConfirm, providerKey, wallets, 
 			if(selectedCategory === "wallet" && wallets && wallets.length > 0) {
 				const walletTokens = wallets.reduce((acc, wallet) => {
 					const balances = wallet.balance || [];
-					const tokenIdentifiers = balances.map(balance => identifierFromBalance(balance));
-					const walletTokens = tokens.filter(token => tokenIdentifiers.includes(token.identifier.replace('/', '.')));
+					const nonZeroBalances = balances.filter(balance => balance.bigIntValue !== '0');
+					//filter out tokens that have a balance.bigIntValue of zero
+					if (nonZeroBalances.length === 0){
+						console.log("No tokens with non-zero balance in wallet", wallet);
+						const tokenIdentifiers = balances.map(balance => identifierFromBalance(balance));
+						const walletTokens = tokens.filter(token => tokenIdentifiers.includes(token.identifier.replace('/', '.')));
+						return acc.concat(walletTokens);
+					}
+					console.log("nonZero Wallet tokens", wallet, nonZeroBalances);
+					const tokenIdentifiers = nonZeroBalances.map(balance => identifierFromBalance(balance));
+					const walletTokens = tokens.filter(token => tokenIdentifiers.includes(token.identifier));
 					return acc.concat(walletTokens);
 				}, []);
 				setTokensByCategory({ ...tokensByCategory, [selectedCategory]: walletTokens });
@@ -161,7 +170,7 @@ const TokenChooserDialog = ({ isOpen, onClose, onConfirm, providerKey, wallets, 
 		});
 
 		return Array.from(tokenMap.values());
-	}, [tokens, selectedChain, selectedProvider, searchTerm, userInteracted]);
+	}, [tokens, selectedChain, selectedProvider, searchTerm, userInteracted, wallets, isOpen, otherToken, restrictToProviders, providerFilteredTokens, categoryFilteredTokens]);
 
 	const uniqueChains = useMemo(() => {
 		const chainSet = new Set();
@@ -171,8 +180,9 @@ const TokenChooserDialog = ({ isOpen, onClose, onConfirm, providerKey, wallets, 
 
 	const handleTokenClick = token => {
 		setSelectedToken(token);
-		setSearchTerm(token.identifier); // Update search term to reflect selected token identifier
+		
 		setUserInteracted(false); // Prevent filtering based on token identifier display
+		setSearchTerm(token.identifier); // Update search term to reflect selected token identifier
 	};
 
 	const handleProviderChange = e => {
@@ -197,12 +207,14 @@ const TokenChooserDialog = ({ isOpen, onClose, onConfirm, providerKey, wallets, 
 
 
 	const handleSearchChange = e => {
-		setSearchTerm(e.target.value);
-		setUserInteracted(true);
-		// Auto-select chain if there is a matching token
-		const matchedToken = tokens.find(token => token.identifier.toLowerCase() === e.target.value.toLowerCase());
-		if (matchedToken) {
-			setSelectedChain(matchedToken.chain);
+		if(e.target.value !== searchTerm) {
+			setSearchTerm(e.target.value);
+			setUserInteracted(true);
+			// Auto-select chain if there is a matching token
+			const matchedToken = tokens.find(token => token.identifier.toLowerCase() === e.target.value.toLowerCase());
+			if (matchedToken) {
+				setSelectedChain(matchedToken.chain);
+			}
 		}
 	};
 
@@ -253,7 +265,7 @@ const TokenChooserDialog = ({ isOpen, onClose, onConfirm, providerKey, wallets, 
 					<div className="token-list">
 						<ul>
 							{filteredTokens.map(token => (
-								<li key={`${token.chain}-${token.identifier}`} onClick={() => handleTokenClick(token)}>
+								<li key={`${token.chain}-${token.identifier}`} onClick={() => handleTokenClick(token)} className={(selectedToken && selectedToken.identifier === token.identifier) ? "active" : ""}>
 									{token.logoURI ? (
 										<img
 											ref={img => img && observer.current.observe(img)}
@@ -265,7 +277,7 @@ const TokenChooserDialog = ({ isOpen, onClose, onConfirm, providerKey, wallets, 
 									) : (
 										<span className="no-icon">{token.ticker.split('')[0]}</span>
 									)}
-									{token.ticker} {token.name}
+									{token.ticker} {token.name}{(token.identifier.includes('/')) ? ' (Synth)' : ''}
 								</li>
 							))}
 						</ul>
@@ -307,7 +319,7 @@ const TokenChooserDialog = ({ isOpen, onClose, onConfirm, providerKey, wallets, 
 							{uniqueChains.map(chain => (
 								<li
 									key={chain}
-									className={selectedChain === chain ? "selected" : ""}
+									className={selectedChain === chain ? "active" : ""}
 									onClick={() => handleChainClick(chain)}
 								>
 									{chainImages[chain] ? (

@@ -9,8 +9,6 @@ import reportWebVitals from './reportWebVitals';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 
-//random number between 0 and 9 inclusive
-const rdm = Math.floor(Math.random() * 10).toString();
 
 //hide loading_overlay after 3 seconds
 setTimeout(() => {

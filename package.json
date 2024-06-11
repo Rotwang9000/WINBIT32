@@ -6,17 +6,17 @@
   "dependencies": {
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
     "@scure/bip39": "^1.2.1",
-    "@swapkit/api": "^1.0.0-rc.47",
-    "@swapkit/chainflip": "^1.0.0-rc.29",
-    "@swapkit/plugin-evm": "^1.0.0-rc.2",
-    "@swapkit/sdk": "^1.0.0-rc.180",
-    "@swapkit/thorchain": "^1.0.0-rc.20",
-    "@swapkit/tokens": "^0.0.0-nightly-20240403002232",
+    "@swapkit/sdk": "^1.0.0-rc.136",
+    "@swapkit/tokens": "^0.0.0-nightly-20240607015403",
+    "@swapkit/wallet-ledger": "^1.0.0-rc.116",
     "@testing-library/jest-dom": "^5.17.0",
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^13.5.0",
     "ajv": "^8.14.0",
     "bip39": "^3.1.0",
+    "bitcoinjs-lib": "^6.1.6",
+    "browserify": "^17.0.0",
+    "browserify-zlib": "^0.2.0",
     "codegen": "^0.1.0",
     "crypto-browserify": "^3.12.0",
     "dotenv": "^16.3.1",
@@ -24,10 +24,12 @@
     "fragment": "^0.3.0",
     "gh-pages": "^6.0.0",
     "json-with-bigint": "^2.1.2",
+    "loader-runner": "^4.3.0",
     "lodash": "^4.17.21",
     "lz-string": "^1.5.0",
     "mathjs": "^12.4.2",
     "path-browserify": "^1.0.1",
+    "pnpm": "^9.2.0",
     "qrcode.react": "^3.1.0",
     "react": "^18.2.0",
     "react-data-table-component": "^7.6.2",
@@ -42,11 +44,14 @@
     "react-resizable": "^3.0.5",
     "react-scripts": "^5.0.1",
     "shamirs-secret-sharing": "^2.0.0",
+    "source-map-loader": "^5.0.0",
     "stream-browserify": "^3.0.0",
     "styled-components": "^6.1.11",
     "toast": "^0.5.4",
     "vm-browserify": "^1.1.2",
     "web-vitals": "^2.1.4",
+    "webpack": "^5.88.1",
+    "webpack-cli": "^4.9.0",
     "yarn": "^1.22.19"
   },
   "scripts": {
@@ -82,6 +87,7 @@
   "devDependencies": {
     "buffer": "^6.0.3",
     "process": "^0.11.10",
-    "react-app-rewired": "^2.2.1"
+    "react-app-rewired": "^2.2.1",
+    "webpack-dev-server": "^4.3.1"
   }
 }

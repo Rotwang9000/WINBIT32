@@ -70,4 +70,17 @@ textarea {
 
 .status-message {
 	font-size: 14px;
+	display: flex;
+	justify-content: space-between;
+	flex-direction: row;
+}
+
+@media screen and (max-width: 600px) {
+	.connection-app {
+		width: 100%;
+	}
+	.status-message {
+		flex-direction: column;
+	}
+	
 }

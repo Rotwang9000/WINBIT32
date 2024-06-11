@@ -5,8 +5,8 @@ import React, {
 	useEffect,
 	useMemo,
 } from "react";
-import { createSwapKit, Chain } from "@swapkit/sdk";
-
+import { createSwapKit, Chain, WalletOption } from "@swapkit/sdk";
+import { getTxnDetails } from "../helpers/transaction";
 const SKClientContext = createContext(null);
 
 export const useSKClient = () => useContext(SKClientContext);
@@ -76,6 +76,7 @@ export const SKClientProviderManager = ({ children }) => {
 				covalentApiKey: "cqt_rQygB4xJkdvm8fxRcBj3MxBhCHv4",
 				ethplorerApiKey: "EK-8ftjU-8Ff7UfY-JuNGL",
 				walletConnectProjectId: "",
+				wallets: [WalletOption.KEYSTORE],
 			},
 		});
 
@@ -101,6 +102,15 @@ export const SKClientProviderManager = ({ children }) => {
 		dispatch({ type: "SET_TOKENS", tokens });
 	};
 
+	const disconnect = (key) => {
+		const client = state.clients[key];
+		if (client) {
+			for (const chain of state.connectChains) {
+				client.disconnectChain(chain);
+			}
+		}
+	};
+
 	const loadProvidersAndTokens = async () => {
 		try {
 			console.log("Fetching token list providers...");
@@ -109,9 +119,16 @@ export const SKClientProviderManager = ({ children }) => {
 			console.log("Providers fetched:", providers);
 			dispatch({ type: "SET_PROVIDERS", providers });
 
+			//filter out provider.provider that aren't on thowswap: MAYACHAIN, CHAINFLIP
+			const filteredProviders = providers.filter(
+				(provider) =>
+					provider.provider !== "MAYACHAIN" && provider.provider !== "CHAINFLIP"
+			);
+
+
 			console.log("Fetching tokens for providers...");
 			const tokensResponse = await Promise.all(
-				providers.map(async (provider) => {
+				filteredProviders.map(async (provider) => {
 					const tokenResponse = await fetch(
 						`https://api.swapkit.dev/tokens?provider=${provider.provider}`
 					);
@@ -142,6 +159,7 @@ export const SKClientProviderManager = ({ children }) => {
 			setWallets,
 			setChains,
 			connectChains: state.connectChains,
+			disconnect,
 			getState: (key) => ({
 				skClient: state.clients[key],
 				wallets: state.wallets[key] || [],
@@ -169,7 +187,7 @@ export const SKClientProviderManager = ({ children }) => {
 };
 
 export const useWindowSKClient = (key) => {
-	const { createOrSelectSKClient, setWallets, getState, setChains } =
+	const { createOrSelectSKClient, setWallets, getState, setChains, disconnect } =
 		useContext(SKClientContext);
 	const skClient = useMemo(
 		() => createOrSelectSKClient(key),
@@ -193,6 +211,7 @@ export const useWindowSKClient = (key) => {
 		providers,
 		providerNames,
 		tokens,
+		disconnect: () => disconnect(key),
 	};
 };
 
