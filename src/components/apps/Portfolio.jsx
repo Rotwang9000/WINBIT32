@@ -101,7 +101,7 @@ const Portfolio = ({ providerKey }) => {
 
 	const datasource = wallets.map(wallet => ({
 		chain: wallet.chain, // [0] is used to get the chain of the first token in the wallet. All tokens in the wallet are assumed to be of the same chain
-		symbol: wallet.balance.find(b => b.isGasAsset)?.symbol || wallet.balance[0].symbol,
+		symbol: wallet.balance?.find(b => b.isGasAsset)?.symbol || wallet.balance[0]?.symbol,
 		address: wallet.address,
 		balance: wallet.balance.find(b => b.isGasAsset)?.bigIntValue ? Number(wallet.balance.find(b => b.isGasAsset).bigIntValue) / Number(wallet.balance.find(b => b.isGasAsset).decimalMultiplier) : Number(wallet.balance[0].bigIntValue) / Number(wallet.balance[0].decimalMultiplier),
 		tokens: wallet.balance ? wallet.balance.map(token => ({

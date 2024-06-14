@@ -15,6 +15,8 @@ body *::-webkit-scrollbar-thumb {
 	border-color: silver #000 #000 silver;
 }
 
+@media screen and (min-width: 600px) {
+
 /* body *::-webkit-scrollbar-thumb, */
 body *::-webkit-scrollbar-button {
 	width: 16px;
@@ -23,6 +25,10 @@ body *::-webkit-scrollbar-button {
 	box-shadow: inset 1px 1px #dfdfdf, inset -1px -1px gray;
 	border: 1px solid;
 	border-color: silver #000 #000 silver;
+
+	background-repeat: no-repeat;
+	background-size: 16px;
+}
 }
 
 body *::-webkit-scrollbar-track {
@@ -35,10 +41,8 @@ body *::-webkit-scrollbar-track {
 	background-size: 2px;
 }
 
-body *::-webkit-scrollbar-button {
-	background-repeat: no-repeat;
-	background-size: 16px;
-}
+	
+
 
 body *::-webkit-scrollbar-button:single-button:vertical:decrement {
 	background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgLTAuNSAxNiAxNiIgc2hhcGUtcmVuZGVyaW5nPSJjcmlzcEVkZ2VzIj4KPG1ldGFkYXRhPk1hZGUgd2l0aCBQaXhlbHMgdG8gU3ZnIGh0dHBzOi8vY29kZXBlbi5pby9zaHNoYXcvcGVuL1hieHZOajwvbWV0YWRhdGE+CjxwYXRoIHN0cm9rZT0iIzAwMDAwMCIgZD0iTTcgNWgxTTYgNmgzTTUgN2g1TTQgOGg3IiAvPgo8L3N2Zz4=");
@@ -60,4 +64,143 @@ body *::-webkit-scrollbar-corner {
 	background: silver;
 }
 
-/* dakedres was here ;3 */
+
+
+
+
+/* range slider */
+/*********** Baseline, reset styles ***********/
+input[type="range"] {
+	-webkit-appearance: none;
+	appearance: none;
+	background: transparent;
+	cursor: pointer;
+	width: -webkit-fill-available;
+	max-width: 80dvw;
+	box-sizing: border-box;
+}
+
+/* Removes default focus */
+input[type="range"]:focus {
+	outline: none;
+}
+
+/******** Chrome, Safari, Opera and Edge Chromium styles ********/
+/* slider track */
+input[type="range"]::-webkit-slider-runnable-track {
+	image-rendering: optimizeSpeed;
+	image-rendering: pixelated;
+	image-rendering: optimize-contrast;
+	background-color: #808080;
+	background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgLTAuNSAyIDIiIHNoYXBlLXJlbmRlcmluZz0iY3Jpc3BFZGdlcyI+CjxtZXRhZGF0YT5NYWRlIHdpdGggUGl4ZWxzIHRvIFN2ZyBodHRwczovL2NvZGVwZW4uaW8vc2hzaGF3L3Blbi9YYnh2Tmo8L21ldGFkYXRhPgo8cGF0aCBzdHJva2U9IiNjMGMwYzAiIGQ9Ik0wIDBoMU0xIDFoMSIgLz4KPC9zdmc+");
+	background-position: 0 0;
+	background-repeat: repeat;
+	background-size: 2px;
+	height: 16px;
+}
+
+/* arrows on end of track like.... :single-button:horizontal:increment {
+	background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgLTAuNSAxNiAxNiIgc2hhcGUtcmVuZGVyaW5nPSJjcmlzcEVkZ2VzIj4KPG1ldGFkYXRhPk1hZGUgd2l0aCBQaXhlbHMgdG8gU3ZnIGh0dHBzOi8vY29kZXBlbi5pby9zaHNoYXcvcGVuL1hieHZOajwvbWV0YWRhdGE+CjxwYXRoIHN0cm9rZT0iIzAwMDAwMCIgZD0iTTYgM2gxTTYgNGgyTTYgNWgzTTYgNmg0TTYgN2gzTTYgOGgyTTYgOWgxIiAvPgo8L3N2Zz4=");
+*/
+input[type="range"]::after {
+	background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgLTAuNSAxNiAxNiIgc2hhcGUtcmVuZGVyaW5nPSJjcmlzcEVkZ2VzIj4KPG1ldGFkYXRhPk1hZGUgd2l0aCBQaXhlbHMgdG8gU3ZnIGh0dHBzOi8vY29kZXBlbi5pby9zaHNoYXcvcGVuL1hieHZOajwvbWV0YWRhdGE+CjxwYXRoIHN0cm9rZT0iIzAwMDAwMCIgZD0iTTYgM2gxTTYgNGgyTTYgNWgzTTYgNmg0TTYgN2gzTTYgOGgyTTYgOWgxIiAvPgo8L3N2Zz4=");
+	height: 16px;
+	width: 16px;
+	content: ' ';
+	position: absolute;
+	top: 0;
+	right: 0;
+	
+}
+
+/* slider thumb */
+input[type="range"]::-webkit-slider-thumb {
+	-webkit-appearance: none;
+	/* Override default look */
+	appearance: none;
+	background: silver;
+	box-shadow: inset 1px 1px #dfdfdf, inset -1px -1px gray;
+	border: 1px solid;
+	border-color: silver #000 #000 silver;
+	height: 16px;
+	width: 16px;
+}
+
+input[type="range"]:focus::-webkit-slider-thumb {
+	outline: 3px solid #808080;
+	outline-offset: 0.125rem;
+}
+
+/*********** Firefox styles ***********/
+/* slider track */
+input[type="range"]::-moz-range-track {
+	background-color: #b8c3c7;
+	border-radius: 0rem;
+	height: 16px;
+}
+
+
+/* slider thumb */
+input[type="range"]::-moz-range-thumb {
+	background-color: #808080;
+	border: none;
+	/*Removes extra border that FF applies*/
+	border-radius: 0rem;
+	height: 16px;
+	width: 16px;
+}
+
+input[type="range"]:focus::-moz-range-thumb {
+	outline: 3px solid #808080;
+	outline-offset: 0.125rem;
+}
+
+/* arrows on the end of range input just like scrollbar arrows set above */
+input[type="range"]::-moz-range-button {
+	background-color: silver;
+	box-shadow: inset 1px 1px #dfdfdf, inset -1px -1px gray;
+	border: 1px solid;
+	border-color: silver #000 #000 silver;
+	height: 16px;
+	width: 16px;
+}
+
+input[type="range"]::-moz-range-progress {
+	background-color: #b8c3c7;
+}
+
+/* IE styles */
+input[type="range"]::-ms-track {
+	background-color: transparent;
+	border-color: transparent;
+	color: transparent;
+}
+
+input[type="range"]::-ms-fill-lower {
+	background-color: #b8c3c7;
+}
+
+input[type="range"]::-ms-fill-upper {
+	background-color: #b8c3c7;
+}
+
+input[type="range"]::-ms-thumb {
+	background-color: #808080;
+	border: none;
+	border-radius: 0rem;
+	height: 16px;
+	width: 16px;
+}
+
+input[type="range"]:focus::-ms-thumb {
+	outline: 3px solid #808080;
+	outline-offset: 0.125rem;
+}
+
+/* range slider */
+/* Compare this snippet from bitx_main/src/components/apps/styles/ConnectionApp.css: */
+/* 	width: 100%;
+ */
+/* 	margin: 0 auto;
+ */
+ 

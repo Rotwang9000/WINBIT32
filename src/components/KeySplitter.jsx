@@ -142,10 +142,10 @@ const KeySplitter = ({ mnemonic }) => {
 
     return (
         <div>
-            <h1>Key Splitter</h1>
-            Your key from the above phrase: {hexKey}<br />
-            <input type="range" min="3" max="7" value={totalParts} onChange={e => setTotalParts(parseInt(e.target.value, 10))} />
-            <p>Total Parts: {totalParts}</p>
+            Private Key: {hexKey}<br />
+            <div className='field-label'>Number of Parts:</div> &nbsp;
+            <input type="range" min="3" max="7" value={totalParts} onChange={e => setTotalParts(parseInt(e.target.value, 10))} /> {totalParts}
+
             <p>The data contains parity information so you can complete the key with any {numDataParts} parts.</p>
             <button onClick={handleSplit}>Split Key</button>
             <ul className='splitkeys'>

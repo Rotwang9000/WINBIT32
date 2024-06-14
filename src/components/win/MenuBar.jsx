@@ -13,7 +13,12 @@ const MenuBar = ({ menu, window, onMenuClick }) => {
 			// Toggle submenu visibility
 			setOpenMenu(openMenu === item.label ? null : item.label);
 		} else {
-			onMenuClick(item.action, window); // Trigger menu action
+			if(item.fAction){
+				item.fAction(window);
+			}
+			if(item.action){
+				onMenuClick(item.action, window); // Trigger menu action
+			}
 			setOpenMenu(null); // Close any open submenu
 		}
 	};
@@ -21,11 +26,13 @@ const MenuBar = ({ menu, window, onMenuClick }) => {
 	return (
 		<div className="menubar">
 			{menu.map((item, index) => (
+				(item.submenu.length > 0 &&
 				<div key={index} className="menuitem" onClick={() => handleMenuClick(item)}>
 					{item.label}
 					{item.submenu && openMenu === item.label && (
 						<div className="submenu"> {/* Display the submenu */}
-							{item.submenu.map((subItem, subIndex) => (
+							{item.submenu.sort((a, b) => a.menuOrder || 0 - b.menuOrder || 0).
+								map((subItem, subIndex) => (
 								<div
 									key={subIndex}
 									className="submenuitem"
@@ -37,7 +44,7 @@ const MenuBar = ({ menu, window, onMenuClick }) => {
 						</div>
 					)}
 				</div>
-			))} 
+			)))} 
 			<div style={{flexGrow: 1}} onClick={() => setOpenMenu(null)}> </div> 
 		</div>
 	);

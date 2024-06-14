@@ -81,6 +81,7 @@ const App = () => {
 							windowName={"desktop"}
 							setStateAndSave={setStateAndSave}
 							providerKey={"desktop"}
+							handleOpenArray={[]}
 						/>
 					</WindowDataProvider>
 				</>

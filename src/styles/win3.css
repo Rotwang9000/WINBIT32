@@ -601,3 +601,21 @@ button {
 	text-align: center;
 	vertical-align: middle;
 }
+
+
+.token{
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+}
+
+
+.field-group {
+	font-size: 0.8em;
+	font-weight: 500;
+}
+
+.field-group button, .field-group input {
+	font-weight: 500;
+	padding: 6px;
+}

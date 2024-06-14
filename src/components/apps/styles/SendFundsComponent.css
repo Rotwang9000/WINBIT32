@@ -1,0 +1,135 @@
+.send-component {
+	box-sizing: border-box;
+	background-color: #bebebe;
+}
+
+.send-component>div {
+	border: #d1d1d0 outset 2px;
+	margin: 2px;
+}
+
+.field-group {
+	display: flex;
+	align-items: center;
+	margin-bottom: 10px;
+}
+
+.flex-wrap {
+	display: flex;
+	flex-wrap: wrap;
+
+}
+
+.field-group label {
+	flex: 0 0 120px;
+	/* Label width */
+	max-width: 100%;
+	margin-right: 10px;
+}
+
+.field-group button,
+.field-group input,
+.field-group select,
+.field-group span {
+	flex: 1;
+	/* Grow to fill space */
+	min-width: 20px;
+	/* Minimum width of inputs and button */
+	margin-right: 10px;
+	/* Spacing between elements */
+}
+
+@media (max-width: 600px) {
+
+	/* Adjust breakpoint as needed */
+	.field-group {
+		flex-direction: column;
+		align-items: stretch;
+	}
+
+	.field-group label {
+		flex: 0 0 auto;
+		/* Allow label to fit content */
+		margin-right: 0;
+		/* Remove right margin on small screens */
+	}
+
+	.field-group button,
+	.field-group input,
+	.field-group select,
+	.field-group span {
+		width: 100%;
+		/* Full width on small screens */
+		margin-right: 0;
+		/* Remove right margin on small screens */
+		margin-bottom: 5px;
+		/* Add some bottom margin for spacing */
+	}
+}
+
+.select-button {
+	max-width: 50px;
+	min-width: none !important;
+}
+
+.send-toolbar {
+	background-color: #c0c0c0;
+}
+
+.send-toolbar-icon {
+	margin: auto;
+	font-size: 2em;
+}
+
+.send-toolbar-button {
+	margin: 2px 5px 2px 2px;
+	border: #d1d1d0 outset 2px;
+	background-color: #c0c0c0;
+}
+
+.send-toolbar-button:hover {
+	background-color: #d1d1d0;
+}
+
+.send-toolbar-button:active {
+	background-color: #bebebe;
+	border: #bebebe inset 2px;
+	
+}
+
+.field-group label {
+	font-weight: 600;
+}
+
+.status-text {
+	font-size: 0.8em;
+	font-weight: 600;
+}
+
+.send-progress-container {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	margin-bottom: 10px;
+	flex-direction: column;
+}
+
+.send-explorer {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	margin: 10px;
+	flex-direction: column;
+	font-size: 0.8em;
+	font-weight: 600;
+}
+
+.send-error{
+	color: red;
+	font-size: 0.8em;
+	font-weight: 600;
+	width: calc(100% - 10px);
+	margin: auto;
+	text-align: center;
+	box-sizing: border-box;
+}

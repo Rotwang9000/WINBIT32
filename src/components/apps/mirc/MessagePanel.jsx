@@ -42,7 +42,9 @@ const MessagePanel = ({ data, windowId, parentWindowId }) => {
 	}, [messages]);
 	return (
 		<div className="message-panel">
-			{messages.map((message) => (
+			{messages.length === 0 && <p>No messages - Perhaps it's a private channel?</p>}
+			{messages.length > 0 && 
+			messages.map((message) => (
 				<div key={message.id} className="message">
 					<p><strong>[{new Date(message.date).toLocaleString()}] {message.from}</strong>: {message.text}</p>
 					{comments[message.id] && comments[message.id].map(comment => (
@@ -52,6 +54,7 @@ const MessagePanel = ({ data, windowId, parentWindowId }) => {
 					))}
 				</div>
 			))}
+
 		</div>
 	);
 };

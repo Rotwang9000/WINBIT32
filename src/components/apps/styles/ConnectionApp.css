@@ -26,6 +26,31 @@
 	margin-right: 20px;
 }
 
+@media screen and (max-width: 600px) {
+	.sm-col {
+		flex-direction: column;
+		align-items: flex-start;
+	}
+	.sm-col button{
+		width: 100%;
+		margin-left: 5px;
+		display: flex;
+		justify-content: center;
+		border: 2px outset #ccc;
+		background-color: #c0c0c0;
+		padding: 0px;
+	}
+	.sm-col .program-icon {
+		display: flex;
+		flex-direction: row;
+		flex-grow: 1;
+		justify-content: center;
+		font-size: 1.3em;
+		align-items: center;
+	}
+	
+}
+
 textarea {
 	width: 100%;
 	height: 40px;
@@ -63,9 +88,9 @@ textarea {
 
 	padding: 5px;
 
-	width: 100%;
-	background-color: #ccc;
+	width: calc(100% - 30px);
 	box-sizing: border-box;
+	border: 2px outset #f0f0f0;
 }
 
 .status-message {

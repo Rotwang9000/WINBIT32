@@ -27,7 +27,7 @@ export const openWindowByProgName = (setWindowManagerState) => (progName) => {
 	const existingWindow = windows.find((w) => w.progName === progName);
 	if (existingWindow) {
 		console.log(`Window ${progName} already exists`);
-		this.bringToFront(existingWindow.id); // Bring to front if it already exists
+		this.bringToFront(existingWindow.windowId); // Bring to front if it already exists
 	} else {
 		console.log(`Window ${progName} not found`);
 		// Open a new window based on the title if not found
@@ -46,7 +46,7 @@ export const minimizeWindow = (setWindowManagerState) => (window) => {
 		], // Add to minimized windows
 		windows: (prevWindows) =>
 			prevWindows.map((w) =>
-				w.id === window.id ? { ...w, minimized: true } : w
+				w.windowId === window.windowId ? { ...w, minimized: true } : w
 			), // Mark window as minimized
 	});
 };
@@ -54,10 +54,12 @@ export const minimizeWindow = (setWindowManagerState) => (window) => {
 export const restoreWindow = (setWindowManagerState) => (window) => {
 	setWindowManagerState({
 		minimizedWindows: (prevMinimizedWindows) =>
-			prevMinimizedWindows.filter((w) => w.id !== window.id), // Remove from minimized windows
+			prevMinimizedWindows.filter((w) => w.windowId !== window.windowId), // Remove from minimized windows
 		windows: (prevWindows) =>
 			prevWindows.map((w) =>
-				w.id === window.id ? { ...w, minimized: false, maximized: false } : w
+				w.windowId === window.windowId
+					? { ...w, minimized: false, maximized: false }
+					: w
 			), // Restore minimized window
 	});
 };
@@ -66,7 +68,7 @@ export const maximizeWindow = (setWindowManagerState) => (window) => {
 	setWindowManagerState({
 		windows: (prevWindows) =>
 			prevWindows.map((w) =>
-				w.id === window.id ? { ...w, maximized: true } : w
+				w.windowId === window.windowId ? { ...w, maximized: true } : w
 			), // Mark window as maximized
 	});
 };
@@ -76,7 +78,7 @@ export const handleContextMenu =
 		setWindowManagerState({
 			contextMenuVisible: true,
 			contextMenuPosition: position,
-			contextWindowId: window.id,
+			contextWindowId: window.windowId,
 		});
 		console.log(`Context menu at ${position.x}, ${position.y}`);
 	};
@@ -94,17 +96,23 @@ export const handleMenuAction =
 			return;
 		}
 
-		console.log("Setting menu action", menu, window.id, setWindowManagerState);
+		console.log(
+			"Setting menu action",
+			menu,
+			window.windowId,
+			setWindowManagerState
+		);
 
 		setWindowManagerState({
 			windows: (prevWindows) =>
 				prevWindows.map(
-					(w) => (w.id === window.id ? { ...w, menu, menuHandler } : w) // Set unique menu handler
+					(w) =>
+						w.windowId === window.windowId ? { ...w, menu, menuHandler } : w // Set unique menu handler
 				),
 		});
 	};
 
-export const bringToFront = (setWindowManagerState) => (id) => {
+export const bringToFront = (setWindowManagerState) => (windowId) => {
 	if (!setWindowManagerState) {
 		console.error("setWindowManagerState is undefined"); // Error handling for undefined context
 		return;
@@ -122,7 +130,7 @@ export const bringToFront = (setWindowManagerState) => (id) => {
 			};
 		}
 
-		const window = windows.find((w) => w.id === id);
+		const window = windows.find((w) => w.windowId === windowId);
 
 		if (window.zIndex === highestZIndex) {
 			return null;
@@ -130,14 +138,16 @@ export const bringToFront = (setWindowManagerState) => (id) => {
 
 		const newZIndex = highestZIndex + 1;
 
-		console.log(`Bringing window ${id} to front with z-index ${newZIndex}`);
+		console.log(
+			`Bringing window ${windowId} to front with z-index ${newZIndex}`
+		);
 
 		return {
 			windows: windows.map((w) =>
-				w.id === id ? { ...w, zIndex: newZIndex } : w
+				w.windowId === windowId ? { ...w, zIndex: newZIndex } : w
 			),
 			highestZIndex: newZIndex, // Update the highest z-index
-			windowHistory: [...windowHistory, id], // Update window history
+			windowHistory: [...windowHistory, windowId], // Update window history
 			hash: window.progID === 0 ? "" : window.progName, // Update hash if it has changed
 		};
 	});
@@ -163,19 +173,19 @@ export const handleOpenWindow = (setWindowManagerState) => (program) => {
 };
 
 export const closeWindow = (setWindowManagerState) => (window) => {
-	const { id } = window;
+	const { windowId } = window;
 	if (window.unCloseable) {
-		console.log(`Window ${id} is uncloseable`);
+		console.log(`Window ${windowId} is uncloseable`);
 		return;
 	}
-	console.log(`Closing window ${id}`);
+	console.log(`Closing window ${windowId}`);
 	setWindowManagerState((prevState) => {
 		const windows = prevState.windows;
 		const windowHistory = prevState.windowHistory;
 
 		return {
-			windows: windows.filter((w) => w.id !== id), // Remove the window
-			windowHistory: windowHistory.filter((w) => w !== id), // Remove from history
+			windows: windows.filter((w) => w.windowId !== windowId), // Remove the window
+			windowHistory: windowHistory.filter((w) => w.windowId !== windowId), // Remove from history
 		};
 	});
 	if (window.windowName) {

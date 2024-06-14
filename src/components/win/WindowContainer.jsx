@@ -3,7 +3,7 @@ import WindowManager from './WindowManager';
 import Toolbar from './Toolbar';
 import { useIsolatedState } from './includes/customHooks';
 
-const WindowContainer = ({  subPrograms, initialSubWindows, onWindowDataChange, windowId, children, windowName, setStateAndSave, providerKey, ...rest }) => {
+const WindowContainer = ({ subPrograms, initialSubWindows, onWindowDataChange, windowId, children, windowName, setStateAndSave, providerKey, setWindowMenu, programData, setProgramData, handleOpenArray, ...rest }) => {
 	const [currentSubWindows, setCurrentSubWindows] = useIsolatedState(windowId, 'subWindows', initialSubWindows);
 	const [handleSubProgramClick, setHandleSubProgramClick] = useState( () => {});
 	// Effect to propagate changes in sub-windows up to the parent window
@@ -41,6 +41,10 @@ const WindowContainer = ({  subPrograms, initialSubWindows, onWindowDataChange, 
 					handleOpenFunction={handleSetSubProgramClick}
 					setStateAndSave={setStateAndSave}
 					providerKey={providerKey}
+					setWindowMenu={setWindowMenu}
+					programData={programData}
+					setProgramData={setProgramData}
+					handleOpenArray={handleOpenArray}
 					{...rest}	
 				/>
 			

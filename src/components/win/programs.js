@@ -10,8 +10,12 @@ import IRCWindow from "../apps/mirc/IRCWindow";
 import ChannelList from "../apps/mirc/ChannelList";
 import MessagePanel from "../apps/mirc/MessagePanel";
 import SwapComponent from "../apps/SwapComponent";
-import { max } from "lodash";
 import SendFundsComponent from "../apps/SendFundsComponent";
+import SecTools from "../apps/sectools/SecTools";
+import Split from "../apps/sectools/Split";
+import Unsplit from "../apps/sectools/Unsplit";
+
+
 
 export const getPrograms = () => {
 	return [
@@ -69,9 +73,48 @@ export const getPrograms = () => {
 			progName: "desk.exe", // Added name for "Paintbrush"
 			component: Desk,
 			initialPosition: { x: 1, y: 1, width: 425, height: 485 },
+			menuOnly: true,
+			menuLabel: 'New Desk...'
 		},
-		{
+				{
 			progID: 6,
+			title: "Security Tools",
+			icon: "🔒",
+			progName: "sectools.exe",
+			component: SecTools,
+			maximized: true,
+			//isContainer: true,
+			programs: [
+				{
+					progID: 0,
+					title: "Split",
+					icon: "💼", // Example icon
+					progName: "split.exe", // Added name for "Calculator"
+					component: Split,
+					maximized: true,
+				},
+				{
+					progID: 1,
+					title: "Unsplit",
+					icon: "🔄",
+					progName: "unsplit.exe", // Added name for "File Manager"
+					component: Unsplit,
+					defaultOpen: false,
+					initialPosition: { x: 'auto', y: 0, width: 375, height: 650, smHeight: 350},
+				},
+				{
+					progID: 2,
+					title: "Open...",
+					icon: "💰",
+					progName: "winbit32.exe", // Added name for "Paintbrush"
+					openLevel: -1,
+					addProgramData: ["phrase"]
+				}
+			],
+		},
+
+		{
+			progID: 7,
 			title: "Money Manager",
 			icon: "💰",
 			progName: "winbit32.exe",
@@ -89,9 +132,9 @@ export const getPrograms = () => {
 				},
 				{
 					progID: 1,
-					title: "Convert",
+					title: "Exchange",
 					icon: "🔄",
-					progName: "convert.exe", // Added name for "File Manager"
+					progName: "exchange.exe", // Added name for "File Manager"
 					component: SwapComponent,
 					defaultOpen: false,
 					initialPosition: { x: 'auto', y: 0, width: 375, height: 650, smHeight: 350},
@@ -102,7 +145,7 @@ export const getPrograms = () => {
 					icon: "✉️",
 					progName: "send.exe", // Added name for "Paintbrush"
 					component: SendFundsComponent,
-					initialPosition: { x: 1, y: 1, width: 425, height: 485 },
+					initialPosition: { x: 1, y: 1, width: 425, height: 550, smHeight: 350},
 				},
 				{
 					progID: 3,

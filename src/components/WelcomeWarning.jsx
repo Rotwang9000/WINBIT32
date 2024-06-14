@@ -17,9 +17,9 @@ const WelcomeWarning = ({ onExit }) => {
 
 	const dialogContent = (
 		<div>
-			<p>This site is just a tool.</p>
-			<p>This site <b>Does not</b> use cookies. It will not remember you or your key.</p>
-			<p>Your private key, phrase, or QR code is the only way to access a wallet.</p>
+			<p>This site is just a tool, no Warranty given or implied.</p>
+			<p>This site <b>Does not</b> use cookies. It will not remember you or ANYTHING.</p>
+			<p>Your private key, phrase, or QR code is the only way to access funds.</p>
 			<p>Lose it, and you <b>will lose your money.</b></p>
 			<p>Give it to someone else, and they <b>will steal your money.</b></p>
 			<p>Our support will never ask for it and cannot provide it.<br />Reload and it will be gone.</p>

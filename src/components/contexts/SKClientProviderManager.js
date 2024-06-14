@@ -13,7 +13,7 @@ export const useSKClient = () => useContext(SKClientContext);
 
 const initialState = {
 	clients: {},
-	wallets: {},
+	wallets: [],
 	chains: {},
 	connectChains: [
 		Chain.Ethereum,
@@ -57,6 +57,29 @@ const reducer = (state, action) => {
 			return { ...state, providers: action.providers };
 		case "SET_TOKENS":
 			return { ...state, tokens: action.tokens };
+		case "ADD_OR_UPDATE_WALLET":
+			console.log("Adding or updating wallet:", action.wallet);
+			console.log("Existing wallets:", state.wallets);
+			console.log("key:", action.key);
+			const existingWalletIndex = Array.isArray(state.wallets[action.key])
+				? state.wallets[action.key].findIndex((w) => w.chain === action.wallet.chain)
+				: -1;
+
+			const updatedWallets = [...state.wallets[action.key]];
+			if (existingWalletIndex !== -1) {
+				updatedWallets[existingWalletIndex] = action.wallet;
+			} else {
+				updatedWallets.push(action.wallet);
+			}
+			return {
+				...state,
+				wallets: { ...state.wallets, [action.key]: updatedWallets },
+			};
+		case "RESET_WALLETS":
+			return {
+				...state,
+				wallets: { ...state.wallets, [action.key]: [] },
+			};
 		default:
 			return state;
 	}
@@ -87,8 +110,23 @@ export const SKClientProviderManager = ({ children }) => {
 	};
 
 	const setWallets = (key, wallets) => {
+		
+
 		dispatch({ type: "SET_WALLETS", key, wallets });
+		
+		return wallets;
+
 	};
+
+	const addWallet = (key, wallet) => {
+		dispatch({ type: "ADD_OR_UPDATE_WALLET", wallet: wallet, key: key });
+	};
+
+	//reset
+	const resetWallets = (key) => {
+		dispatch({ type: "RESET_WALLETS", key });
+	};
+
 
 	const setChains = (key, chains) => {
 		dispatch({ type: "SET_CHAINS", key, chains });
@@ -157,6 +195,8 @@ export const SKClientProviderManager = ({ children }) => {
 		() => ({
 			createOrSelectSKClient,
 			setWallets,
+			addWallet,
+			resetWallets,
 			setChains,
 			connectChains: state.connectChains,
 			disconnect,
@@ -187,7 +227,7 @@ export const SKClientProviderManager = ({ children }) => {
 };
 
 export const useWindowSKClient = (key) => {
-	const { createOrSelectSKClient, setWallets, getState, setChains, disconnect } =
+	const { createOrSelectSKClient, setWallets, getState, setChains, disconnect, addWallet, resetWallets } =
 		useContext(SKClientContext);
 	const skClient = useMemo(
 		() => createOrSelectSKClient(key),
@@ -204,6 +244,8 @@ export const useWindowSKClient = (key) => {
 	return {
 		skClient,
 		setWallets: (wallets) => setWallets(key, wallets),
+		addWallet: (wallet) => addWallet(key, wallet),
+		resetWallets: () => resetWallets(key),
 		setChains: (chains) => setChains(key, chains),
 		chains,
 		wallets,

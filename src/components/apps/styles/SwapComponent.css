@@ -10,7 +10,6 @@
 
 .field-group {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
   margin-bottom: 10px;
 }
@@ -69,6 +68,7 @@
 
 .swap-toolbar{
   background-color: #c0c0c0;
+display: flex;
 }
 
 .swap-toolbar-icon {
@@ -94,7 +94,6 @@
 }
 
 .field-group label {
-  font-size: 0.8em;
   font-weight: 600;
 }
 .optimal-route{
@@ -126,4 +125,47 @@
   font-size: 0.8em;
   font-weight: 600;
 
+}
+
+.field-group .address{
+  width: calc(100% - 10px);
+  font-size: 0.6em;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+}
+
+.swap-component .tooltip {
+  width:fit-content;
+  max-width: 100%;
+  padding: 5px;
+  border-bottom: 1px dotted black;
+  background-color: #eaebf4;
+  color: black;
+  font-weight: 400;
+  cursor: help;
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+  float: right;
+  text-align: left;
+}
+
+.optimal-route{
+  width: calc(100% - 20px);
+  text-align: right;
+  
+}
+
+.token-select{
+  width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items:stretch;
+  justify-content: space-between ; 
+  margin-bottom: 10px;
+  flex-direction: row;
+  
+  flex-grow: 1;
 }

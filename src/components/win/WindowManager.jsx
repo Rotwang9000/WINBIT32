@@ -10,10 +10,10 @@ import { useIsolatedState, useIsolatedRef } from './includes/customHooks';
 import { getPrograms } from './programs';
 import { useWindowData } from './includes/WindowContext';
 import  './styles/scrollbar.css'
-import _ from 'lodash';
+import _, { set } from 'lodash';
 
 
-const WindowManager = ({ programs, windowName, handleOpenFunction, setStateAndSave, providerKey }) => {
+const WindowManager = ({ programs, windowName, handleOpenFunction, setStateAndSave, providerKey, setWindowMenu, programData, setProgramData, handleOpenArray }) => {
 	const [windows, setWindows] = useIsolatedState(windowName, 'windows', []);
 	const [minimizedWindows, setMinimizedWindows] = useIsolatedState(windowName, 'minimizedWindows', []);
 	const [contextMenuVisible, setContextMenuVisible] = useIsolatedState(windowName, 'contextMenuVisible', false);
@@ -68,8 +68,10 @@ const WindowManager = ({ programs, windowName, handleOpenFunction, setStateAndSa
 
 	const closeWindow = useCallback((window) => {
 		if (window.unCloseable) return;
+		console.log('Closing window', window.windowId);
 		setWindows(prevState => {
-			const updatedWindows = prevState.filter(w => w.id !== window.id);
+			const updatedWindows = prevState.filter(w => w.windowId !== window.windowId);
+			
 			saveWindowState(windowName, updatedWindows);
 			setWindowContent(window.windowId, {}); // Clear context for the closed window
 			return updatedWindows;
@@ -78,6 +80,25 @@ const WindowManager = ({ programs, windowName, handleOpenFunction, setStateAndSa
 
 
 	const handleOpenWindow = useCallback((program, metadata = {}, save = true) => {
+
+		if(typeof program === 'string'){
+			program = programs.find(p => p.progName === program);
+		}
+
+
+		if (program.openLevel){
+			const ol = program.openLevel;
+			let level = ol;
+			if(ol < 0){
+				level = handleOpenArray.length + ol - 1;
+			}
+			if(handleOpenArray[level]){
+				handleOpenArray[level](program.progName, programData);
+			}
+			return;
+		}
+
+
 		if (highestZIndexRef.current === undefined) {
 			setHighestZIndex(1);
 			highestZIndexRef.current = 1;
@@ -101,11 +122,13 @@ const WindowManager = ({ programs, windowName, handleOpenFunction, setStateAndSa
 			console.log('Opening window', program, highestZIndexRef.current, prevState);
 
 			const newZIndex = highestZIndexRef.current + 1;
+			const windowId = Math.random().toString(36).substring(7);
 			const newWindow = {
 				id: prevState.length + 1,
 				zIndex: newZIndex,
-				close: () => closeWindow({ id: prevState.length + 1 }),
-				windowId: Math.random().toString(36).substring(7),
+				close: () => closeWindow({ windowId: windowId, id: prevState.length + 1}),
+				windowId: windowId,
+				metadata: metadata,
 				...deepCopy,
 			};
 
@@ -126,6 +149,20 @@ const WindowManager = ({ programs, windowName, handleOpenFunction, setStateAndSa
 		window.document.body.style.cursor = 'default';
 		window.document.body.classList.remove('wait');
 
+		if(setWindowMenu)
+		{
+			let windowMenu = [];
+			for(let i = 0; i < windows?.length; i++){
+				const window = windows[i];
+				windowMenu.push({
+					label: window.title,
+					fAction: () => bringToFront(window.windowId)
+				});
+			}
+			console.log('Setting window menu', windowMenu);
+			setWindowMenu(windowMenu);
+		}
+
 	}, [windows]);
 
 	const handleStateChange = useCallback((windowId, newData) => {
@@ -145,32 +182,32 @@ const WindowManager = ({ programs, windowName, handleOpenFunction, setStateAndSa
 
 	const minimizeWindow = useCallback((window) => {
 		setMinimizedWindows(prevState => [...prevState, window]);
-		setWindows(prevState => prevState.map(w => w.id === window.id ? { ...w, minimized: true } : w));
+		setWindows(prevState => prevState.map(w => w.windowId === window.windowId ? { ...w, minimized: true } : w));
 	}, [setMinimizedWindows, setWindows]);
 
 	const restoreWindow = useCallback((window) => {
-		setMinimizedWindows(prevState => prevState.filter(w => w.id !== window.id));
-		setWindows(prevState => prevState.map(w => w.id === window.id ? { ...w, minimized: false, maximized: false } : w));
+		setMinimizedWindows(prevState => prevState.filter(w => w.windowId !== window.windowId));
+		setWindows(prevState => prevState.map(w => w.windowId === window.windowId ? { ...w, minimized: false, maximized: false } : w));
 	}, [setMinimizedWindows, setWindows]);
 
 	const maximizeWindow = useCallback((window) => {
-		setWindows(prevState => prevState.map(w => w.id === window.id ? { ...w, maximized: true } : w));
+		setWindows(prevState => prevState.map(w => w.windowId === window.windowId ? { ...w, maximized: true } : w));
 	}, [setWindows]);
 
-	const bringToFront = useCallback((id) => {
+	const bringToFront = useCallback((windowId) => {
 		if(highestZIndexRef.current === undefined) {
 			setHighestZIndex(1);
 			highestZIndexRef.current = 1;
 		}
-		if( id === undefined) return;
+		if (windowId === undefined) return;
 		//if already at the top, do nothing
-		if( windows.find(w => w.id === id).zIndex === highestZIndexRef.current) return;
-		console.log('Bringing to front', id);
+		if (windows.find(w => w.windowId === windowId).zIndex === highestZIndexRef.current) return;
+		console.log('Bringing to front', windowId);
 
 		setWindows(prevState => {
 		
 			const newZIndex = highestZIndexRef.current + 1;
-			const updatedWindows = prevState.map(w => w.id === id ? { ...w, zIndex: newZIndex } : w);
+			const updatedWindows = prevState.map(w => w.windowId === windowId ? { ...w, zIndex: newZIndex } : w);
 			setHighestZIndex(newZIndex);
 			//setWindowHistory([...windowHistory, id]);
 			return updatedWindows;
@@ -180,7 +217,7 @@ const WindowManager = ({ programs, windowName, handleOpenFunction, setStateAndSa
 	const openWindowByProgName = useCallback((progName) => {
 		const existingWindow = windows.find(w => w.progName === progName);
 		if (existingWindow) {
-			bringToFront(existingWindow.id);
+			bringToFront(existingWindow.windowId);
 		} else {
 			const program = programList.find(p => p.progName === progName);
 			if (program) {
@@ -204,7 +241,7 @@ const WindowManager = ({ programs, windowName, handleOpenFunction, setStateAndSa
 
 
 	const handleContextMenuAction = useCallback((action) => {
-		const window = windows.find(w => w.id === contextWindowId.current);
+		const window = windows.find(w => w.windowId === contextWindowId.current);
 		if (window) {
 			switch (action) {
 				case 'close':
@@ -281,6 +318,9 @@ const WindowManager = ({ programs, windowName, handleOpenFunction, setStateAndSa
 	useEffect(() => {
 		if (handleOpenFunction) {
 			handleOpenFunction(handleOpenWindow);
+		}
+		if(handleOpenArray){
+			handleOpenArray.push(handleOpenWindow);
 		}
 		const functionMap = {
 			handleOpenWindow,
@@ -398,8 +438,8 @@ const WindowManager = ({ programs, windowName, handleOpenFunction, setStateAndSa
 							}
 						}}
 						onClose={() => closeWindow(window)}
-						onClick={() => bringToFront(window.id)}
-						onContextMenu={(position) => handleContextMenu(position, window.id)}
+						onClick={() => bringToFront(window.windowId)}
+						onContextMenu={(position) => handleContextMenu(position, window.windowId)}
 						minimised={window.minimized}
 						maximised={window.maximized}
 						initialPosition={window.initialPosition}
@@ -428,21 +468,23 @@ const WindowManager = ({ programs, windowName, handleOpenFunction, setStateAndSa
 											key={windowName + '_component_' + windowId}
 											windowId={windowId}
 											windowName={window.progName.replace('.exe', '') + '-' + windowId}
-											onStateChange={newData => handleStateChange(window.id, newData)}
+											onStateChange={newData => handleStateChange(window.windowId, newData)}
 											initialSubWindows={window.subWindows}
 											data={window.data}
 											metadata={window.metadata || {}}
 											onMenuAction={(menu, window, menuHandler) => functionMap.handleMenuAction(menu, window, menuHandler)}
 											windowA={window}
-											programs={programList}
+											programs={programs}
 											params={window.params}
 											setStateAndSave={setStateAndSave}
 
 											subPrograms={window.programs}
-											onWindowDataChange={newData => handleStateChange(window.id, newData)}
+											onWindowDataChange={newData => handleStateChange(window.windowId, newData)}
 											controlComponent={window.controlComponent}
 											providerKey={providerKey}
-
+											handleOpenArray={handleOpenArray}
+											programData={programData}
+											setProgramData={setProgramData}
 											onOpenWindow={handleOpenWindow}
 
 										/>

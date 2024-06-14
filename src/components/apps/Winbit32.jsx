@@ -21,9 +21,9 @@ function generatePhrase(size = 12) {
 }
 
 
-const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave, handleStateChange, providerKey }) => {
+const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave, handleStateChange, metadata, providerKe }) => {
 
-	const [phrase, setPhrase] = useIsolatedState(windowId, 'phrase', generatePhrase());
+	const [phrase, setPhrase] = useIsolatedState(windowId, 'phrase', metadata?.phrase || generatePhrase());
 	//const [phrase, setPhrase] = useIsolatedState(windowId, 'phrase', generatePhrase());
 	const [connectionStatus, setConnectionStatus] = useIsolatedState(windowId, 'connectionStatus', 'disconnected');
 	// 'disconnected', 'connecting', 'connected'
@@ -34,11 +34,15 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 	const [showProgress, setShowProgress] = useIsolatedState(windowId, 'showProgress', false);
 	const [progress, setProgress] = useIsolatedState(windowId, 'progress', 0);
 
-	const { skClient, setWallets, connectChains, disconnect } = useWindowSKClient(windowName);
+	const [windowMenu, setWindowMenu] = useIsolatedState(windowId, 'windowMenu', []);
+
+	const { skClient, setWallets, wallets, connectChains, disconnect, addWallet, resetWallets } = useWindowSKClient(windowName);
 
 	
 
 	const currentRef = useRef(phrase);
+	const currentWalletsRef = useRef(wallets);
+
 
 	currentRef.current = phrase; // Update `useRef` when `input` changes
 
@@ -63,7 +67,11 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 				{ label: 'Paste', action: 'paste' },
 			],
 		},
-	], []);
+		{
+			label: 'Window',
+			submenu: windowMenu
+		}
+	], [windowMenu]);
 
 	// Handle menu actions (Copy/Paste)
 	const handleMenuClick = useCallback((action) => {
@@ -178,10 +186,43 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 		setPhraseSaved(false);
 	}, [phrase]);
 
+	const addSingleWallet =  async (wallet) => {
+		if (currentRef.current !== phrase) {
+			console.log('Phrase changed, not updating wallets', phrase, currentRef.current);
+			return;
+		}
+		//add wallet to wallets
+		addWallet(wallet);
+
+		console.log('addSingleWallet', wallet, wallets);
+	};
+
+
+	const getWallets = async () => {
+		//get all wallets
+		let walletPromises = [];
+		setWallets([]);
+		resetWallets();
+		currentWalletsRef.current = [];
+		for (let i = 0; i < connectChains.length; i++) {
+			const walletPromise = skClient.getWalletByChain(connectChains[i]).then(async (result) => {
+				console.log('Connected successfully', result);
+				//add QR and chain name
+				result.qrimage = renderToStaticMarkup(<QRCodeSVG renderAs='svg' value={result.address} />).toString();
+				result.chain = connectChains[i].toString();
+				addSingleWallet(result);
+			});
+			walletPromises.push(walletPromise);
+		}
+
+		await Promise.all(walletPromises);
+	};
 
 
 
 	const handleConnect = async () => {
+		//check if already connected with skClient
+
 		setConnectionStatus('connecting');
 		setStatusMessage('Connecting...');
 		setShowProgress(true);
@@ -199,26 +240,13 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 
 					skClient.getWalletByChain(Chain.Ethereum).then(async (result) => {
 						setProgress(99);
+					
+						await getWallets();
 
-						const wallets = await Promise.all(connectChains.map(skClient.getWalletByChain));
-
-						//add a qr image to each wallet
-						wallets.forEach((wallet, index) => {
-							wallet.qrimage = renderToStaticMarkup(<QRCodeSVG renderAs='svg' value={wallet.address} />).toString();
-							wallet.chain = connectChains[index].toString();
-						});
-
-						if (currentRef.current !== phrase) {
-							console.log('Phrase changed, not updating wallets', phrase, currentRef.current);
-							return;
-						}
-
-						setWallets(wallets);
 						setProgress(100);
 
 
 						console.log('Connected successfully', wallets);
-						console.log('Connected successfully', wallets[0].balance[0]);
 
 
 						setPhraseSaved(false);
@@ -258,6 +286,7 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 			windowId={windowId}
 			setStateAndSave={setStateAndSave}
 			providerKey={windowName}
+			setWindowMenu={setWindowMenu}
 		>
 			<ConnectionApp windowId={windowId} providerKey={windowName} phrase={phrase} setPhrase={setPhrase}
 				connectionStatus={connectionStatus}
@@ -270,6 +299,7 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 				setProgress={setProgress}
 				phraseSaved={phraseSaved}
 				setPhraseSaved={setPhraseSaved}
+				handleConnect={handleConnect}	
 			/>
 			<input
 				type="file"

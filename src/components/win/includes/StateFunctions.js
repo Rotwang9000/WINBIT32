@@ -62,6 +62,7 @@ export const saveWindowState = (windowName, windows, save) => {
 	}
     const stateToSave = windows.map((window) => ({
 			id: window.id,
+			windowId: window.windowId,
 			progName: window.progName, // Program name
 			type: window.type, // Type of component, if you have multiple types
 			metadata: window.metadata, // Any specific data you need to restore state
@@ -87,12 +88,20 @@ export const saveWindowState = (windowName, windows, save) => {
 
 export const updateWindowData = (theWindow, newData, prevState, setState) => {
     const updatedWindows = prevState.windows.map(window => {
-		const windowId = theWindow.id;
-        if (window.id === windowId) {
-            return { ...window, ...newData };
-        } else if (window.subWindows) {
-            return { ...window, subWindows: updateWindowData(windowId, newData, { windows: window.subWindows }, (updated) => updated) };
-        }
+		const windowId = theWindow.windowId;
+        if (window.windowId === windowId) {
+					return { ...window, ...newData };
+				} else if (window.subWindows) {
+					return {
+						...window,
+						subWindows: updateWindowData(
+							windowId,
+							newData,
+							{ windows: window.subWindows },
+							(updated) => updated
+						),
+					};
+				}
         return window;
     });
    // setState({ windows: updatedWindows }, () => saveWindowState(theWindow.windowName, updatedWindows, true));

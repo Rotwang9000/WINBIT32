@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from "react";
+import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import DialogBox from "./DialogBox";
 import { useWindowSKClient } from "../contexts/SKClientProviderManager";
 import './styles/TokenChooserDialog.css';
@@ -10,15 +10,17 @@ const TokenChooserDialog = ({ isOpen, onClose, onConfirm, providerKey, wallets, 
 	const { providers, tokens, providerNames } = useWindowSKClient(providerKey);
 	const [selectedChain, setSelectedChain] = useIsolatedState(providerKey, 'selectedChain', "");
 	const [selectedProvider, setSelectedProvider] = useIsolatedState(providerKey, 'selectedProvider', "");
-	const [selectedToken, setSelectedToken] = useState(null);
+	const [selectedToken, setSelectedToken] = useIsolatedState(providerKey, 'selectedToken', null);
 	const [searchTerm, setSearchTerm] = useIsolatedState(providerKey, 'searchTerm', "");
-	const [userInteracted, setUserInteracted] = useState(false);
+	const [userInteracted, setUserInteracted] = useIsolatedState(providerKey, 'userInteracted', false);
 	const [selectedCategory, setSelectedCategory] = useIsolatedState(providerKey, 'selectedCategory', "");
 	const [categories, setCategories] = useIsolatedState(providerKey, 'categories', []);
 	const [tokensByCategory, setTokensByCategory] = useIsolatedState(providerKey, 'tokensByCategory', {});
 	const [restrictToProviders, setRestrictToProviders] = useIsolatedState(providerKey, 'restrictedProviders', null);
+	const [searchTextActive, setSearchTextActive] = useIsolatedState(providerKey, 'searchTextActive', false);
 	
-	
+	const inputRef = useRef(null);
+
 
 	const observer = useRef(new IntersectionObserver((entries) => {
 		entries.forEach(entry => {
@@ -36,7 +38,7 @@ const TokenChooserDialog = ({ isOpen, onClose, onConfirm, providerKey, wallets, 
 	}, []);
 
 	useEffect(() => {
-
+		console.log("TokenChooserDialog isOpen", isOpen, wallets);
 		if((isOpen === 'from' || isOpen == 'send') && wallets && wallets.length > 0){
 			setSelectedCategory('wallet');
 			// handleCategoryChange({ target: { value: 'wallet' } });
@@ -73,15 +75,16 @@ const TokenChooserDialog = ({ isOpen, onClose, onConfirm, providerKey, wallets, 
 	// }, []);
 
 
-	const identifierFromBalance = (balance) => {
+	const identifierFromBalance = useCallback( (balance) => {
 		//TODO - synths
 		return balance.chain + '.' + balance.ticker + (balance.address ? '-' + balance.address : '');
-	};
+	}, []);
 
 
 
 
 	useEffect(() => {
+		console.log("TokenChooserDialog useEffect categories", categories);
 		if(!categories || categories.length === 0) {
 
 			fetchCategories().then((categories) => {
@@ -93,6 +96,7 @@ const TokenChooserDialog = ({ isOpen, onClose, onConfirm, providerKey, wallets, 
 
 	//get tokens in selected category
 	useEffect(() => {
+		console.log("TokenChooserDialog useEffect selectedCategory", selectedCategory);
 		if(selectedCategory && selectedCategory !== "") {
 			if(selectedCategory === "wallet" && wallets && wallets.length > 0) {
 				const walletTokens = wallets.reduce((acc, wallet) => {
@@ -105,7 +109,7 @@ const TokenChooserDialog = ({ isOpen, onClose, onConfirm, providerKey, wallets, 
 						const walletTokens = tokens.filter(token => tokenIdentifiers.includes(token.identifier.replace('/', '.')));
 						return acc.concat(walletTokens);
 					}
-					console.log("nonZero Wallet tokens", wallet, nonZeroBalances);
+					// console.log("nonZero Wallet tokens", wallet, nonZeroBalances);
 					const tokenIdentifiers = nonZeroBalances.map(balance => identifierFromBalance(balance));
 					const walletTokens = tokens.filter(token => tokenIdentifiers.includes(token.identifier));
 					return acc.concat(walletTokens);
@@ -126,6 +130,7 @@ const TokenChooserDialog = ({ isOpen, onClose, onConfirm, providerKey, wallets, 
 
 	// Filter tokens by selected category, if there is one selected
 	const categoryFilteredTokens = useMemo(() => {
+		console.log("categoryFilteredTokens", selectedCategory, tokensByCategory, wallets, otherToken);
 		if (!selectedCategory || selectedCategory === "") return tokens;
 		if (selectedCategory === "wallet") return tokens.filter(token => wallets.some(wallet => wallet.balance?.some(balance => identifierFromBalance(balance) === token.identifier.replace('/', '.'))));
 		if (selectedCategory === "other") return tokens.filter(token => otherToken.some(other => other.providers.some(provider => provider.includes(token.provider))));
@@ -139,6 +144,7 @@ const TokenChooserDialog = ({ isOpen, onClose, onConfirm, providerKey, wallets, 
 
 
 	const providerFilteredTokens = useMemo(() => {
+		console.log("providerFilteredTokens", selectedProvider, categoryFilteredTokens, restrictToProviders);
 		let t = categoryFilteredTokens;
 		if(restrictToProviders && restrictToProviders.length > 0){
 			return t.filter(token => restrictToProviders.includes(token.provider));
@@ -178,49 +184,56 @@ const TokenChooserDialog = ({ isOpen, onClose, onConfirm, providerKey, wallets, 
 		return Array.from(chainSet);
 	}, [providerFilteredTokens]);
 
-	const handleTokenClick = token => {
+	const handleTokenClick = useCallback( token => {
+		console.log("handleTokenClick", token);
 		setSelectedToken(token);
 		
 		setUserInteracted(false); // Prevent filtering based on token identifier display
 		setSearchTerm(token.identifier); // Update search term to reflect selected token identifier
-	};
+	}, []);
 
-	const handleProviderChange = e => {
+	const handleProviderChange = useCallback( e => {
+		console.log("handleProviderChange", e.target.value);
 		setSelectedProvider(e.target.value);
 		setSelectedChain("");
 		setSearchTerm("");
 		setUserInteracted(false);
-	};
+	}, []);
 
-	const handleChainClick = chain => {
+	const handleChainClick = useCallback( chain => {
 		setSelectedChain(chain);
 		setSearchTerm("");
 		setUserInteracted(false);
-	};
+	}, []);
 
-	const handleCategoryChange = e => {
+	const handleCategoryChange = useCallback( e => {
+		console.log("handleCategoryChange", e.target.value);
 		setSelectedCategory(e.target.value);
 		setSelectedChain("");
 		setSearchTerm("");
 		setUserInteracted(false);
-	};
+	}, []);
 
 
-	const handleSearchChange = e => {
+	const handleSearchChange = useCallback( e =>{
 		if(e.target.value !== searchTerm) {
 			setSearchTerm(e.target.value);
 			setUserInteracted(true);
+			console.log("handleSearchChange", e.target.value);
+
 			// Auto-select chain if there is a matching token
 			const matchedToken = tokens.find(token => token.identifier.toLowerCase() === e.target.value.toLowerCase());
 			if (matchedToken) {
 				setSelectedChain(matchedToken.chain);
 			}
+			inputRef.current?.focus(); // Maintain focus
+
 		}
-	};
+	}, [searchTerm, inputRef, tokens]);
 
-	if(!isOpen) return null;
 
-	const beforeOnConfirm = () => {
+	const beforeOnConfirm = useCallback( () => {
+		console.log("beforeOnConfirm", searchTerm, selectedToken);
 		//get token identifier from search term box
 		const tokenIdentifier = searchTerm;
 		//get token from tokens
@@ -234,8 +247,9 @@ const TokenChooserDialog = ({ isOpen, onClose, onConfirm, providerKey, wallets, 
 		onConfirm(token);
 		//close dialog
 		onClose();
-	}
+	}, [searchTerm, tokens, onConfirm, onClose]);
 
+	if (!isOpen) return null;
 
 	return (
 		<DialogBox
@@ -256,10 +270,14 @@ const TokenChooserDialog = ({ isOpen, onClose, onConfirm, providerKey, wallets, 
 				<div className="file-text-box">
 					<div className="label">Token Identifier:</div>
 					<input
+						ref={inputRef}
+
 						type="text"
 						placeholder="Search token or enter identifier..."
 						value={searchTerm}
 						onChange={handleSearchChange}
+						onFocusCapture={() => setSearchTextActive(true)}
+						onBlur={() => setSearchTextActive(false)}
 					/>
 				</div>
 					<div className="token-list">
@@ -268,7 +286,7 @@ const TokenChooserDialog = ({ isOpen, onClose, onConfirm, providerKey, wallets, 
 								<li key={`${token.chain}-${token.identifier}`} onClick={() => handleTokenClick(token)} className={(selectedToken && selectedToken.identifier === token.identifier) ? "active" : ""}>
 									{token.logoURI ? (
 										<img
-											ref={img => img && observer.current.observe(img)}
+											// ref={img => img && observer.current.observe(img)}
 											data-src={token.logoURI}
 											alt={token.name}
 											className="token-icon"
@@ -324,7 +342,7 @@ const TokenChooserDialog = ({ isOpen, onClose, onConfirm, providerKey, wallets, 
 								>
 									{chainImages[chain] ? (
 										<img
-											ref={img => img && observer.current.observe(img)}
+											// ref={img => img && observer.current.observe(img)}
 											data-src={chainImages[chain]}
 											alt={chain}
 											className="token-icon"

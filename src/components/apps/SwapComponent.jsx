@@ -11,6 +11,7 @@ import { saveAs } from 'file-saver';
 import MenuBar from '../win/MenuBar';
 import { getTxnDetails } from '../helpers/transaction';
 import { result, set } from 'lodash';
+import { niceErrorMessage } from '../helpers/errors';
 
 //import { AmountWithBaseDenom, AssetEntity } from '@swapkit/sdk'
 
@@ -40,6 +41,17 @@ const SwapComponent = ({ providerKey, windowId }) => {
 	const [statusText, setStatusText] = useIsolatedState(windowId, 'statusText', '');
 	const [quoteStatus, setQuoteStatus] = useIsolatedState(windowId, 'quoteStatus', 'Fill in all the details');
 	const [quoteId, setQuoteId] = useIsolatedState(windowId, 'quoteId', '');
+	const [maxAmount, setMaxAmount] = useIsolatedState(windowId, 'maxAmount', '0');
+	const [txnTimer, setTxnTimer] = useIsolatedState(windowId, 'txnTimer', null);
+
+	const txnTimerRef = useRef(txnTimer);
+
+	useEffect(() => {
+		txnTimerRef.current = txnTimer;
+	}, [txnTimer]);
+
+
+	const bigInt = require('big-integer');
 
 
 	useEffect(() => {
@@ -58,8 +70,8 @@ const SwapComponent = ({ providerKey, windowId }) => {
 	}, []);
 
 
-	const checkTxnStatus = useCallback(async (_txnHash) => {
-		if (swapInProgress && txnHash && txnHash === _txnHash && currentTxnStatus.current?.done !== true && currentTxnStatus.current?.lastCheckTime && (new Date() - currentTxnStatus.current?.lastCheckTime) > 10000) {
+	const checkTxnStatus = useCallback(async (_txnHash, cnt) => {
+		if (swapInProgress && txnHash && txnHash !== '' && txnHash === _txnHash && currentTxnStatus.current?.done !== true && currentTxnStatus.current?.lastCheckTime && (new Date() - currentTxnStatus.current?.lastCheckTime) > 1000 && cnt < 100)  {
 			console.log('Txn status before:', txnStatus);
 			const status = await getTxnDetails({ "hash": txnHash.toString() }).catch(error => {
 				console.error('Error getting txn details:', error);
@@ -69,17 +81,26 @@ const SwapComponent = ({ providerKey, windowId }) => {
 				return null;
 			});
 			console.log('Txn status:', status);
+
 			status.lastCheckTime = new Date();
 			setTxnStatus(status);
 			currentTxnStatus.current = status;
-			if (status?.done === false) {
+			if (status?.done === false && status?.result?.legs?.length > 0) {
 				setProgress((prev) => (prev < 95) ? prev + 1 : 95);
-				const delay = ((status.result.legs.last().estimatedEndTimestamp - status.result.startTimestamp) / 80) * 1000 || 1000;
-				setTimeout(() => {
-					checkTxnStatus();
-				}, delay);
+				const delay = ((status.result.legs.slice(-1).estimatedEndTimestamp - status.result.startTimestamp) / 80) * 1000 || 10000;
+				if(!cnt) cnt = 0;
+				console.log('Delay:', delay, cnt, txnHash);
+				
+				if (txnTimerRef.current) clearTimeout(txnTimerRef.current);
+
+				setTxnTimer(setTimeout(() => {
+					checkTxnStatus(txnHash + '', cnt+1);
+				}, delay));
+			}else if (status?.done === true) {
+				setProgress(100);
+				setSwapInProgress(false);
 			}
-		} else if (txnStatus?.done === true) {
+		} else if (txnStatus?.done === true || txnStatus?.error || txnStatus?.txn?.route?.complete === true) {
 			if (txnStatus?.error?.message) {
 				setStatusText('Please follow the transaction on the link below');
 				console.error('Error:', txnStatus.error.message);
@@ -88,15 +109,35 @@ const SwapComponent = ({ providerKey, windowId }) => {
 			}
 			setProgress(100);
 			setSwapInProgress(false);
+		}else{
+			console.log('Txn status not checked:', txnHash, _txnHash, swapInProgress, txnStatus, currentTxnStatus.current?.done, currentTxnStatus.current?.lastCheckTime, (new Date() - currentTxnStatus.current?.lastCheckTime) > 1000);
 		}
 	}, [swapInProgress, txnHash, txnStatus]);
+
+	useEffect(() => {
+		const token = swapFrom;
+		console.log('Selected token:', token);
+		const wallet = wallets.find(w => w?.chain === token?.chain);
+		console.log('Wallet:', wallet);
+		const balance = wallet?.balance?.find(b => b.isSynthetic !== true && b.chain + '.' + b.symbol.toUpperCase() === token.identifier.toUpperCase()) || wallet?.balance?.find(b => b.isSynthetic === true && b.symbol.toUpperCase() === token.identifier.toUpperCase());
+		console.log('Balance:', balance);
+		if (balance) {
+			//const readableBalance = formatBigIntToSafeValue(bigInt(balance.bigIntValue), balance.decimal, balance.decimal);
+			const readableBalance = bigInt(balance.bigIntValue).divide(bigInt(10n).pow(balance.decimal));
+			console.log('Readable balance:', readableBalance, bigInt(balance.bigIntValue), balance.decimal);
+			setMaxAmount(readableBalance.toString());
+		} else {
+			setMaxAmount('0');
+		}
+	}, [swapFrom, wallets]);
+
 
 
 	//if there is a txn hash, check the status
 	useEffect(() => {
 
-
-		checkTxnStatus(txnHash + '');
+		if(txnHash !== '')
+		checkTxnStatus(txnHash + '', 0);
 
 
 
@@ -119,6 +160,10 @@ const SwapComponent = ({ providerKey, windowId }) => {
 		setProgress(0)
 
 		const wallet = chooseWalletForToken(swapFrom);
+
+		//const basisPoints = (swapFrom.identifier.contains('/') || swapTo.identifier.contains('/')) ? 10 : 100;
+		const basisPoints = (swapFrom.identifier.includes('/') || swapTo.identifier.includes('/')) ? '32' : '64';
+
 		const quoteParams = {
 			sellAsset: swapFrom.identifier,
 			sellAmount: amount,
@@ -126,9 +171,11 @@ const SwapComponent = ({ providerKey, windowId }) => {
 			senderAddress: wallet.address,
 			recipientAddress: destinationAddress,
 			slippage: slippage.toString(),
-			affiliateBasisPoints: 100,
+			affiliateBasisPoints: basisPoints,
 			affiliateAddress: 'be'
 		};
+
+
 		console.log('Quote params:', quoteParams);
 		try {
 
@@ -191,11 +238,14 @@ const SwapComponent = ({ providerKey, windowId }) => {
 				route: route,
 				feeOption: FeeOption[feeOption] || FeeOption.Average,
 				recipient: destinationAddress,
+				affiliate: 'be',
+				affiliateBasisPoints: basisPoints,
+				affiliateFee: basisPoints,
 			};
 			console.log('Swap params:', swapParams);
 			const swapResponse = await skClient.swap(swapParams).catch(error => {
 				console.error('Error swapping:', error);
-				setStatusText('Error swapping: ' + error.message);
+				setStatusText('Error swapping: ' + niceErrorMessage(error));
 				setSwapInProgress(false);
 				setShowProgress(false);
 				return null;
@@ -219,6 +269,9 @@ const SwapComponent = ({ providerKey, windowId }) => {
 				setShowProgress(false);
 				return null;
 			});
+			txDetails.done = false;
+			txDetails.status = 'pending';
+			txDetails.lastCheckTime = 1;
 			currentTxnStatus.current = txDetails;
 
 			setTxnStatus(txDetails);
@@ -278,6 +331,13 @@ const SwapComponent = ({ providerKey, windowId }) => {
 			
 
 		if (swapFrom && swapTo && amount && thisDestinationAddress) {
+
+
+			setStatusText('');
+			setQuoteStatus('Getting Quotes...');
+
+			const basisPoints = (swapFrom.identifier.includes('/') || swapTo.identifier.includes('/')) ? '32' : '64';
+
 				const quoteParams = {
 					sellAsset: swapFrom.identifier,
 					sellAmount: amount,
@@ -285,7 +345,8 @@ const SwapComponent = ({ providerKey, windowId }) => {
 					senderAddress: chooseWalletForToken(swapFrom)?.address,
 					recipientAddress: thisDestinationAddress,
 					slippage: slippage,
-					
+					affiliateBasisPoints: basisPoints,
+					affiliateAddress: 'be'
 				};
 				try{
 					const response = await SwapKitApi.getQuote(quoteParams).catch(error => {
@@ -316,7 +377,12 @@ const SwapComponent = ({ providerKey, windowId }) => {
 						if (!destinationAddress) setDestinationAddress(chooseWalletForToken(swapTo)?.address);
 
 						//setQuoteStatus(`Optimal: ${optimalRoute.providers.join(', ')} - ${optimalRoute.estimatedTime.total} mins - ${optimalRoute.expectedBuyAmountMaxSlippage} ${swapTo?.ticker}`);
-						setQuoteStatus(`Optimal: ${optimalRoute.providers.join(', ')} - ${optimalRouteTime} mins - ${optimalRoute.expectedOutputMaxSlippage} ${swapTo?.ticker}`);
+						setQuoteStatus(<>
+						Optimal:<br />
+							{optimalRoute.providers.join(', ')}  {parseFloat(optimalRouteTime).toPrecision(3)} mins<br />
+							Expected Min {swapTo?.ticker}: {parseFloat(optimalRoute.expectedOutputMaxSlippage).toPrecision(8)} <br />
+							Expected USD Equiv.: {parseFloat(optimalRoute.expectedOutputUSD).toPrecision(8)} <br />
+						</>);
 					}
 				}catch(error){
 					console.error("Error getting quotes:", error, quoteParams);
@@ -395,6 +461,8 @@ slippage=${slippage}
 		}
 		const lines = data.split('\n');
 		lines.forEach(line => {
+			if (line.startsWith(';')) return; // Ignore comments (lines starting with ;
+
 			const [key, value] = line.split('=');
 			switch (key.trim()) {
 				case 'token_from':
@@ -505,6 +573,20 @@ slippage=${slippage}
 		},
 	], []);
 
+
+	const tokenChooserDialog = useMemo(() => {
+		if (isTokenDialogOpen) {
+			return <TokenChooserDialog
+				isOpen={isTokenDialogOpen}
+				onClose={closeTokenDialog}
+				onConfirm={handleTokenSelect}
+				wallets={wallets}
+				otherToken={swapFrom}
+			/>
+		}
+		return null;
+	}, [isTokenDialogOpen, closeTokenDialog, handleTokenSelect, wallets, swapFrom]);
+
 	return (
 		<div style={{ width: '100%', boxSizing: 'border-box', display: 'flex', flexDirection: 'column',  justifyContent: 'space-between', }} className='swap-component'> 
 			<div className="swap-toolbar">
@@ -524,13 +606,22 @@ slippage=${slippage}
 					<div className='swap-toolbar-icon' >❝</div>
 					Quote
 				</button>
+				<button className='swap-toolbar-button' onClick={() => {
+					const swapX = swapFrom;
+					setSwapFrom(swapTo);
+					setSwapTo(swapX);
+				}}>
+					<div className='swap-toolbar-icon' >⇅</div>
+					Switch
+				</button>
+
 				<div className='status-text'>
 				{statusText}
 				</div>
 			</div>
 			<div style={{ display: (swapInProgress || explorerUrl? 'flex' : 'none')}} className="swap-progress-container">
 				{swapInProgress ? <div>
-					<div className="swap-progress">
+					<div className="swap-progress" onClick={() => { setTxnStatus((prev) => { prev.lastCheckTime = 10; return prev; }) }} >
 					{showProgress && <ProgressBar percent={progress} progressID={windowId} showPopup={true} />}
 					</div>
 				</div>
@@ -550,46 +641,63 @@ slippage=${slippage}
 
 				<div className="field-group">
 					<label>From Token</label>
-					{!swapInProgress && (
+					<div className='token-select'>	
+										{!swapInProgress && (
 					<button onClick={() => openTokenDialog(setSwapFrom, 'from')} className='select-button'>Select</button>
 					)}
 					{swapFrom && (
-						<span>
+						<span className='token'>
 							<img src={swapFrom.logoURI} alt={swapFrom.name} style={{ width: '20px', height: '20px', 'marginRight': '5px' }} /> 
-							{swapFrom.ticker} {swapFrom.name}
+							 <span>{swapFrom.ticker}{swapFrom.name} on {swapFrom.chain}</span>
 						</span>
+					)}
+					</div>
+
+				</div>
+				<div className="field-group">
+					<label>Balance</label>
+					{swapFrom && (
+						<span>
+							{maxAmount} {swapFrom.ticker}
+						</span>
+					)}
+				</div>
+
+				<div className="field-group">
+					<label>Amount</label>
+					{!swapInProgress ? (	
+						<>
+						<input type="number" value={amount} onChange={e => setAmount(e.target.value)} />
+						{maxAmount && <input type="range" min="0" max={maxAmount} value={amount} onChange={e => setAmount(e.target.value)} step={maxAmount / 100} />}
+						</>
+					) : (
+						amount
 					)}
 				</div>
 				<div className="field-group">
 					<label>To Token</label>
+					<div className='token-select'>
 					{!swapInProgress && (
-					<button onClick={() => openTokenDialog(setSwapTo, 'to')} className='select-button'>Select</button>
+						<button onClick={() => openTokenDialog(setSwapTo, 'to')} className='select-button'>Select</button>
 
 					)}
 					{swapTo && (
-						<span>
-							<img src={swapTo.logoURI} alt={swapTo.name} style={{ width: '20px', height: '20px', 'marginRight': '5px' }} /> 
-							{swapTo.ticker} {swapTo.name}
+						<span className='token'>
+							<img src={swapTo.logoURI} alt={swapTo.name} style={{ width: '20px', height: '20px', 'marginRight': '5px' }} />
+							<div>{swapTo.ticker} {swapTo.name} on {swapTo.chain}</div>
 						</span>
 					)}
-				</div>
-				<div className="field-group">
-					<label>Amount</label>
-					{!swapInProgress ? (	
-					<input type="number" value={amount} onChange={e => setAmount(e.target.value)} />
-					) : (
-						amount
-					)}
+					</div>
 				</div>
 				<div className="field-group">
 					<label>Destination Address</label>
 					{!swapInProgress ? (	
 						<input type="text" value={destinationAddress} onChange={e => setDestinationAddress(e.target.value)} />
 					) : (
-						destinationAddress
+							<span className='address' title={destinationAddress}>{destinationAddress}</span>
 					)}
 				</div>
-				<div className="field-group">
+				<div className="field-group flex-wrap">
 					<label>Route Selection</label>
 					{!swapInProgress ? (	
 						<div style={{width: '100%', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', justifyContent: 'space-between'}}>
@@ -605,15 +713,18 @@ slippage=${slippage}
 										: 0)
 									: 
 									
-									(typeof(route.estimatedTime) === 'object' ? route.estimatedTime.total / 60 : route.estimatedTime / 60)
+											parseFloat((typeof (route.estimatedTime) === 'object' ? route.estimatedTime.total / 60 : route.estimatedTime / 60)).toPrecision(3)
 								
-									} mins - {route.expectedOutputMaxSlippage} {swapTo?.ticker}
+									} mins - {parseFloat(route.expectedOutputMaxSlippage).toPrecision(5)} {swapTo?.ticker}
 								</option>
 							))}
 						</select>
-						<div className='optimal-route'>
-						{quoteStatus}
-						</div>
+						{quoteStatus &&
+							<div className='optimal-route'><div className='tooltip'>
+								{quoteStatus}
+								</div>
+							</div>
+						}
 						</div>
 
 					) : (
@@ -650,16 +761,7 @@ slippage=${slippage}
 					}}
 				/>
 			</div>
-			<TokenChooserDialog
-				isOpen={isTokenDialogOpen}
-				onClose={() => setIsTokenDialogOpen(false)}
-				onConfirm={token => {
-					if (currentTokenSetter) currentTokenSetter(token);
-					setIsTokenDialogOpen(false);
-				}}
-				wallets={wallets}
-				otherToken={swapFrom}
-			/>
+			{tokenChooserDialog}
 		</div>
 	);
 };
