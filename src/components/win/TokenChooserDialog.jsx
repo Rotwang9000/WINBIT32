@@ -4,22 +4,20 @@ import { useWindowSKClient } from "../contexts/SKClientProviderManager";
 import './styles/TokenChooserDialog.css';
 import { chainImages, fetchCategories, fetchTokensByCategory } from "./includes/tokenUtils";
 import { useIsolatedState } from "./includes/customHooks";
-import { set } from "lodash";
+import { debounce, set } from "lodash";
 
-const TokenChooserDialog = ({ isOpen, onClose, onConfirm, providerKey, wallets, otherToken }) => {
+const TokenChooserDialog = ({ isOpen, onClose, onConfirm, providerKey, wallets, otherToken, windowId, inputRef }) => {
 	const { providers, tokens, providerNames } = useWindowSKClient(providerKey);
-	const [selectedChain, setSelectedChain] = useIsolatedState(providerKey, 'selectedChain', "");
-	const [selectedProvider, setSelectedProvider] = useIsolatedState(providerKey, 'selectedProvider', "");
-	const [selectedToken, setSelectedToken] = useIsolatedState(providerKey, 'selectedToken', null);
-	const [searchTerm, setSearchTerm] = useIsolatedState(providerKey, 'searchTerm', "");
-	const [userInteracted, setUserInteracted] = useIsolatedState(providerKey, 'userInteracted', false);
-	const [selectedCategory, setSelectedCategory] = useIsolatedState(providerKey, 'selectedCategory', "");
-	const [categories, setCategories] = useIsolatedState(providerKey, 'categories', []);
-	const [tokensByCategory, setTokensByCategory] = useIsolatedState(providerKey, 'tokensByCategory', {});
-	const [restrictToProviders, setRestrictToProviders] = useIsolatedState(providerKey, 'restrictedProviders', null);
-	const [searchTextActive, setSearchTextActive] = useIsolatedState(providerKey, 'searchTextActive', false);
-	
-	const inputRef = useRef(null);
+	const [selectedChain, setSelectedChain] = useState("");
+	const [selectedProvider, setSelectedProvider] = useState("");
+	const [selectedToken, setSelectedToken] = useState(null);
+	const [searchTerm, setSearchTerm] = useState("");
+	const [userInteracted, setUserInteracted] = useState(false);
+	const [selectedCategory, setSelectedCategory] = useState("");
+	const [categories, setCategories] = useState([]);
+	const [tokensByCategory, setTokensByCategory] = useState({});
+	const [restrictToProviders, setRestrictToProviders] = useState(null);
+	const [searchTextActive, setSearchTextActive] = useState(false);
 
 
 	const observer = useRef(new IntersectionObserver((entries) => {
@@ -73,6 +71,7 @@ const TokenChooserDialog = ({ isOpen, onClose, onConfirm, providerKey, wallets, 
 	// 	const tokens = fetchTokensByCategory(categoryName);
 	// 	return tokens;
 	// }, []);
+
 
 
 	const identifierFromBalance = useCallback( (balance) => {
@@ -215,22 +214,33 @@ const TokenChooserDialog = ({ isOpen, onClose, onConfirm, providerKey, wallets, 
 	}, []);
 
 
-	const handleSearchChange = useCallback( e =>{
-		if(e.target.value !== searchTerm) {
-			setSearchTerm(e.target.value);
-			setUserInteracted(true);
-			console.log("handleSearchChange", e.target.value);
+	const handleSearchChange = useCallback(debounce((value) => {
+		setSearchTerm(value);
+		setUserInteracted(true);
 
-			// Auto-select chain if there is a matching token
-			const matchedToken = tokens.find(token => token.identifier.toLowerCase() === e.target.value.toLowerCase());
-			if (matchedToken) {
-				setSelectedChain(matchedToken.chain);
-			}
-			inputRef.current?.focus(); // Maintain focus
-
+		// Auto-select chain if there is a matching token
+		const matchedToken = tokens.find(token => token.identifier.toLowerCase() === value.toLowerCase());
+		if (matchedToken) {
+			setSelectedChain(matchedToken.chain);
 		}
-	}, [searchTerm, inputRef, tokens]);
+	}, 300), [tokens]); // Debounce search term changes
 
+	useEffect(() => {
+		// Setup
+		return () => {
+			// Cleanup
+			handleSearchChange.cancel(); // This is how you cancel a debounced function with lodash
+		};
+	}, [handleSearchChange]);
+	
+
+	useEffect(() => {
+		if (searchTextActive) {
+			if (inputRef.current) {
+				inputRef.current.focus();
+			}
+		}
+	}, []);
 
 	const beforeOnConfirm = useCallback( () => {
 		console.log("beforeOnConfirm", searchTerm, selectedToken);
@@ -249,7 +259,19 @@ const TokenChooserDialog = ({ isOpen, onClose, onConfirm, providerKey, wallets, 
 		onClose();
 	}, [searchTerm, tokens, onConfirm, onClose]);
 
-	if (!isOpen) return null;
+	useEffect(() => {
+		if (searchTextActive) {
+			inputRef.current.focus();
+		}
+	}, [searchTextActive]);
+
+
+	useEffect(() => {
+		if (searchTextActive) {
+			inputRef.current.focus();
+		}
+	}, [searchTextActive]);
+	//	if (!isOpen) return null;
 
 	return (
 		<DialogBox
@@ -270,12 +292,32 @@ const TokenChooserDialog = ({ isOpen, onClose, onConfirm, providerKey, wallets, 
 				<div className="file-text-box">
 					<div className="label">Token Identifier:</div>
 					<input
+						key={windowId+'-search-text'}
 						ref={inputRef}
-
 						type="text"
 						placeholder="Search token or enter identifier..."
+						// {(searchTextActive ? { value={ searchTerm } } : {} )}
+						className="search-text-box"
 						value={searchTerm}
-						onChange={handleSearchChange}
+						onKeyDown={(e) => {
+							e.stopPropagation();
+							if (e.key === 'Enter') {
+								e.preventDefault();
+								beforeOnConfirm(selectedToken);
+							}
+
+						}
+						}
+						onKeyUp={(e) => {
+							e.stopPropagation();
+						}
+						}
+
+						onChange={(e) => {
+							e.stopPropagation();
+							handleSearchChange(e.target.value);
+						}
+						}
 						onFocusCapture={() => setSearchTextActive(true)}
 						onBlur={() => setSearchTextActive(false)}
 					/>
@@ -286,7 +328,7 @@ const TokenChooserDialog = ({ isOpen, onClose, onConfirm, providerKey, wallets, 
 								<li key={`${token.chain}-${token.identifier}`} onClick={() => handleTokenClick(token)} className={(selectedToken && selectedToken.identifier === token.identifier) ? "active" : ""}>
 									{token.logoURI ? (
 										<img
-											// ref={img => img && observer.current.observe(img)}
+											ref={img => img && observer.current.observe(img)}
 											data-src={token.logoURI}
 											alt={token.name}
 											className="token-icon"
@@ -342,7 +384,7 @@ const TokenChooserDialog = ({ isOpen, onClose, onConfirm, providerKey, wallets, 
 								>
 									{chainImages[chain] ? (
 										<img
-											// ref={img => img && observer.current.observe(img)}
+											ref={img => img && observer.current.observe(img)}
 											data-src={chainImages[chain]}
 											alt={chain}
 											className="token-icon"

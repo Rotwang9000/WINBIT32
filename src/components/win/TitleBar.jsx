@@ -1,45 +1,54 @@
-import React, { useState } from 'react';
+import React, { useCallback } from 'react';
 
-const TitleBar = ({ title = "Program Manager", showMinMax = true, onContextMenu, onMinimize, onMaximize, onClose, isMaximized, ...rest}) => {
-	//const [isMaximized, setIsMaximized] = useState(false); // Track maximize/restore state
-
-	const handleMaximize = () => {
-		//setIsMaximized(!isMaximized); // Toggle maximize/restore
+const TitleBar = ({
+	title = "Program Manager",
+	showMinMax = true,
+	onContextMenu,
+	onMinimize,
+	onMaximize,
+	onClose,
+	isMaximized,
+	...rest
+}) => {
+	const handleMaximize = useCallback(() => {
 		if (onMaximize) {
-			onMaximize(!isMaximized); // Notify parent component
+			onMaximize(!isMaximized);
 		}
-	};
+	}, [isMaximized, onMaximize]);
+
+	const handleContextMenu = useCallback((e) => {
+		const rect = e.target.getBoundingClientRect();
+		const position = { x: rect.left, y: rect.bottom };
+		console.log(`Context menu at ${position.x}, ${position.y}`);
+		if (onContextMenu) {
+			onContextMenu(position);
+		}
+	}, [onContextMenu]);
 
 	return (
 		<div className="title" {...rest}>
 			<div
 				className="button close contextbutton"
-				onClick={(e) => {
-					const rect = e.target.getBoundingClientRect(); // Get position for context menu
-					const position = { x: rect.left, y: rect.bottom }; // Position context menu below button
-					console.log(`Context menu at ${position.x}, ${position.y}`);	
-					if (onContextMenu) {
-						onContextMenu(position); // Trigger context menu
-					}
-				}}
+				onClick={handleContextMenu}
 			>
 				&#8212;
 			</div>
-			<div className='title-text' onDoubleClick={handleMaximize}  >{title}</div> {/* Display title */}
+			<div className='title-text' onDoubleClick={handleMaximize}>
+				{title}
+			</div>
 			{showMinMax && (
 				<div className='maxmin'>
 					<div
 						className="button min"
-						onClick={onMinimize} // Trigger minimize
+						onClick={onMinimize}
 					>
 						▼
 					</div>
 					<div
 						className="button max"
-						onClick={handleMaximize} // Toggle maximize/restore
-					> 
-						{isMaximized ? '⬍'
-							: '▲'} {/* Toggle symbol */}
+						onClick={handleMaximize}
+					>
+						{isMaximized ? '⬍' : '▲'}
 					</div>
 				</div>
 			)}
@@ -47,4 +56,4 @@ const TitleBar = ({ title = "Program Manager", showMinMax = true, onContextMenu,
 	);
 };
 
-export default TitleBar;
+export default React.memo(TitleBar);

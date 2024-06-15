@@ -1,9 +1,9 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useCallback, useRef } from 'react';
 import ReactDOM from 'react-dom';
 import TitleBar from './TitleBar';
 import Draggable from 'react-draggable'; // For draggable dialogs
 
-const DialogBox = ({
+const DialogBox = React.memo(({
 	title = 'Dialog',
 	content,
 	modal = true,
@@ -21,14 +21,15 @@ const DialogBox = ({
 		info: 'ℹ️',
 		question: '❓',
 		exclamation: '❗',
-		stop: <img src='stop.png' />
+		stop: <img src='stop.png' alt='stop' />
 	};
 
 	const iconSymbol = (icon && icons[icon]) ? <div className="icon">{icons[icon]}</div> : null;
 
 	const handleStart = (e, data) => {
+		console.log('Start', data.x, data.y);
 		e.stopPropagation();
-	}
+	};
 
 	if (!content) {
 		content = children;
@@ -37,23 +38,23 @@ const DialogBox = ({
 	}
 
 	// Create a div that will be used as the portal container
-	const portalContainer = document.createElement('div');
-	portalContainer.id = 'dialog-portal-container';
+	const portalContainer = useRef(document.createElement('div'));
+	portalContainer.current.id = 'dialog-portal-container';
 
 	useEffect(() => {
 		// Append the portal container to the body
-		document.body.appendChild(portalContainer);
+		document.body.appendChild(portalContainer.current);
 		return () => {
 			// Cleanup the portal container when the component unmounts
-			document.body.removeChild(portalContainer);
+			document.body.removeChild(portalContainer.current);
 		};
-	}, [portalContainer]);
+	}, []);
 
 	// The dialog box content
 	const dialogContent = (
 		<div className={`dialog-wrapper ${modal ? 'modal' : ''}`}>
 			{modal && <div className="dialog-backdrop" onClick={onCancel} />} {/* Dimming background */}
-			<Draggable handle={"div div.title>div.title-text"} defaultPosition={{ x: 0, y: 0 }} positionOffset={{ x: '-50%', y: '-50%' }} onStart={handleStart}>
+			<Draggable handle={"div div.title>div.title-text"} defaultPosition={{ x: 0, y: 0 }} positionOffset={{ x: '-50%', y: '-50%' }} onStart={handleStart} cancel='.search-text-box' disabled={true}>
 				<div className='dialog-border'>
 					<TitleBar
 						title={title}
@@ -100,7 +101,7 @@ const DialogBox = ({
 	);
 
 	// Render the dialog box into the portal container
-	return ReactDOM.createPortal(dialogContent, portalContainer);
-};
+	return ReactDOM.createPortal(dialogContent, portalContainer.current);
+});
 
 export default DialogBox;

@@ -573,6 +573,7 @@ slippage=${slippage}
 		},
 	], []);
 
+	const inputRef = useRef(windowId + '-search-text');
 
 	const tokenChooserDialog = useMemo(() => {
 		if (isTokenDialogOpen) {
@@ -582,6 +583,8 @@ slippage=${slippage}
 				onConfirm={handleTokenSelect}
 				wallets={wallets}
 				otherToken={swapFrom}
+				windowId={windowId + '_token_chooser'}
+				inputRef={inputRef}
 			/>
 		}
 		return null;
