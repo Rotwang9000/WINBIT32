@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import WindowManager from './WindowManager';
 import Toolbar from './Toolbar';
 import { useIsolatedState } from './includes/customHooks';
@@ -24,6 +24,10 @@ const WindowContainer = ({
 	const handleSetSubProgramClick = useCallback((handle) => {
 		setHandleSubProgramClick(() => handle);
 	}, []);
+
+	useEffect(() => {
+		setCurrentSubWindows(initialSubWindows);
+	}, [initialSubWindows, setCurrentSubWindows]);
 
 	return (
 		<div className="window-container">

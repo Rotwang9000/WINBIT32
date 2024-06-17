@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useReducer } from "react";
 import { useWindowData } from "./WindowContext";
 
 function isEqual(a, b) {
@@ -143,4 +143,33 @@ export function useArrayState(windowId, key) {
 		removeItemByIndex,
 		replaceItemAtIndex,
 	};
+}
+
+export function useIsolatedReducer(windowId, key, reducer, initialState) {
+	const { getWindowContent, setWindowContent } = useWindowData();
+	const initialContent = getWindowContent(windowId)[key];
+
+	const [state, dispatch] = useReducer(
+		reducer,
+		initialContent !== undefined ? initialContent : initialState
+	);
+
+	const updateCounterRef = useRef([0, 0]);
+
+	useEffect(() => {
+		if (updateCounterRef.current[0] !== updateCounterRef.current[1]) {
+			setWindowContent(windowId, (prevState) => ({
+				...prevState,
+				[key]: state,
+			}));
+			updateCounterRef.current[1] = updateCounterRef.current[0];
+		}
+	}, [windowId, key, state, setWindowContent]);
+
+	const isolatedDispatch = (action) => {
+		dispatch(action);
+		updateCounterRef.current[0]++;
+	};
+
+	return [state, isolatedDispatch];
 }

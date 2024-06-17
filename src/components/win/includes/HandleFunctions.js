@@ -1,139 +1,101 @@
 import { resetState } from "./StateFunctions";
 
-export const handleQRRead = (setWindowManagerState) => (data) => {
-	setWindowManagerState({ qrResult: data, showQRPop: false });
+export const handleQRRead = (dispatch) => (data) => {
+	dispatch({ type: "SET_QR_RESULT", payload: data });
+	dispatch({ type: "SET_SHOW_QR_POP", payload: false });
 };
 
-export const toggleQRPop = (setWindowManagerState) => () => {
-	setWindowManagerState((prevState) => ({ showQRPop: !prevState.showQRPop }));
+export const toggleQRPop = (dispatch) => () => {
+	dispatch({ type: "TOGGLE_QR_POP" });
 };
 
-export const handleExit = (setWindowManagerState) => () => {
-	setWindowManagerState({ showDOSPrompt: true }); // Trigger "exit" to DOS prompt
+export const handleExit = (dispatch) => () => {
+	dispatch({ type: "SET_SHOW_DOS_PROMPT", payload: true });
 };
 
-export const handleHashChange = (setWindowManagerState) => () => {
-	// Get the current hash and bring the corresponding window to the front
+export const handleHashChange = (dispatch) => () => {
 	console.log("hash change");
 	const hash = window.location.hash.replace("#", "");
 	if (hash) {
 		console.log(`Hash found: ${hash}`);
-		this.openWindowByProgName(hash); // Bring the correct window to the front
+		dispatch(openWindowByProgName(dispatch, hash));
 	}
 };
 
-export const openWindowByProgName = (setWindowManagerState) => (progName) => {
-	const { windows } = this.state;
-	const existingWindow = windows.find((w) => w.progName === progName);
-	if (existingWindow) {
-		console.log(`Window ${progName} already exists`);
-		this.bringToFront(existingWindow.windowId); // Bring to front if it already exists
-	} else {
-		console.log(`Window ${progName} not found`);
-		// Open a new window based on the title if not found
-		const program = this.state.programs.find((p) => p.progName === progName);
-		if (program) {
-			this.handleOpenWindow(program);
+export const openWindowByProgName = (dispatch, progName) => {
+	return (state) => {
+		const { windows, programs } = state;
+		const existingWindow = windows.find((w) => w.progName === progName);
+		if (existingWindow) {
+			console.log(`Window ${progName} already exists`);
+			dispatch(bringToFront(dispatch, existingWindow.windowId));
+		} else {
+			console.log(`Window ${progName} not found`);
+			const program = programs.find((p) => p.progName === progName);
+			if (program) {
+				dispatch(handleOpenWindow(dispatch, program));
+			}
 		}
-	}
+	};
 };
 
-export const minimizeWindow = (setWindowManagerState) => (window) => {
-	setWindowManagerState({
-		minimizedWindows: (prevMinimizedWindows) => [
-			...prevMinimizedWindows,
-			window,
-		], // Add to minimized windows
-		windows: (prevWindows) =>
-			prevWindows.map((w) =>
-				w.windowId === window.windowId ? { ...w, minimized: true } : w
-			), // Mark window as minimized
-	});
+export const minimizeWindow = (dispatch) => (window) => {
+	dispatch({ type: "MINIMIZE_WINDOW", payload: window });
 };
 
-export const restoreWindow = (setWindowManagerState) => (window) => {
-	setWindowManagerState({
-		minimizedWindows: (prevMinimizedWindows) =>
-			prevMinimizedWindows.filter((w) => w.windowId !== window.windowId), // Remove from minimized windows
-		windows: (prevWindows) =>
-			prevWindows.map((w) =>
-				w.windowId === window.windowId
-					? { ...w, minimized: false, maximized: false }
-					: w
-			), // Restore minimized window
-	});
+export const restoreWindow = (dispatch) => (window) => {
+	dispatch({ type: "RESTORE_WINDOW", payload: window });
 };
 
-export const maximizeWindow = (setWindowManagerState) => (window) => {
-	setWindowManagerState({
-		windows: (prevWindows) =>
-			prevWindows.map((w) =>
-				w.windowId === window.windowId ? { ...w, maximized: true } : w
-			), // Mark window as maximized
-	});
+export const maximizeWindow = (dispatch) => (window) => {
+	dispatch({ type: "MAXIMIZE_WINDOW", payload: window });
 };
 
-export const handleContextMenu =
-	(setWindowManagerState) => (position, window) => {
-		setWindowManagerState({
+export const handleContextMenu = (dispatch) => (position, window) => {
+	dispatch({
+		type: "SET_CONTEXT_MENU",
+		payload: {
 			contextMenuVisible: true,
 			contextMenuPosition: position,
 			contextWindowId: window.windowId,
-		});
-		console.log(`Context menu at ${position.x}, ${position.y}`);
-	};
+		},
+	});
+	console.log(`Context menu at ${position.x}, ${position.y}`);
+};
 
-export const handleMenuClick = (setWindowManagerState) => (action, window) => {
+export const handleMenuClick = (dispatch) => (action, window) => {
 	if (window && window.menuHandler) {
 		window.menuHandler(action); // Use the correct handler for the instance
 	}
 };
 
-export const handleMenuAction =
-	(setWindowManagerState) => (menu, window, menuHandler) => {
-		// Check if menu has changed
-		if (window.menu === menu) {
-			return;
-		}
-
-		console.log(
-			"Setting menu action",
-			menu,
-			window.windowId,
-			setWindowManagerState
-		);
-
-		setWindowManagerState({
-			windows: (prevWindows) =>
-				prevWindows.map(
-					(w) =>
-						w.windowId === window.windowId ? { ...w, menu, menuHandler } : w // Set unique menu handler
-				),
-		});
-	};
-
-export const bringToFront = (setWindowManagerState) => (windowId) => {
-	if (!setWindowManagerState) {
-		console.error("setWindowManagerState is undefined"); // Error handling for undefined context
+export const handleMenuAction = (dispatch) => (menu, window, menuHandler) => {
+	// Check if menu has changed
+	if (window.menu === menu) {
 		return;
 	}
 
-	setWindowManagerState((prevState) => {
-		const windows = prevState.windows;
-		const highestZIndex = prevState.highestZIndex;
-		const contextMenuVisible = prevState.contextMenuVisible;
-		const windowHistory = prevState.windowHistory;
+	console.log("Setting menu action", menu, window.windowId);
+
+	dispatch({
+		type: "SET_WINDOW_MENU",
+		payload: { windowId: window.windowId, menu, menuHandler },
+	});
+};
+
+export const bringToFront = (dispatch, windowId) => {
+	return (state) => {
+		const { windows, highestZIndex, contextMenuVisible, windowHistory } = state;
 
 		if (contextMenuVisible) {
-			return {
-				contextMenuVisible: false,
-			};
+			dispatch({ type: "SET_CONTEXT_MENU_VISIBLE", payload: false });
+			return;
 		}
 
 		const window = windows.find((w) => w.windowId === windowId);
 
 		if (window.zIndex === highestZIndex) {
-			return null;
+			return;
 		}
 
 		const newZIndex = highestZIndex + 1;
@@ -142,51 +104,45 @@ export const bringToFront = (setWindowManagerState) => (windowId) => {
 			`Bringing window ${windowId} to front with z-index ${newZIndex}`
 		);
 
-		return {
-			windows: windows.map((w) =>
-				w.windowId === windowId ? { ...w, zIndex: newZIndex } : w
-			),
-			highestZIndex: newZIndex, // Update the highest z-index
-			windowHistory: [...windowHistory, windowId], // Update window history
-			hash: window.progID === 0 ? "" : window.progName, // Update hash if it has changed
-		};
-	});
+		dispatch({
+			type: "BRING_TO_FRONT",
+			payload: {
+				windowId,
+				newZIndex,
+				windowHistory: [...windowHistory, windowId],
+				hash: window.progID === 0 ? "" : window.progName,
+			},
+		});
+	};
 };
 
-export const handleOpenWindow = (setWindowManagerState) => (program) => {
-	setWindowManagerState((prevState) => {
-		const windows = prevState.windows;
-		const highestZIndex = prevState.highestZIndex;
+export const handleOpenWindow = (dispatch, program) => {
+	return (state) => {
+		const { windows, highestZIndex } = state;
 
-		return {
-			windows: [
-				...windows,
-				{
-					id: windows.length + 1, // Unique ID for the new window
-					zIndex: highestZIndex + 1, // Set the correct z-index
-					...program, // Spread the program data
+		dispatch({
+			type: "OPEN_WINDOW",
+			payload: {
+				window: {
+					id: windows.length + 1,
+					zIndex: highestZIndex + 1,
+					...program,
 				},
-			],
-			highestZIndex: highestZIndex + 1,
-		};
-	});
+			},
+		});
+	};
 };
 
-export const closeWindow = (setWindowManagerState) => (window) => {
+export const closeWindow = (dispatch) => (window) => {
 	const { windowId } = window;
 	if (window.unCloseable) {
 		console.log(`Window ${windowId} is uncloseable`);
 		return;
 	}
 	console.log(`Closing window ${windowId}`);
-	setWindowManagerState((prevState) => {
-		const windows = prevState.windows;
-		const windowHistory = prevState.windowHistory;
-
-		return {
-			windows: windows.filter((w) => w.windowId !== windowId), // Remove the window
-			windowHistory: windowHistory.filter((w) => w.windowId !== windowId), // Remove from history
-		};
+	dispatch({
+		type: "CLOSE_WINDOW",
+		payload: windowId,
 	});
 	if (window.windowName) {
 		resetState(window.windowName); // Reset the window state

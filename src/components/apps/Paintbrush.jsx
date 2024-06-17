@@ -54,6 +54,7 @@ const Paintbrush = ({ onMenuAction, windowA, windowId }) => {
 		const canvas = canvasRef.current;
 		switch (action) {
 			case 'exit':
+				console.log('Exit action');
 				windowA.close();
 				break;
 			case 'save':
