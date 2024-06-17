@@ -43,6 +43,7 @@ const SwapComponent = ({ providerKey, windowId }) => {
 	const [quoteId, setQuoteId] = useIsolatedState(windowId, 'quoteId', '');
 	const [maxAmount, setMaxAmount] = useIsolatedState(windowId, 'maxAmount', '0');
 	const [txnTimer, setTxnTimer] = useIsolatedState(windowId, 'txnTimer', null);
+	const [usersDestinationAddress, setUsersDestinationAddress] = useIsolatedState(windowId, 'usersDestinationAddress', '');
 
 	const txnTimerRef = useRef(txnTimer);
 
@@ -315,7 +316,10 @@ const SwapComponent = ({ providerKey, windowId }) => {
 
 				console.log("Wallet:", wallet);
 
-				if (wallet) setDestinationAddress(wallet.address);
+				if (wallet){
+					setDestinationAddress(wallet.address);
+					setUsersDestinationAddress(wallet.address);
+				}
 			}
 
 			
@@ -617,7 +621,6 @@ slippage=${slippage}
 					<div className='swap-toolbar-icon' >⇅</div>
 					Switch
 				</button>
-
 				<div className='status-text'>
 				{statusText}
 				</div>
@@ -651,7 +654,8 @@ slippage=${slippage}
 					{swapFrom && (
 						<span className='token'>
 							<img src={swapFrom.logoURI} alt={swapFrom.name} style={{ width: '20px', height: '20px', 'marginRight': '5px' }} /> 
-							 <span>{swapFrom.ticker}{swapFrom.name} on {swapFrom.chain}</span>
+								<span>{swapFrom.ticker}{swapFrom.name} on {swapFrom.chain} {(swapFrom?.ticker?.includes('/') ? ' (Synthetic)' : '')}
+							 </span>
 						</span>
 					)}
 					</div>
@@ -687,15 +691,21 @@ slippage=${slippage}
 					{swapTo && (
 						<span className='token'>
 							<img src={swapTo.logoURI} alt={swapTo.name} style={{ width: '20px', height: '20px', 'marginRight': '5px' }} />
-							<div>{swapTo.ticker} {swapTo.name} on {swapTo.chain}</div>
+								<div>{swapTo.ticker} {swapTo.name} on {swapTo.chain}{(swapTo?.ticker?.includes('/') ? ' (Synthetic)' : '')}</div>
 						</span>
 					)}
 					</div>
 				</div>
 				<div className="field-group">
-					<label>Destination Address</label>
+					<label style={{display: 'flex', flexDirection: 'row', justifyContent: 'space-between'}}>
+					Destination Address				{usersDestinationAddress && usersDestinationAddress !== destinationAddress ? (
+						<button onClick={() => setDestinationAddress(usersDestinationAddress)} title='Use Wallet Address' style={{marginLeft: '5px', padding: '6px', fontSize: '10px', display:'block', border: '1px solid black', minWidth:'fit-content'}} >
+							Own
+						</button>
+
+					) : ''}</label>
 					{!swapInProgress ? (	
-						<input type="text" value={destinationAddress} onChange={e => setDestinationAddress(e.target.value)} />
+						<input type="text" value={destinationAddress} onChange={e => setDestinationAddress(e.target.value)}  style={usersDestinationAddress && usersDestinationAddress !== destinationAddress ? {color: 'blue'} : {}} />
 					) : (
 							<span className='address' title={destinationAddress}>{destinationAddress}</span>
 					)}

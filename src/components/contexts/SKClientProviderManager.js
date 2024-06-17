@@ -171,10 +171,12 @@ export const SKClientProviderManager = ({ children }) => {
 						`https://api.swapkit.dev/tokens?provider=${provider.provider}`
 					);
 					const tokenData = await tokenResponse.json();
-					return tokenData.tokens.map((token) => ({
+					//filter out bnb chain 
+					return tokenData.tokens.filter((token) => token.chain !== "BNB").map((token) => ({
 						...token,
 						provider: provider.provider,
 					}));
+					
 				})
 			);
 			console.log("Tokens fetched:", tokensResponse);

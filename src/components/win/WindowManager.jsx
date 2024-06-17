@@ -3,14 +3,13 @@ import WindowBorder from './WindowBorder';
 import Taskbar from './Taskbar';
 import ContextMenu from './ContextMenu';
 import MenuBar from './MenuBar';
-import WindowContainer from './WindowContainer';
 import * as HandleFunctions from './includes/HandleFunctions';
 import { loadWindowState, saveWindowState, initializeWindows, updateWindowData, restoreWindowsFromSavedState } from './includes/StateFunctions';
 import { useIsolatedState, useIsolatedRef } from './includes/customHooks';
 import { getPrograms } from './programs';
 import { useWindowData } from './includes/WindowContext';
 import  './styles/scrollbar.css'
-import _, { set } from 'lodash';
+import { createNewWindow, convertObjectFunctions } from './includes/WindowManagerFunctions';
 
 
 const WindowManager = ({ programs, windowName, handleOpenFunction, setStateAndSave, providerKey, setWindowMenu, programData, setProgramData, handleOpenArray }) => {
@@ -79,69 +78,11 @@ const WindowManager = ({ programs, windowName, handleOpenFunction, setStateAndSa
 	}, [setWindows, windowName, setWindowContent]);
 
 
-	const handleOpenWindow = useCallback((program, metadata = {}, save = true) => {
-
-		if(typeof program === 'string'){
-			program = programs.find(p => p.progName === program);
-		}
-
-
-		if (program.openLevel){
-			const ol = program.openLevel;
-			let level = ol;
-			if(ol < 0){
-				level = handleOpenArray.length + ol - 1;
-			}
-			if(handleOpenArray[level]){
-				handleOpenArray[level](program.progName, programData);
-			}
-			return;
-		}
-
-
-		if (highestZIndexRef.current === undefined) {
-			setHighestZIndex(1);
-			highestZIndexRef.current = 1;
-		}
-
-		if(window.document.body.classList.contains('wait'))
-			{
-				return;
-			}
-		//window.document.body.addClass('wait');
-		window.document.body.classList.add('wait');
-		window.document.body.style.cursor = 'url(/waits.png), auto';
-		
-
-		console.log('Opening window in ' + windowName, program, highestZIndexRef.current);
-
-		const deepCopy = _.cloneDeep(program);
-
-		
-		setWindows((prevState = []) => {
-			console.log('Opening window', program, highestZIndexRef.current, prevState);
-
-			const newZIndex = highestZIndexRef.current + 1;
-			const windowId = Math.random().toString(36).substring(7);
-			const newWindow = {
-				id: prevState.length + 1,
-				zIndex: newZIndex,
-				close: () => closeWindow({ windowId: windowId, id: prevState.length + 1}),
-				windowId: windowId,
-				metadata: metadata,
-				...deepCopy,
-			};
-
-			console.log('Opening new window with zIndex', newZIndex, highestZIndexRef.current, newWindow);
-			setHighestZIndex(newZIndex);
-			highestZIndexRef.current = newZIndex;
-
-			const updatedWindows = [...prevState, newWindow];
-			return updatedWindows;
-		});
+	const handleOpenWindow = useCallback( (program, metadata, saveState = true) => {
+		createNewWindow(programs, handleOpenArray, programData, highestZIndexRef, setHighestZIndex, windowName, setWindows, closeWindow, program, metadata, saveState);
 	
-
-	}, [windowName, setWindows, setHighestZIndex, closeWindow]);
+	},
+	[programs, handleOpenArray, programData, setHighestZIndex, windowName, setWindows, closeWindow]);
 
 
 	useEffect(() => {
@@ -263,14 +204,7 @@ const WindowManager = ({ programs, windowName, handleOpenFunction, setStateAndSa
 		setContextMenuVisible(false);
 	}, [windows, closeWindow, restoreWindow, minimizeWindow, maximizeWindow]);
 
-	const convertToFunction = (input, functionMap) => {
-		if (typeof input === "string" && input.startsWith("!!")) {
-			const functionName = input.slice(2); // Remove "!!" prefix
-			// console.log(`Converting ${input} to function in window ${windowName}`);
-			return functionMap[functionName]; // Return the function reference
-		}
-		return input; // Return the original input if not a special case
-	};
+
 
 	const functionMap = {
 		handleOpenWindow,
@@ -282,38 +216,6 @@ const WindowManager = ({ programs, windowName, handleOpenFunction, setStateAndSa
 		handleMenuAction: HandleFunctions.handleMenuAction(setWindowManagerState),
 	};
 
-	function convertObjectFunctions(obj, functionMap) {
-		// Base case: if the object is not really an object (or is null), return it unchanged
-		if (obj === null || typeof obj !== 'object') {
-			return obj;
-		}
-
-		// Iterate over each key in the object
-		Object.keys(obj).forEach(key => {
-			const value = obj[key];
-
-			// If the value is a string and it matches a key in the functionMap, convert it
-			if (typeof value === 'string' && value.startsWith("!!")) {
-				// console.log('converting', value);
-
-				if (key.startsWith("_")) {
-					key = key.slice(1);
-				}
-
-
-				obj[key] = convertToFunction(
-					value,
-					functionMap
-				);
-
-			} else if (typeof value === 'object') {
-				// If the value is an object, recursively process it
-				convertObjectFunctions(value, functionMap);
-			}
-		});
-
-		return obj;
-	}
 
 	useEffect(() => {
 		if (handleOpenFunction) {
@@ -521,3 +423,5 @@ const WindowManager = ({ programs, windowName, handleOpenFunction, setStateAndSa
 };
 
 export default WindowManager;
+
+
