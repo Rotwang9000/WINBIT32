@@ -1,5 +1,4 @@
 const webpack = require("webpack");
-const path = require("path");
 
 
 module.exports = function override(config) {
@@ -38,19 +37,7 @@ module.exports = function override(config) {
   config.experiments = {
 		asyncWebAssembly: false,
 		syncWebAssembly: true,
-		lazyCompilation: {
-			// disable lazy compilation for dynamic imports
-			imports: false,
 
-			// disable lazy compilation for entries
-			entries: false,
-
-			// do not lazily compile moduleB
-			test: (module) =>
-				!/secp256k1/.test(
-					module.memory
-				),
-		},
 	};
 
 	return config;
