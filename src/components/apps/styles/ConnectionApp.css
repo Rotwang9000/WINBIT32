@@ -1,0 +1,111 @@
+.connection-app {
+	font-family:"play",
+		fixedsys,
+		consolas,
+		monospace;
+	width: 100%;
+	margin: 0 auto;
+	margin-left: 0px;
+	padding: 10px;
+	border: 1px solid #000;
+	box-shadow: 2px 2px 4px #888;
+	background-color: #c0c0c0;
+	position: relative;
+	box-sizing: border-box;
+}
+
+.content {
+	display: flex;
+	flex-direction: column;
+}
+
+.row {
+	display: flex;
+	align-items: center;
+	margin-bottom: 10px;
+	margin-right: 20px;
+}
+
+@media screen and (max-width: 600px) {
+	.sm-col {
+		flex-direction: column;
+		align-items: flex-start;
+	}
+	.sm-col button{
+		width: 100%;
+		margin-left: 5px;
+		display: flex;
+		justify-content: center;
+		border: 2px outset #ccc;
+		background-color: #c0c0c0;
+		padding: 0px;
+	}
+	.sm-col .program-icon {
+		display: flex;
+		flex-direction: row;
+		flex-grow: 1;
+		justify-content: center;
+		font-size: 1.3em;
+		align-items: center;
+	}
+	
+}
+
+textarea {
+	width: 100%;
+	height: 40px;
+	margin-right: 10px;
+	padding: 5px;
+	font-size: 14px;
+	border: 1px solid #000;
+	background-color: #fff;
+	resize: none;
+}
+
+.connect-button {
+	padding: 5px 10px;
+	font-size: 14px;
+	border: 1px solid #000;
+	background-color: #e0e0e0;
+	cursor: pointer;
+}
+
+.connect-button:active {
+	background-color: #d0d0d0;
+	box-shadow: inset 1px 1px 2px #888;
+}
+
+.traffic-light {
+	width: 20px;
+	height: 20px;
+	margin-left: 10px;
+	border: 1px solid #000;
+	background-color: #f00;
+	/* default red */
+}
+
+.status-row {
+
+	padding: 5px;
+
+	width: calc(100% - 30px);
+	box-sizing: border-box;
+	border: 2px outset #f0f0f0;
+}
+
+.status-message {
+	font-size: 14px;
+	display: flex;
+	justify-content: space-between;
+	flex-direction: row;
+}
+
+@media screen and (max-width: 600px) {
+	.connection-app {
+		width: 100%;
+	}
+	.status-message {
+		flex-direction: column;
+	}
+	
+}

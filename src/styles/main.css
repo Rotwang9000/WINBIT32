@@ -1,0 +1,43 @@
+.loading_overlay {
+	position: fixed;
+	background: rgba(0, 0, 0, 0.9);
+	color: #fff;
+	display: flex;
+	z-index: 999999999999999999999;
+	height: 100vh;
+	width: 100vw;
+	overflow: visible;
+	margin: auto;
+	top: 0;
+	left: 0;
+	bottom: 0;
+	right: 0;
+	align-items: center;
+	flex-direction: column;
+	justify-content: center;
+	text-align: center;
+	font-size: 1.5em;
+	font-weight: bold;
+	padding: 10px;
+	box-sizing: border-box;
+	-moz-box-sizing: border-box;
+
+
+}
+
+.loading_overlay>div {
+	max-width: 600px;
+	width: 100%;
+	margin: auto;
+	text-align: center;
+	font-size: 1.5em;
+	font-weight: bold;
+	padding: 10px;
+	box-sizing: border-box;
+	-moz-box-sizing: border-box;
+
+}
+
+.loading_overlay img {
+	max-width: 100%;
+}

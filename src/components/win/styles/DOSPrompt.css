@@ -1,0 +1,54 @@
+.dos-prompt {
+	/* Fullscreen styling */
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+
+	/* Background and text color */
+	background-color: black;
+	/* Classic DOS black */
+	color: #dcdcdc;
+	/* Off-white text, not pure white */
+
+	/* Font styling to mimic DOS */
+	font-family: 'Courier New', Courier, monospace;
+	/* Classic monospace font */
+	font-size: 16px;
+	/* use preformatted style*/
+	white-space: pre;
+	
+
+	/* Text alignment */
+	display: flex;
+	justify-content: left;
+	
+	/* Center content */
+	text-align: left;
+}
+
+.dos-text {
+	padding: 20px;
+	/* Padding to prevent text from touching screen edges */
+}
+
+.dos-blink {
+	/* Blinking cursor effect */
+	border-bottom: 2px solid #dcdcdc;
+	/* Cursor color */
+	animation: blink 1s steps(1) infinite;
+}
+
+/* Animation keyframes for the blinking effect */
+@keyframes blink {
+
+	from,
+	to {
+		color: transparent;
+	}
+
+	50% {
+		color: #dcdcdc;
+	}
+}	

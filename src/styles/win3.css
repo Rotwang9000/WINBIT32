@@ -1,0 +1,621 @@
+html,body {
+	background-color: teal;
+	font-family: "play", fixedsys, consolas, monospace;
+	-webkit-touch-callout: none;
+	-webkit-user-select: none;
+	-khtml-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
+	width: 100%;
+	height: 100%;
+	margin: 0;
+	padding: 0;
+	overflow: hidden;
+}
+
+body.wait,
+body.wait * {
+	cursor: url('../images/waits.png'), auto;
+
+}
+
+button {
+	cursor: pointer;
+		font-family: "play", fixedsys, consolas, monospace;
+}
+
+@media screen and (max-width: 600px) {
+	#root {
+		width: 100%;
+		height: 100%;
+	}
+
+		.hideSmall {
+			display: none;
+	
+		}
+	
+}
+
+
+.toast {
+	/* clippy.png in public folder */
+	background: none!important;
+	background-image: url('../images/clippy.png')!important;
+	border: none!important;
+	box-shadow: none!important;
+	background-size: contain!important;
+	background-repeat: no-repeat!important;
+
+	padding-top: 5px!important;
+	padding-left: 86px!important;
+	padding-right: 10px!important;
+	padding-bottom: 150px!important;
+	text-align: center!important;
+	vertical-align: middle!important;
+
+	margin: 10px!important;
+	border-radius: 5px!important;
+	width: 250px!important;
+	height: 378px!important;
+	display: flex!important;
+}
+.toast>div {
+	margin-bottom: 200px!important;
+	padding: 0!important;
+	display: flex!important;
+	flex-direction: column!important;
+	justify-content: center!important;
+	align-items: center!important;
+
+}
+
+#root {
+	position: relative;
+	width: 100%;
+	height: 100%;
+}
+
+.play-regular {
+	font-family: "Play", sans-serif;
+	font-weight: 400;
+	font-style: normal;
+}
+
+.play-bold {
+	font-family: "Play", sans-serif;
+	font-weight: 700;
+	font-style: normal;
+}
+
+.dialog-wrapper {
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	padding: 3px;
+	min-width: fit-content;
+	min-height: fit-content;
+	z-index: 999999999;
+}
+
+.window-manager {
+	position: absolute;
+	width: 100%;
+	height: 100%;
+	height: -webkit-fill-available;
+	display: flex;
+}
+
+
+.desk, .desk-style {
+	height: 100%;
+	overflow: hidden;
+	display: flex;
+}
+
+.desk-style{
+		position: relative;
+}
+
+.window-container{
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+	flex-grow: 1;
+	position: relative;
+}
+
+.window-content .window-manager>.maximised>.window-border>.maximised{
+	top: 30px;
+	left: 3px;
+	width: calc(100% - 8px);
+	height: calc(100% - 36px);
+	box-sizing: border-box;
+}
+
+
+.window-content .program-icon{
+	color: #000;
+}
+
+.window, .dialog-box {
+	background: #fff;
+	height: 100%;
+	width: 100%;
+	position: relative;
+	border: 1px solid #000;
+	z-index: 99999999999;
+	display: flex;
+	flex-direction: column;
+}
+
+.dialog-wrapper {
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100vw;
+	height: 100vh;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	z-index: 1000;
+	/* Ensure it's above other elements */
+}
+
+.dialog-backdrop {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background: rgba(0, 0, 0, 0.5);
+}
+
+
+.dialog-box-row {
+	display: flex;
+	flex-direction: row;
+	flex-grow: 1;
+}
+
+.dialog-box-row-adapt{
+	display: flex;
+	flex-direction: row;
+	flex-grow: 1;
+	aspect-ratio: 466/218;
+	min-width: fit-content;
+	min-height: fit-content;
+	height: 100%;
+		overflow-x: visible;
+			overflow-y: visible;
+			overflow: visible!important;
+
+}
+.dialog-box-row-adapt .content{
+	flex-grow: 1;
+	overflow-x: visible;
+	overflow-y: visible;
+	overflow: visible!important;	
+	min-height: fit-content!important;
+	height: 100% !important;
+}
+
+
+
+
+@media screen and (max-width: 600px) {
+	.dialog-box-row-adapt {
+		flex-direction: column;
+			aspect-ratio: 218/466;
+	}
+}
+
+
+.window .title, .dialog-border .title {
+	background: #000080;
+	color: #fff;
+	text-align: center;
+	line-height: 24px;
+	height: 26px;
+	font-weight: 500;
+	border-bottom: solid 1px #000;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+
+}
+
+.window .title-text, .dialog-border .title-text {
+	width: 100%;	
+}
+
+.window .maxmin, .dialog-border .maxmin {
+	display: flex;
+	margin: 0px;
+
+}
+
+
+.window .title .button, .dialog-border .title .button, .dialog-buttons button {
+	background: #c0c0c0;
+	color: #000;
+	display: inline-block;
+	margin: 0px;
+	width: 20px;
+	height: 20px;
+	font-size: 12px;
+	float: right;
+	border: outset 3px;
+	line-height: 20px;
+	z-index: 5555;
+}
+
+.window .title .button:active, .dialog-border .title .button:active, .dialog-buttons button:active {
+	border: inset 3px;
+}
+
+.window .title .close, .dialog-border .title .close{
+	float: left;
+	color: #fff;
+	font-weight: 800;
+	font-size: 21px;
+	line-height: 16px;
+	text-shadow: -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black;
+}
+
+.window-content, .dialog-box .content {
+	/*fill remaining height, if there is a title, it will be subtracted and also menu if there is one*/
+	height: calc(100% - 26px);
+	width: 100%;
+	border: none;
+	padding: 0px;
+	margin: 0px;
+	flex-grow: 1;
+	overflow: auto;
+	display: flex;
+}
+
+
+.menubar {
+	height: 24px;
+	border-bottom: solid 1px #191919;
+	display: flex;
+	background-color: #fff;
+	color: #000;
+}
+.submenu {
+	position: absolute;
+	background: #fff;
+	border: solid 1px #000080;
+	margin-left: -7px;
+	z-index: 1000000;
+}
+
+.menubar .menuitem {
+	line-height: 24px;
+	padding: 0px 7px;
+	display: inline-block;
+	background: #fff;
+}
+
+.submenuitem{
+	padding: 5px 10px;
+	color: #000;
+}
+
+.menubar .menuitem:hover, .menubar .submenuitem:hover {
+	background: #000080;
+	color: #fff;
+}
+
+
+
+.icons {
+	position: absolute;
+	bottom: 0px;
+	left: 0px;
+	right: 0px;
+	padding: 15px 5px;
+	background: #fff;
+	z-index: -1;
+}
+
+.icons .icon {
+	display: inline-block;
+	margin: 00px 10px;
+	width: 80px;
+	font-size: 12px;
+	text-align: center;
+}
+
+.icon:active>.text {
+	background: #000080;
+	color: #fff;
+}
+
+.handle {
+	position: absolute;
+	height: 29px;
+	width: 29px;
+	border: solid 1px #000;
+}
+
+.topright, .handle-ne {
+	top: -1px;
+	right: -1px;
+	cursor: ne-resize;
+}
+
+.bottomright, .handle-se {
+	bottom: -1px;
+	right: -1px;
+	cursor: nw-resize;
+}
+
+.topleft, .handle-nw {
+	top: -1px;
+	left: -1px;
+	cursor: nw-resize;
+}
+
+.bottomleft, .handle-sw {
+	bottom: -1px;
+	left: -1px;
+	cursor: ne-resize;
+}
+.dialog-border {
+	background: #000080;
+	position: absolute;
+	padding: 1px 2px 2px 1px;
+	border: 1px solid #000080;
+	width: auto;
+	height: auto;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	z-index: 9999;
+
+}
+
+
+
+.window-border {
+	background: #cdcdcd;
+	position: absolute;
+	padding: 2px 4px 4px 2px;
+	border: 1px solid #000;
+	display: flex;
+	width: 100%;
+}
+
+.maximize, .maximised {
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	z-index: 999999999999;
+	
+}
+.maximised>.window-border{
+	position: relative;
+	padding: 0px;
+}
+.window-content .window-manager>.maximised>.window-border>.maximised{
+	position: relative;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	padding: 0px;
+
+}
+
+.ui-draggable-dragging>* {
+	display: none;
+	border: dotted 2px #777;
+	background: none;
+	background: rgba(0, 0, 0, 0);
+	border: none;
+	z-index: 999999999;
+}
+
+.ui-draggable-dragging {
+	border: dotted 2px #555;
+	background: rgba(0, 0, 0, 0);
+}
+
+.context-menu {
+	position: absolute;
+	border: solid 1px #000;
+	width: 150px;
+	margin: -1px;
+	margin-top: 5px;
+	z-index: 999999;
+	background: #fff;
+	box-shadow: 1px 1px 5px 0px rgba(0, 0, 0, .5);
+
+}
+
+.context-menu .context-item {
+	padding: 5px;
+	font-weight: 600;
+	padding: 5px;
+	z-index: 999999999;
+	position: relative;
+	color: #000;
+	text-align: left;
+}
+
+.context-menu .context-item:hover {
+	background: #000080;
+	color: #fff;
+}
+
+
+.context-menu .context-item:active {
+	background: #000080;
+	color: #fff;
+}
+
+
+.dialog-wrapper {
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	padding: 3px;
+	min-width: fit-content;
+	min-height: fit-content;
+	z-index: 999999999;
+}
+
+.dialog-border{
+		min-width: fit-content;
+			min-height: fit-content;
+}
+
+.dialog-backdrop {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background: rgba(0, 0, 0, 0.5);
+	/* Semi-transparent for dimming */
+}
+
+.dialog-box {
+	position: relative;
+	background: white;
+
+	z-index: 1000;
+	min-width: fit-content;
+	min-height: fit-content;
+		overflow-x: hidden;
+			overflow-y: auto;
+	
+}
+
+.dialog-box .content{
+	min-width: 300px;
+	min-height: 50px;
+	display: flex;
+	flex-direction: row;
+
+}
+
+.dialog-box .content .message {
+	flex-grow: 1;
+	padding: 10px;
+	margin-right: 2vw;
+	text-align: justify;
+}
+
+.dialog-box .icon {
+	width: 20vw;
+	max-width: 50px;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	font-size: 200%;
+	margin-right: 2vw;
+	margin-left: 2vw;
+}
+
+.dialog-buttons {
+	display: flex;
+	justify-content: space-around;
+	padding: 10px;
+}
+
+.dialog-buttons-column {
+	display: flex;
+	flex-direction: column;
+	justify-content: flex-start;
+	padding: 10px;
+}
+
+.dialog-buttons button {
+	padding: 5px;
+	cursor: pointer;
+	min-width: 100px;
+	height: 35px;
+	font-size: 14px;
+	line-height: normal;
+	font-weight: 600;
+}
+
+.dialog-buttons-column button {
+	padding: 0px;
+	cursor: pointer;
+	min-width: 100px;
+	height: 26px;
+	font-size: 14px;
+	line-height: normal;
+	font-weight: 600;
+	margin-bottom: 10px;
+	border-radius: 2px;
+	/* narrow shadow */
+	box-shadow: 0 0 0 1px #000;
+}
+
+
+.no-icon{
+
+	/* width: '20px', height: '20px', marginRight: '8px', backgroundColor: 'orange', borderRadius: '5px', overflow: 'hidden', fontSize: '12px', display: 'inline-block' */
+	width: 20px;
+	height: 20px;
+	margin-right: 8px;
+	background-color: orange;
+	border-radius: 5px;
+	overflow: hidden;
+	font-size: 16px;
+	display: inline-block;
+	text-align: center;
+	vertical-align: middle;
+
+}
+
+.token-icon{
+	width: 20px;
+	height: 20px;
+	margin-right: 8px;
+	border-radius: 5px;
+	overflow: hidden;
+	font-size: 12px;
+	display: inline-block;
+	text-align: center;
+	vertical-align: middle;
+}
+
+
+.token{
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+}
+
+
+.field-group {
+	font-size: 0.8em;
+	font-weight: 500;
+}
+
+.field-group button, .field-group input {
+	font-weight: 500;
+	padding: 6px;
+}

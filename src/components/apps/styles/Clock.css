@@ -1,0 +1,36 @@
+.clock{
+	width: 100%;
+	padding: 20px;
+	background-color: #f0f0f0;
+	border-radius: 10px;
+	text-align: center;
+	box-sizing: border-box;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: justify;
+	height: 100%;
+	font-family: 'Courier New', Courier, monospace
+}
+
+.clock-date{
+	font-size: 1.5em;
+
+}
+
+.clock-time{
+	font-size: 3em;
+	flex-grow: 1;
+flex-grow: 1;
+	justify-content: center;
+	display: flex;
+	flex-direction: column;
+}
+
+.clock-timezone{
+	font-size: 1em;
+}
+
+.clock-timezone-select{
+	font-size: 0.7em;
+}

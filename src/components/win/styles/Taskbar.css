@@ -1,0 +1,29 @@
+.taskbar {
+	position: fixed;
+	bottom: 0;
+	/* Position it at the bottom */
+	left: 0;
+	width: 100%;
+	/* Full width */
+	height: fit-content;
+	/* Layout and spacing */
+	display: flex;
+	justify-content: flex-start;
+	/* Icons are aligned to the left */
+	align-items: center;
+	padding: 0 10px;
+	/* Padding to ensure icons aren't flush with the edge */
+
+	/* Text styling */
+	color: white;
+	font-family: 'Courier New', Courier, monospace;
+	/* Monospace font */
+}
+
+.taskbar-icon {
+	/* Icon styling within the taskbar */
+	margin-right: 10px;
+	/* Space between icons */
+	cursor: pointer;
+	/* Pointer cursor on hover */
+}
