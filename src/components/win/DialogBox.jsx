@@ -21,7 +21,8 @@ const DialogBox = React.memo(({
 		info: 'ℹ️',
 		question: '❓',
 		exclamation: '❗',
-		stop: <img src='stop.png' alt='stop' />
+		stop: <img src='stop.png' alt='stop' />,
+		key: <img src='/images/safe.png' alt='key' style={{ width: '64px', height: '64px' }} />
 	};
 
 	const iconSymbol = (icon && icons[icon]) ? <div className="icon">{icons[icon]}</div> : null;
@@ -41,20 +42,22 @@ const DialogBox = React.memo(({
 	const portalContainer = useRef(document.createElement('div'));
 	portalContainer.current.id = 'dialog-portal-container';
 
-	useEffect(() => {
-		// Append the portal container to the body
-		document.body.appendChild(portalContainer.current);
-		return () => {
-			// Cleanup the portal container when the component unmounts
-			document.body.removeChild(portalContainer.current);
-		};
-	}, []);
+
 
 	// The dialog box content
 	const dialogContent = (
 		<div className={`dialog-wrapper ${modal ? 'modal' : ''}`}>
 			{modal && <div className="dialog-backdrop" onClick={onCancel} />} {/* Dimming background */}
-			<Draggable handle={"div div.title>div.title-text"} defaultPosition={{ x: 0, y: 0 }} positionOffset={{ x: '-50%', y: '-50%' }} onStart={handleStart} cancel='.search-text-box' disabled={true}>
+			<Draggable handle={"div div.title>div.title-text"} defaultPosition={{ x: 0, y: 0 }} positionOffset={{ x: '-50%', y: '-50%' }} onStart={handleStart} cancel='.search-text-box' disabled={true}
+				onKeyDown={(e) => {
+					if (e.key === 'Escape') {
+						onClose();
+					}
+					if(e.key === 'Enter'){
+						onConfirm();
+					}
+				}}
+			>
 				<div className='dialog-border'>
 					<TitleBar
 						title={title}
@@ -99,6 +102,51 @@ const DialogBox = React.memo(({
 			</Draggable>
 		</div>
 	);
+
+	useEffect(() => {
+
+		//detect Enter keypress on all inputs and trigger the OK button
+			const handleKeyPress = (e) => {
+				if (e.key === 'Enter') {
+					onConfirm();
+				}
+			};
+			//add to inputs in this specific dialog by reference
+			const inputs = portalContainer.current.getElementsByTagName('input');
+			for (let i = 0; i < inputs.length; i++) {
+				inputs[i].addEventListener('keypress', handleKeyPress);
+			}
+
+			return () => {
+				//remove event listeners
+				for (let i = 0; i < inputs.length; i++) {
+					inputs[i].removeEventListener('keypress', handleKeyPress);
+				}
+			}
+			
+
+		}, [onConfirm]);
+		
+		useEffect(() => {
+	
+
+		const inputs = portalContainer.current.getElementsByTagName('input');
+
+		//set focus to first input after it is mounted and rendered
+		if (inputs.length > 0) {
+			inputs[0].componentDidMount = () => {
+				inputs[0].focus();
+				
+			}
+		}
+
+		// Append the portal container to the body
+		document.body.appendChild(portalContainer.current);
+		return () => {
+			// Cleanup the portal container when the component unmounts
+			document.body.removeChild(portalContainer.current);
+		};
+	}, []);
 
 	// Render the dialog box into the portal container
 	return ReactDOM.createPortal(dialogContent, portalContainer.current);

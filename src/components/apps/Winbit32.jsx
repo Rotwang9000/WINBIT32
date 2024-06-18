@@ -12,8 +12,8 @@ import { Chain } from '@swapkit/sdk';
 import { QRCodeSVG } from 'qrcode.react';
 import { renderToString, renderToStaticMarkup } from 'react-dom/server'
 import { isValidMnemonic } from '../helpers/phrase';
-import { set } from 'lodash';
-
+import { processKeyPhrase, processFileOpen, setupFileInput, triggerFileInput } from './sectools/includes/KeyStoreFunctions';
+ 
 // Function to generate a random phrase
 function generatePhrase(size = 12) {
 	const entropy = size === 12 ? 128 : 256;
@@ -21,7 +21,7 @@ function generatePhrase(size = 12) {
 }
 
 
-const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave, handleStateChange, metadata, providerKe }) => {
+const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave, handleStateChange, metadata }) => {
 
 	const [phrase, setPhrase] = useIsolatedState(windowId, 'phrase', metadata?.phrase || generatePhrase());
 	//const [phrase, setPhrase] = useIsolatedState(windowId, 'phrase', generatePhrase());
@@ -43,6 +43,22 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 	const currentRef = useRef(phrase);
 	const currentWalletsRef = useRef(wallets);
 
+	const fileInputRef = useRef(null);
+
+	useEffect(() => {
+		fileInputRef.current = setupFileInput(setPhrase, setStatusMessage);
+
+		return () => {
+			if (fileInputRef.current) {
+				document.body.removeChild( fileInputRef.current );
+			}
+		};
+	}, [setPhrase]);
+
+	const handleOpenFile = useCallback(() => {
+		triggerFileInput(fileInputRef.current);
+	}, []);
+
 
 	currentRef.current = phrase; // Update `useRef` when `input` changes
 
@@ -56,7 +72,9 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 			label: 'File',
 			submenu: [
 				{ label: 'Open...', action: 'open' },
-				{ label: 'Save', action: 'save' },
+				{ label: 'Save as text', action: 'save' },
+				{ label: 'Save as Keystore', action: 'saveKeystore' },
+
 				{ label: 'Exit', action: 'exit' },
 			],
 		},
@@ -82,12 +100,15 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 				windowA.close();
 				break;
 			case 'open':
-				document.getElementById('fileInput' + windowId).click(); // Trigger file input
+				handleOpenFile();
 				break;
 			case 'save':
 				const blob = new Blob([currentInput], { type: 'text/plain' });
 				saveAs(blob, 'phrase.txt'); // Save file
 				setPhraseSaved(true);
+				break;
+			case 'saveKeystore':
+				processKeyPhrase(currentInput);
 				break;
 			case 'copy':
 				console.log('Copying:', currentInput);
@@ -189,7 +210,7 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 	const addSingleWallet =  async (wallet) => {
 		if (currentRef.current !== phrase) {
 			console.log('Phrase changed, not updating wallets', phrase, currentRef.current);
-			return;
+			return false;
 		}
 		//add wallet to wallets
 		addWallet(wallet);
@@ -210,7 +231,10 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 				//add QR and chain name
 				result.qrimage = renderToStaticMarkup(<QRCodeSVG renderAs='svg' value={result.address} />).toString();
 				result.chain = connectChains[i].toString();
-				addSingleWallet(result);
+				if(await addSingleWallet(result) === false) {
+					console.log('Phrase changed, not updating wallets!!', phrase, currentRef.current);
+					return false;
+				}
 			});
 			walletPromises.push(walletPromise);
 		}
@@ -242,6 +266,10 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 						setProgress(99);
 					
 						await getWallets();
+						if(currentRef.current !== phrase) {
+							console.log('Phrase changed, not updating wallets', phrase, currentRef.current);
+							return false;
+						}
 
 						setProgress(100);
 
@@ -301,19 +329,7 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 				setPhraseSaved={setPhraseSaved}
 				handleConnect={handleConnect}	
 			/>
-			<input
-				type="file"
-				id={"fileInput" + windowId}
-				style={{ display: 'none' }} // Hidden file input for Open
-				onChange={(e) => {
-					const file = e.target.files[0];
-					if (file) {
-						const reader = new FileReader();
-						reader.onload = (ev) => setPhrase(ev.target.result);
-						reader.readAsText(file);
-					}
-				}}
-			/>
+
 		</WindowContainer>
 	);
 };

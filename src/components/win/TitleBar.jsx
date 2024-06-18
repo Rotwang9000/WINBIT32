@@ -8,6 +8,7 @@ const TitleBar = ({
 	onMaximize,
 	onClose,
 	isMaximized,
+	onClick,
 	...rest
 }) => {
 	const handleMaximize = useCallback(() => {
@@ -26,14 +27,14 @@ const TitleBar = ({
 	}, [onContextMenu]);
 
 	return (
-		<div className="title" {...rest}>
+		<div className="title" {...rest} >
 			<div
 				className="button close contextbutton"
 				onClick={handleContextMenu}
 			>
 				&#8212;
 			</div>
-			<div className='title-text' onDoubleClick={handleMaximize}>
+			<div className='title-text' onDoubleClick={handleMaximize} onClick={onClick}>
 				{title}
 			</div>
 			{showMinMax && (

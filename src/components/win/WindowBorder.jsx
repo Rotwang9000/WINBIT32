@@ -46,6 +46,7 @@ const WindowBorder = React.memo(({
 						onClose={onClose}
 						onContextMenu={onContextMenu}
 						maximised={maximised}
+						onClick={onClick}
 					>
 						{children} {/* Additional content */}
 					</Window>

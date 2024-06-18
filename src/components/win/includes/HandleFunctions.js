@@ -72,10 +72,11 @@ export const handleMenuClick = (dispatch) => (action, window) => {
 export const handleMenuAction = (dispatch) => (menu, window, menuHandler) => {
 	// Check if menu has changed
 	if (window.menu === menu) {
+		// console.log("Menu action already set", menu, window.menu);
 		return;
 	}
 
-	console.log("Setting menu action", menu, window.windowId);
+	// console.log("Setting menu action", menu, window.windowId);
 
 	dispatch({
 		type: "SET_WINDOW_MENU",
@@ -83,14 +84,15 @@ export const handleMenuAction = (dispatch) => (menu, window, menuHandler) => {
 	});
 };
 
-export const bringToFront = (dispatch, windowId) => {
-	return (state) => {
+export const bringToFront = (dispatch, windowId) => (state) => {
+
 		const { windows, highestZIndex, contextMenuVisible, windowHistory } = state;
 
 		if (contextMenuVisible) {
 			dispatch({ type: "SET_CONTEXT_MENU_VISIBLE", payload: false });
-			return;
 		}
+
+		console.log(`Bringing window ${windowId} to front`);
 
 		const window = windows.find((w) => w.windowId === windowId);
 
@@ -113,7 +115,7 @@ export const bringToFront = (dispatch, windowId) => {
 				hash: window.progID === 0 ? "" : window.progName,
 			},
 		});
-	};
+	
 };
 
 export const handleOpenWindow = (dispatch, program) => {

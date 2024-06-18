@@ -271,7 +271,7 @@ const TokenChooserDialog = ({ isOpen, onClose, onConfirm, providerKey, wallets, 
 			inputRef.current.focus();
 		}
 	}, [searchTextActive]);
-	//	if (!isOpen) return null;
+		if (!isOpen) return null;
 
 	return (
 		<DialogBox

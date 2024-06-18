@@ -2,7 +2,7 @@ import React from 'react';
 import TitleBar from './TitleBar';
 import MenuBar from './MenuBar';
 
-const Window = ({ title, onMinimize, onMaximize, onClose, onContextMenu,  maximised, children, ...rest }) => {
+const Window = ({ title, onMinimize, onMaximize, onClose, onContextMenu,  maximised, children, onClick, ...rest }) => {
 
 	let maximisedClass = '';
 	if(maximised) {
@@ -19,6 +19,7 @@ const Window = ({ title, onMinimize, onMaximize, onClose, onContextMenu,  maximi
 				onMaximize={onMaximize}
 				onClose={onClose}
 				isMaximized={maximised}
+				onClick={onClick}
 			
 			/>
 			{children} {/* Any additional content */}

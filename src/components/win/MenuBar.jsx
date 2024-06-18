@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 const MenuBar = ({ menu, window, onMenuClick }) => {
 	const [openMenu, setOpenMenu] = useState(null); // Track which submenu is open
@@ -22,6 +22,11 @@ const MenuBar = ({ menu, window, onMenuClick }) => {
 			setOpenMenu(null); // Close any open submenu
 		}
 	};
+
+	// useEffect(() => {
+	// 	console.log('Menu:', menu);
+	// }
+	// , [menu]);
 
 	return (
 		<div className="menubar">

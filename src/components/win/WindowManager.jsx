@@ -168,9 +168,12 @@ const WindowManager = ({ programs, windowName, handleOpenFunction, setStateAndSa
 				label: window.title,
 				fAction: () => bringToFront(window.windowId),
 			}));
-			debounce(() => setWindowMenu(windowMenu), 300);
+			setWindowMenu(windowMenu);
 		}
-	}, [windows, setWindowMenu]);
+
+	}, [windows]);
+
+
 
 	const handleStateChange = useCallback((windowId, newData) => {
 		// Implement the logic for state change
@@ -199,15 +202,19 @@ const WindowManager = ({ programs, windowName, handleOpenFunction, setStateAndSa
 	}, [dispatch]);
 
 	const bringToFront = useCallback((windowId) => {
-		dispatch(HandleFunctions.bringToFront(dispatch, windowId));
+		//export const bringToFront = (dispatch, windowId) => (state) => {
+		//call HandleFunctions.bringToFront as above
+		const btf = HandleFunctions.bringToFront(dispatch, windowId);
+		btf(state);
+
 	}, [dispatch]);
 
 	const openWindowByProgName = useCallback((progName) => {
-		dispatch(HandleFunctions.openWindowByProgName(dispatch, progName));
+		HandleFunctions.openWindowByProgName(dispatch, progName);
 	}, [dispatch]);
 
 	const handleHashChange = useCallback(() => {
-		dispatch(HandleFunctions.handleHashChange(dispatch));
+		HandleFunctions.handleHashChange(dispatch);
 	}, [dispatch]);
 
 	const getCurrentFrontWindow = useMemo(() => {
@@ -239,7 +246,7 @@ const WindowManager = ({ programs, windowName, handleOpenFunction, setStateAndSa
 	}, [windows, closeWindow, restoreWindow, minimizeWindow, maximizeWindow, dispatch]);
 
 	const handleMenuClick = useCallback((action, window) => {
-		console.log(`Handling menu action: ${action}`);
+		// console.log(`Handling menu action: ${action}`);
 		if (window && window.menuHandler) {
 			window.menuHandler(action);
 		} else {

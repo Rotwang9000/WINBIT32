@@ -32,7 +32,7 @@ function ConnectionApp({ windowId, providerKey, phrase, setPhrase, connectionSta
 		}
 	};
 	//replace all letters with * except first word
-	const blurredPhrase = phrase.split(' ').map((word, index) => index === 0 ? word : '*'.repeat(word.length)).join(' ');
+	const blurredPhrase = phrase? phrase?.split(' ').map((word, index) => index === 0 ? word : '*'.repeat(word.length)).join(' ') : '';
 
 
 	return (
