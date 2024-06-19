@@ -1,0 +1,3 @@
+/*! MIT License © Sindre Sorhus */
+
+/*! noble-curves - MIT License (c) 2022 Paul Miller (paulmillr.com) */
