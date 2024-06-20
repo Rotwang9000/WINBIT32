@@ -24,6 +24,7 @@ const App = () => {
 		y: 0,
 	});
 	const [highestZIndex, setHighestZIndex] = useState(1);
+	const [loaded, setLoaded] = useState(false);
 
 	const handleExit = () => {
 		setShowDOSPrompt(true);
@@ -57,6 +58,12 @@ const App = () => {
 	// 	addProvider(newKey);
 	// 	return newKey;
 	// };
+	useEffect(() => {
+		setTimeout(() => {
+			setLoaded(true);
+		}, 1500);
+
+	}, []);
 
 
 	return (
@@ -77,7 +84,16 @@ const App = () => {
 					<DOSPrompt />
 				) : (
 					<>
+						{ (!loaded) ? <div className="loading_overlay" id="loading_overlay"
+							onClick={() => {setLoaded(true); document.getElementById("loading_overlay").style.display = "none";}}>
+
+							<div>
+								<img src={process.env.PUBLIC_URL + "/winlogo.png"} alt="logo" />
+							</div>
+						</div>
+						:
 						<WelcomeWarning onExit={handleExit} />
+						}
 						<WindowDataProvider>
 							<WindowManager
 								programs={programs}

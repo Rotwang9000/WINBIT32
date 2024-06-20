@@ -10,26 +10,10 @@ import reportWebVitals from './reportWebVitals';
 const root = ReactDOM.createRoot(document.getElementById('root'));
 
 
-//hide loading_overlay after 3 seconds
-setTimeout(() => {
-  document.getElementById("loading_overlay").style.display = "none";
-}, 1500);
-
-
 root.render(
   <>
 
-    <div
-      className="loading_overlay"
-      id="loading_overlay"
-      onClick={() => {
-        document.getElementById("loading_overlay").style.display = "none";
-      }}
-    >
-      <div><img src={process.env.PUBLIC_URL + "/winlogo.png"} alt="logo" /></div>
-      
-      
-    </div>
+
     <App />
   </>
 );
