@@ -1,5 +1,5 @@
 import { wordlists } from "bip39";
-import { createHash } from "crypto";
+import { createHash } from "crypto-browserify";
 
 
 export function isValidMnemonic(mnemonic) {
