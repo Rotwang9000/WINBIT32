@@ -153,6 +153,16 @@ button {
 	z-index: 99999999999;
 	display: flex;
 	flex-direction: column;
+	max-width: 99vw;
+	box-sizing: border-box;
+}
+
+.window .window{
+	max-width: calc(100vw - 10px);
+}
+
+input{
+	box-sizing: border-box;
 }
 
 .dialog-wrapper {
@@ -212,7 +222,7 @@ button {
 @media screen and (max-width: 600px) {
 	.dialog-box-row-adapt {
 		flex-direction: column;
-			aspect-ratio: 218/466;
+			aspect-ratio: 266/466;
 	}
 }
 
@@ -282,6 +292,7 @@ button {
 	flex-grow: 1;
 	overflow: auto;
 	display: flex;
+	flex-direction: column;
 }
 
 

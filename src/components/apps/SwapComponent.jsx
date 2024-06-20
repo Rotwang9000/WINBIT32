@@ -306,12 +306,12 @@ const SwapComponent = ({ providerKey, windowId }) => {
 		// console.log("Wallets:", wallets);
 		if (!token) return null;
 		return wallets.find(wallet => wallet.chain === token.chain);
-	}, [wallets]);
+	}, [wallets, swapTo]);
 
 
 	useEffect(() => {
 		async function updateDestinationAddress() {
-			if(!destinationAddress && swapTo && wallets && wallets.length > 0){
+			if(swapTo && wallets && wallets.length > 0){
 				const wallet = chooseWalletForToken(swapTo);
 
 				console.log("Wallet:", wallet);
@@ -324,7 +324,9 @@ const SwapComponent = ({ providerKey, windowId }) => {
 
 			
 		}
+		
 		updateDestinationAddress();
+		
 	}, [swapTo, wallets]);
 
 
@@ -353,10 +355,13 @@ const SwapComponent = ({ providerKey, windowId }) => {
 					affiliateAddress: 'be'
 				};
 				try{
-					const response = await SwapKitApi.getQuote(quoteParams).catch(error => {
+					const response = await getQuoteFromThorSwap(quoteParams).catch(error => {
 						console.error('Error getting quotes:', error);
-						setQuoteStatus('Error getting quotes');
-						return [];
+						setQuoteStatus('Error getting quotes: ' + error.message);
+						//return [];
+					}).then(response => {
+						console.log("Response:", response);
+						return response;
 					});
 					console.log("Quotes:", response);
 					setRoutes(response.routes);
@@ -383,9 +388,9 @@ const SwapComponent = ({ providerKey, windowId }) => {
 						//setQuoteStatus(`Optimal: ${optimalRoute.providers.join(', ')} - ${optimalRoute.estimatedTime.total} mins - ${optimalRoute.expectedBuyAmountMaxSlippage} ${swapTo?.ticker}`);
 						setQuoteStatus(<>
 						Optimal:<br />
-							{optimalRoute.providers.join(', ')}  {parseFloat(optimalRouteTime).toPrecision(3)} mins<br />
-							Expected Min {swapTo?.ticker}: {parseFloat(optimalRoute.expectedOutputMaxSlippage).toPrecision(8)} <br />
-							Expected USD Equiv.: {parseFloat(optimalRoute.expectedOutputUSD).toPrecision(8)} <br />
+							{optimalRoute.providers.join(', ')}  {parseFloat(parseFloat(optimalRouteTime).toPrecision(3))} mins<br />
+							Expected Min {swapTo?.ticker}: {parseFloat(parseFloat(optimalRoute.expectedOutputMaxSlippage).toPrecision(5))} <br />
+							Expected USD Equiv.: {parseFloat(parseFloat(optimalRoute.expectedOutputUSD).toPrecision(6))} <br />
 						</>);
 					}
 				}catch(error){
@@ -595,7 +600,7 @@ slippage=${slippage}
 	}, [isTokenDialogOpen, closeTokenDialog, handleTokenSelect, wallets, swapFrom]);
 
 	return (
-		<div style={{ width: '100%', boxSizing: 'border-box', display: 'flex', flexDirection: 'column',  justifyContent: 'space-between', }} className='swap-component'> 
+		<>
 			<div className="swap-toolbar">
 
 				<button className='swap-toolbar-button' onClick={() => {
@@ -625,6 +630,8 @@ slippage=${slippage}
 				{statusText}
 				</div>
 			</div>
+					<div style={{ width: '100%', boxSizing: 'border-box', display: 'flex', flexDirection: 'column',  justifyContent: 'space-between', }} className='swap-component'> 
+
 			<div style={{ display: (swapInProgress || explorerUrl? 'flex' : 'none')}} className="swap-progress-container">
 				{swapInProgress ? <div>
 					<div className="swap-progress" onClick={() => { setTxnStatus((prev) => { prev.lastCheckTime = 10; return prev; }) }} >
@@ -653,8 +660,8 @@ slippage=${slippage}
 					)}
 					{swapFrom && (
 						<span className='token'>
-							<img src={swapFrom.logoURI} alt={swapFrom.name} style={{ width: '20px', height: '20px', 'marginRight': '5px' }} /> 
-								<span>{swapFrom.ticker}{swapFrom.name} on {swapFrom.chain} {(swapFrom?.ticker?.includes('/') ? ' (Synthetic)' : '')}
+									<img src={swapFrom.logoURI} alt={swapFrom.name} style={{ width: '20px', height: '20px', 'marginRight': '5px', marginLeft: '5px' }} /> 
+								<span> <b>{swapFrom.ticker}</b> {swapFrom.name} on {swapFrom.chain} {(swapFrom?.ticker?.includes('/') ? ' (Synthetic)' : '')}
 							 </span>
 						</span>
 					)}
@@ -690,8 +697,8 @@ slippage=${slippage}
 					)}
 					{swapTo && (
 						<span className='token'>
-							<img src={swapTo.logoURI} alt={swapTo.name} style={{ width: '20px', height: '20px', 'marginRight': '5px' }} />
-								<div>{swapTo.ticker} {swapTo.name} on {swapTo.chain}{(swapTo?.ticker?.includes('/') ? ' (Synthetic)' : '')}</div>
+							<img src={swapTo.logoURI} alt={swapTo.name} style={{ width: '20px', height: '20px', 'marginRight': '5px', marginLeft: '5px' }} />
+								<div> <b>{swapTo.ticker}</b> {swapTo.name} on {swapTo.chain}{(swapTo?.ticker?.includes('/') ? ' (Synthetic)' : '')}</div>
 						</span>
 					)}
 					</div>
@@ -726,9 +733,9 @@ slippage=${slippage}
 										: 0)
 									: 
 									
-											parseFloat((typeof (route.estimatedTime) === 'object' ? route.estimatedTime.total / 60 : route.estimatedTime / 60)).toPrecision(3)
+											parseFloat(parseFloat((typeof (route.estimatedTime) === 'object' ? route.estimatedTime.total / 60 : route.estimatedTime / 60)).toPrecision(1))
 								
-									} mins - {parseFloat(route.expectedOutputMaxSlippage).toPrecision(5)} {swapTo?.ticker}
+									} mins ~{parseFloat(parseFloat(route.expectedOutputMaxSlippage).toPrecision(5))} {swapTo?.ticker}
 								</option>
 							))}
 						</select>
@@ -776,6 +783,7 @@ slippage=${slippage}
 			</div>
 			{tokenChooserDialog}
 		</div>
+		</>
 	);
 };
 

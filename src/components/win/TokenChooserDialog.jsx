@@ -42,28 +42,28 @@ const TokenChooserDialog = ({ isOpen, onClose, onConfirm, providerKey, wallets, 
 			// handleCategoryChange({ target: { value: 'wallet' } });
 		}
 		
-		if(isOpen === 'to' && otherToken){
+		// if(isOpen === 'to' && otherToken){
 
-			console.log("otherToken", otherToken);
-			//cycle through tokens and get providers for otherToken
+		// 	console.log("otherToken", otherToken);
+		// 	//cycle through tokens and get providers for otherToken
 
-			const otherProviders = tokens.reduce((acc, token) => {
-				if(otherToken.identifier === token.identifier){
-					acc.push(token.provider);
-				}
-				return acc;
-			}, []);
+		// 	const otherProviders = tokens.reduce((acc, token) => {
+		// 		if(otherToken.identifier.toUpperCase() === token.identifier.toUpperCase()){
+		// 			acc.push(token.provider);
+		// 		}
+		// 		return acc;
+		// 	}, []);
 
 
-			console.log("otherProviders", otherProviders);
+		// 	console.log("otherProviders", otherProviders);
 
-			if(otherProviders.length > 0){
-				setRestrictToProviders(otherProviders);
-			}
+		// 	if(otherProviders.length > 0){
+		// 		setRestrictToProviders(null);
+		// 	}
 
-		}else if(restrictToProviders){
-			setRestrictToProviders(null);
-		}
+		// }else if(restrictToProviders){
+		// 	setRestrictToProviders(null);
+		// }
 
 	}, [isOpen, wallets]);
 
@@ -76,7 +76,7 @@ const TokenChooserDialog = ({ isOpen, onClose, onConfirm, providerKey, wallets, 
 
 	const identifierFromBalance = useCallback( (balance) => {
 		//TODO - synths
-		return balance.chain + '.' + balance.ticker + (balance.address ? '-' + balance.address : '');
+		return balance.chain + '.' + balance.ticker + (balance.address ? '-' + balance.address.toUpperCase() : '');
 	}, []);
 
 
@@ -223,7 +223,7 @@ const TokenChooserDialog = ({ isOpen, onClose, onConfirm, providerKey, wallets, 
 		if (matchedToken) {
 			setSelectedChain(matchedToken.chain);
 		}
-	}, 300), [tokens]); // Debounce search term changes
+	}, 1), [tokens]); // Debounce search term changes
 
 	useEffect(() => {
 		// Setup
