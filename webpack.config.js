@@ -13,6 +13,7 @@ const config = {
 					loader: "babel-loader",
 					options: {
 						presets: ["@babel/preset-react"],
+						plugins: ['@babel/plugin-transform-classes'],
 					},
 				},
 			},
