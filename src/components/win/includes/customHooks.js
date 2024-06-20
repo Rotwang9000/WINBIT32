@@ -1,70 +1,56 @@
 import { useState, useEffect, useCallback, useRef, useReducer } from "react";
 import { useWindowData } from "./WindowContext";
+import { useStateSetterContext } from "../../contexts/SetterContext";
 
-function isEqual(a, b) {
-	if (typeof a !== typeof b) return false;
-	if (typeof a === "object" && a !== null && b !== null) {
-		const keysA = Object.keys(a);
-		const keysB = Object.keys(b);
-		if (keysA.length !== keysB.length) return false;
-		return keysA.every((key) => isEqual(a[key], b[key]));
-	}
-	return a === b;
-}
+
+
 
 export function useIsolatedState(windowId, key, defaultValue) {
 	const { getWindowContent, setWindowContent } = useWindowData();
+	const { getState, setState, getSetter, setSetter } = useStateSetterContext();
+
+	// Use a ref to hold the value reference
+	const valueRef = useRef();
 
 	// Initialize state directly from context or default value
-	const [value, setValue] = useState(() => {
+	const existingState = getState(windowId, key);
+	if (existingState === undefined) {
 		const storedValue = getWindowContent(windowId)[key];
-		//console.log("useIsolatedState: ", windowId, key, storedValue);
-		return storedValue !== undefined ? storedValue : defaultValue;
-	});
+		valueRef.current = storedValue !== undefined ? storedValue : defaultValue;
+		setState(windowId, key, valueRef.current);
+	} else {
+		valueRef.current = existingState;
+	}
 
-	const updateCounterRef = useRef([0,0]); // Counter to track updates
-
-	// Updates both local state and the context, handling function updates correctly
-	const setStoredValue = useCallback(
-				
-		(newValue) => {
-			//console.log("setStoredValue: ", windowId, key, newValue, value, updateCounterRef.current[0]);
-
-			setValue((prevValue) => {
-				const resolvedNewValue =
-					typeof newValue === "function" ? newValue(prevValue) : newValue;
-				// Update the context with the resolved value, if it has changed
-				if (isEqual(resolvedNewValue, prevValue)){
-					// console.log("setStoredValue: ", windowId, key, resolvedNewValue, prevValue, newValue, updateCounterRef.current[0]);
-					return prevValue;
-				} 
-
+	// Get or create the setter function
+	let setStoredValue = getSetter(windowId, key);
+	if (!setStoredValue) {
+		setStoredValue = (newValue) => {
+			const resolvedNewValue =
+				typeof newValue === "function" ? newValue(valueRef.current) : newValue;
+			if (resolvedNewValue !== valueRef.current) {
+				valueRef.current = resolvedNewValue;
 				setWindowContent(windowId, (prevState) => ({
 					...prevState,
 					[key]: resolvedNewValue,
 				}));
-
-				updateCounterRef.current[0]++;
-				return resolvedNewValue;
-			});
-		},
-		[windowId, key, setWindowContent]
-	);
+				setState(windowId, key, resolvedNewValue);
+			}
+		};
+		setSetter(windowId, key, setStoredValue);
+	}
 
 	useEffect(() => {
-		// Only update context if the value has actually changed to avoid infinite loops
-		if (updateCounterRef.current[0] !== updateCounterRef.current[1]) {
+		if (existingState !== valueRef.current) {
 			setWindowContent(windowId, (prevState) => ({
 				...prevState,
-				[key]: value,
+				[key]: valueRef.current,
 			}));
-			updateCounterRef.current[1] = updateCounterRef.current[0];
-			// } else {
-			// 	updateCounterRef.current = 0; // Reset the counter after the update cycle
+			setState(windowId, key, valueRef.current);
 		}
-	}, [windowId, key, value, setWindowContent, getWindowContent]);
+	}, [windowId, key, existingState, setWindowContent, setState]);
 
-	return [value, setStoredValue];
+	return [valueRef.current, setStoredValue];
 }
 
 export function useIsolatedRef(windowId, key, defaultValue) {
