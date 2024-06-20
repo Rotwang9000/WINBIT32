@@ -7,7 +7,7 @@
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
     "@scure/bip39": "^1.2.1",
     "@swapkit/sdk": "^1.0.0-rc.136",
-    "@swapkit/tokens": "^0.0.0-nightly-20240618002446",
+    "@swapkit/tokens": "nightly",
     "@swapkit/toolbox-substrate": "^1.0.0-rc.42",
     "@testing-library/jest-dom": "^5.17.0",
     "@testing-library/react": "^13.4.0",
