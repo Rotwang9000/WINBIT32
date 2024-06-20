@@ -27,7 +27,7 @@ const Notepad = ({ onMenuAction, windowA, windowId }) => {
 	], []);
 
 	useEffect(() => {
-		console.log('text:', text);
+		// console.log('text:', text);
 		textRef.current = text; // Update `useRef` when `text` changes
 	}, [text]);
 
@@ -61,17 +61,17 @@ const Notepad = ({ onMenuAction, windowA, windowId }) => {
 				console.log(`Unknown action: ${action}`);
 				break;
 		}
-	}, [text]);
+	}, [text, windowA, windowId]);
 
 	// Notify parent about the menu structure
 	useEffect(() => {
 		if (onMenuAction) {
-			console.log('Notepad menu:', menu);
+			//console.log('Notepad menu:', menu);
 			onMenuAction(menu, windowA, handleMenuClick);
 		}else{
 			console.log('No menu action');
 		}
-	}, []);
+	}, [windowA]);
 
 	return (
 		<>

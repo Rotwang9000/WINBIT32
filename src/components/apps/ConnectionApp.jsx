@@ -52,7 +52,8 @@ function ConnectionApp({ windowId, providerKey, phrase, setPhrase, connectionSta
 					></textarea>
 					<button onClick={() => {
 						console.log('button clicked');
-						handleConnect();
+						
+						handleConnect(true);
 					}
 					} className="connect-button">{
 						(connectionStatus === 'connecting' ? 'Connecting...' : connectionStatus === 'connected' ? 'Refresh' : 'Connect')

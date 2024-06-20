@@ -105,6 +105,13 @@ export const bringToFront = (dispatch, windowId) => (state) => {
 		console.log(
 			`Bringing window ${windowId} to front with z-index ${newZIndex}`
 		);
+		//restore if minimised
+		if (window.minimized) {
+			dispatch({
+				type: "RESTORE_WINDOW",
+				payload: window,
+			});
+		}
 
 		dispatch({
 			type: "BRING_TO_FRONT",

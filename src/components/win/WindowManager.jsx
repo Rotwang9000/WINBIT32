@@ -52,7 +52,7 @@ const reducer = (state, action) => {
 				...state,
 				minimizedWindows: [...state.minimizedWindows, action.payload],
 				windows: state.windows.map(w =>
-					w.windowId === action.payload.windowId ? { ...w, minimized: true } : w
+					w.windowId === action.payload.windowId ? { ...w, minimized: true, zIndex: 0 } : w
 				),
 			};
 		case 'RESTORE_WINDOW':
@@ -66,9 +66,12 @@ const reducer = (state, action) => {
 		case 'MAXIMIZE_WINDOW':
 			return {
 				...state,
-				windows: state.windows.map(w =>
-					w.windowId === action.payload.windowId ? { ...w, maximized: true } : w
-				),
+				windows: state.windows.map(w => {
+					if (w.windowId !== action.payload.windowId) {
+						return { ...w, maximized: false };
+					}
+					return { ...w, maximized: true };
+				}),
 			};
 		case 'SET_CONTEXT_MENU':
 			return {
@@ -140,11 +143,9 @@ const WindowManager = ({ programs, windowName, handleOpenFunction, setStateAndSa
 	}, [state, dispatch]);
 
 	const closeWindow = useCallback((window) => {
+		console.log('closeWindow called with window:', window);
 		if (window.unCloseable) return;
-		dispatch({
-			type: 'SET_WINDOWS',
-			payload: windows.filter(w => w.windowId !== window.windowId),
-		});
+		dispatch({ type: 'CLOSE_WINDOW', payload: window.windowId });
 		saveWindowState(windowName, windows.filter(w => w.windowId !== window.windowId));
 		setWindowContent(window.windowId, {});
 	}, [windows, windowName, setWindowContent, dispatch]);
@@ -171,9 +172,7 @@ const WindowManager = ({ programs, windowName, handleOpenFunction, setStateAndSa
 			setWindowMenu(windowMenu);
 		}
 
-	}, [windows]);
-
-
+	}, [windows, setWindowMenu]);
 
 	const handleStateChange = useCallback((windowId, newData) => {
 		// Implement the logic for state change
@@ -202,12 +201,9 @@ const WindowManager = ({ programs, windowName, handleOpenFunction, setStateAndSa
 	}, [dispatch]);
 
 	const bringToFront = useCallback((windowId) => {
-		//export const bringToFront = (dispatch, windowId) => (state) => {
-		//call HandleFunctions.bringToFront as above
 		const btf = HandleFunctions.bringToFront(dispatch, windowId);
 		btf(state);
-
-	}, [dispatch]);
+	}, [dispatch, state]);
 
 	const openWindowByProgName = useCallback((progName) => {
 		HandleFunctions.openWindowByProgName(dispatch, progName);
@@ -246,7 +242,6 @@ const WindowManager = ({ programs, windowName, handleOpenFunction, setStateAndSa
 	}, [windows, closeWindow, restoreWindow, minimizeWindow, maximizeWindow, dispatch]);
 
 	const handleMenuClick = useCallback((action, window) => {
-		// console.log(`Handling menu action: ${action}`);
 		if (window && window.menuHandler) {
 			window.menuHandler(action);
 		} else {
@@ -366,7 +361,7 @@ const WindowManager = ({ programs, windowName, handleOpenFunction, setStateAndSa
 											data={window.data}
 											metadata={window.metadata || {}}
 											onMenuAction={(menu, window, menuHandler) => functionMap.handleMenuAction(menu, window, menuHandler)}
-											windowA={window}
+											windowA={{ ...window, close: () => closeWindow(window) }} // Pass down close function
 											programs={programs}
 											params={window.params}
 											setStateAndSave={setStateAndSave}

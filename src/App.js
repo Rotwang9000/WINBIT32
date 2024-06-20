@@ -7,6 +7,7 @@ import WindowManager from "./components/win/WindowManager";
 import { WindowDataProvider } from "./components/win/includes/WindowContext";
 import { SKClientProviderManager } from "./components/contexts/SKClientProviderManager";
 import { Toaster } from "react-hot-toast";
+import { StateSetterProvider } from "./components/contexts/SetterContext";
 
 const programs = getPrograms();
 
@@ -60,32 +61,35 @@ const App = () => {
 
 	return (
 		<SKClientProviderManager>
-			<Toaster
-				position="bottom-right"
-				toastOptions={{
-					// Define default options
-					className: "toast",
-					duration: 3000,
-					
-				}}
-			/>
-			{showQRPop && <QRpop onQRRead={handleQRRead} closeQrPop={toggleQRPop} />}
-			{showDOSPrompt ? (
-				<DOSPrompt />
-			) : (
-				<>
-					<WelcomeWarning onExit={handleExit} />
-					<WindowDataProvider>
-						<WindowManager
-							programs={programs}
-							windowName={"desktop"}
-							setStateAndSave={setStateAndSave}
-							providerKey={"desktop"}
-							handleOpenArray={[]}
-						/>
-					</WindowDataProvider>
-				</>
-			)}
+			<StateSetterProvider>
+				<Toaster
+					position="bottom-right"
+					toastOptions={{
+						// Define default options
+						className: "toast",
+						duration: 3000,
+					}}
+				/>
+				{showQRPop && (
+					<QRpop onQRRead={handleQRRead} closeQrPop={toggleQRPop} />
+				)}
+				{showDOSPrompt ? (
+					<DOSPrompt />
+				) : (
+					<>
+						<WelcomeWarning onExit={handleExit} />
+						<WindowDataProvider>
+							<WindowManager
+								programs={programs}
+								windowName={"desktop"}
+								setStateAndSave={setStateAndSave}
+								providerKey={"desktop"}
+								handleOpenArray={[]}
+							/>
+						</WindowDataProvider>
+					</>
+				)}
+			</StateSetterProvider>
 		</SKClientProviderManager>
 	);
 };

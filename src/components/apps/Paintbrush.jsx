@@ -99,21 +99,42 @@ const Paintbrush = ({ onMenuAction, windowA, windowId }) => {
 		}
 	};
 	const startDrawing = (event) => {
+		event.preventDefault(); // Prevent default touch event
 		isDrawingRef.current = true; // Update ref immediately
-
-		const { offsetX, offsetY } = event; // Direct property access
-		console.log(offsetX, offsetY);
-		contextRef.current.beginPath();
-		contextRef.current.moveTo(offsetX, offsetY);
+		if(event.type === 'touchstart') {
+			const touch = event.touches[0];
+			const { clientX, clientY } = touch;
+			const { left, top } = canvasRef.current.getBoundingClientRect();
+			const offsetX = clientX - left;
+			const offsetY = clientY - top;
+			contextRef.current.beginPath();
+			contextRef.current.moveTo(offsetX, offsetY);
+		} else {
+			const { offsetX, offsetY } = event; // Direct property access
+			console.log(offsetX, offsetY, event);
+			contextRef.current.beginPath();
+			contextRef.current.moveTo(offsetX, offsetY);
+		}
 	};
 
 	const draw = (event) => {
+		event.preventDefault(); // Prevent default touch event
 		if (!isDrawingRef.current) return; // Use ref to check drawing status
 
-
-		const { offsetX, offsetY } = event; // Direct property access
-		contextRef.current.lineTo(offsetX, offsetY);
-		contextRef.current.stroke();
+		if(event.type === 'touchmove') {
+			const touch = event.touches[0];
+			const { clientX, clientY } = touch;
+			const { left, top } = canvasRef.current.getBoundingClientRect();
+			const offsetX = clientX - left;
+			const offsetY = clientY - top;
+			contextRef.current.lineTo(offsetX, offsetY);
+			contextRef.current.stroke();
+		} else {
+				
+			const { offsetX, offsetY } = event; // Direct property access
+			contextRef.current.lineTo(offsetX, offsetY);
+			contextRef.current.stroke();
+		}
 	};
 
 	const stopDrawing = () => {
@@ -160,6 +181,12 @@ const Paintbrush = ({ onMenuAction, windowA, windowId }) => {
 			canvas.addEventListener('mousemove', draw);
 			canvas.addEventListener('mouseup', stopDrawing);
 			canvas.addEventListener('mouseleave', stopDrawing);
+			//also for touch events
+			canvas.addEventListener('touchstart', startDrawing);
+			canvas.addEventListener('touchmove', draw);
+			canvas.addEventListener('touchend', stopDrawing);
+			canvas.addEventListener('touchcancel', stopDrawing);
+
 
 			// Clean up event listeners on unmount
 			return () => {
@@ -167,6 +194,12 @@ const Paintbrush = ({ onMenuAction, windowA, windowId }) => {
 				canvas.removeEventListener('mousemove', draw);
 				canvas.removeEventListener('mouseup', stopDrawing);
 				canvas.removeEventListener('mouseleave', stopDrawing);
+				//also for touch events
+				canvas.removeEventListener('touchstart', startDrawing);
+				canvas.removeEventListener('touchmove', draw);
+				canvas.removeEventListener('touchend', stopDrawing);
+				canvas.removeEventListener('touchcancel', stopDrawing);
+
 			};
 		
 	}, [selectedColour]); // Re-run on colour change
