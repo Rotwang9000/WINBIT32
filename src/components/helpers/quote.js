@@ -1,11 +1,44 @@
 export async function getQuoteFromThorSwap(quoteParams) {
-	const apiUrl = "https://api.swapkit.dev"; // Adjust this URL as needed
-
+	//const apiUrl = "https://api.swapkit.dev"; // Adjust this URL as needed
+	const apiUrl = "https://api.thorswap.net/aggregator/tokens/quote"; // Adjust this URL as needed
 	//convert number strings to numbers
 	quoteParams.sellAmount = Number(quoteParams.sellAmount);
 	quoteParams.slippage = Number(quoteParams.slippage);
 	
+	//build url from quoteParams
+	const url = new URL(apiUrl);
+	Object.keys(quoteParams).forEach(key => url.searchParams.append(key, quoteParams[key]));
 
+	//GET apiurl with dynamic quoteParams
+
+	const response = await fetch(url, {
+		method: "GET",
+		headers: {
+			"Content-Type": "application/json",
+		},
+	});
+
+	console.log('response', response);
+
+	//read body of response
+	const body = await response.json();
+	console.log('body', body);
+	
+
+	if (response.status !== 200) {
+		throw new Error(body.message);
+	}
+
+	return body;
+}
+
+
+
+export async function getQuoteFromSwapKit(quoteParams) {
+	const apiUrl = "https://api.swapkit.dev"; // Adjust this URL as needed
+	//convert number strings to numbers
+	quoteParams.sellAmount = Number(quoteParams.sellAmount);
+	quoteParams.slippage = Number(quoteParams.slippage);
 
 	const response = await fetch(`${apiUrl}/quote`, {
 		method: "POST",

@@ -22,8 +22,15 @@ const Split = ({ programData, windowId }) => {
 		const numParityShares = totalParts - numDataParts; // Use two parity shares if more than 5 parts
 
 		// return hex from mnemonic, only if mnemonic is valid
-		const hexKey = phrase && mnemonicToEntropy(phrase).toString("hex");
 
+		//do this but catch errors const hexKey = phrase && mnemonicToEntropy(phrase).toString("hex");
+		let hexKey = '';
+		try {
+			hexKey = phrase && mnemonicToEntropy(phrase).toString('hex');
+		} catch (e) {
+			console.error(e);
+		}
+		
 
 	const copyQRImageToClipboard = (key) => {
 
@@ -112,7 +119,14 @@ const Split = ({ programData, windowId }) => {
 	};
 		//do split on number change
 		useEffect(() => {
-			setParts(splitPhraseToParts(phrase, totalParts, numParityShares));
+			try{
+				setParts(splitPhraseToParts(phrase, totalParts, numParityShares));
+			}catch(e){
+				console.error(e);
+				if (programData.setStatusMessage){
+					programData.setStatusMessage('Invalid mnemonic phrase');
+				}
+			}
 		}, [totalParts, phrase, numParityShares]);
 
 		return (

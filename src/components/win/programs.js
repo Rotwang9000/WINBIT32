@@ -28,7 +28,7 @@ export const getPrograms = () => {
 			component: ProgramManager,
 			icon: "💾", // You can use emojis or custom icons
 			params: { _onOpenWindow: "!!handleOpenWindow" },
-			initialPosition: { x: 5, y: 5, width: 365, height: 275, smHeight: 275 },
+			initialPosition: { x: 5, y: 5, width: 350, height: 275, smHeight: 275 },
 			defaultOpen: true,
 			unCloseable: true,
 		},

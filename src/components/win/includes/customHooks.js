@@ -34,7 +34,10 @@ export function useIsolatedState(windowId, key, defaultValue) {
 				const resolvedNewValue =
 					typeof newValue === "function" ? newValue(prevValue) : newValue;
 				// Update the context with the resolved value, if it has changed
-				if (isEqual(resolvedNewValue, prevValue)) return prevValue;
+				if (isEqual(resolvedNewValue, prevValue)){
+					// console.log("setStoredValue: ", windowId, key, resolvedNewValue, prevValue, newValue, updateCounterRef.current[0]);
+					return prevValue;
+				} 
 
 				setWindowContent(windowId, (prevState) => ({
 					...prevState,

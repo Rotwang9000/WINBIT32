@@ -226,7 +226,7 @@ memo=${memo}
 	}, [selectedToken, amount, recipientAddress, memo, textareaActive]);
 
 	return (
-		<div style={{ width: '100%', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }} className='send-component'>
+		<>
 			<div className="send-toolbar">
 				<button className='send-toolbar-button' onClick={sendFunds} disabled={sendInProgress}>
 					<div className='send-toolbar-icon'>💸</div>
@@ -246,6 +246,7 @@ memo=${memo}
 				: ''
 			}
 			{error && <div className="send-error">{error}</div>}
+	<div style={{ width: '100%', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }} className='swap-component'>
 
 			<div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: '10px' }}>
 				<div className="field-group">
@@ -318,7 +319,7 @@ memo=${memo}
 				onConfirm={handleTokenSelect}
 				wallets={wallets}
 			/>
-		</div>
+			</div></>
     );
 };
 
