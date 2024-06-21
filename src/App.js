@@ -84,36 +84,43 @@ const App = () => {
 					<DOSPrompt />
 				) : (
 					<>
-						<WindowDataProvider>
-							<WindowManager
-								programs={programs}
-								windowName={"desktop"}
-								setStateAndSave={setStateAndSave}
-								providerKey={"desktop"}
-								handleOpenArray={[]}
-								style={loaded ? { display: "block" } : { display: "none" }}
-							/>
-						</WindowDataProvider>
-					
-						{ (loaded) ? 
-						<>
-						<WelcomeWarning onExit={handleExit} />
-						</>
-						:
-						<div className="loading_overlay" id="loading_overlay"
-							onClick={() => {setLoaded(true); document.getElementById("loading_overlay").style.display = "none";}}>
-
-							<div>
-								<img src={process.env.PUBLIC_URL + "/winlogo.png"} alt="logo" />
-							</div>
+						<div
+							style={loaded ? { zIndex: 999 } : { zIndex: 0 }}
+							className="full-desktop"
+							id="desktop">
+							<WindowDataProvider>
+								<WindowManager
+									programs={programs}
+									windowName={"desktop"}
+									setStateAndSave={setStateAndSave}
+									providerKey={"desktop"}
+									handleOpenArray={[]}
+								/>
+							</WindowDataProvider>
 						</div>
-
-						
-						}
+						{loaded ? (
+							<>
+								<WelcomeWarning onExit={handleExit} />
+							</>
+						) : (
+							<div
+								className="loading_overlay"
+								id="loading_overlay"
+								onClick={() => {
+									setLoaded(true);
+									document.getElementById("loading_overlay").style.display =
+										"none";
+								}}>
+								<div>
+									<img
+										src={process.env.PUBLIC_URL + "/winlogo.png"}
+										alt="logo"
+									/>
+								</div>
+							</div>
+						)}
 					</>
-					)
-					}
-
+				)}
 			</StateSetterProvider>
 		</SKClientProviderManager>
 	);
