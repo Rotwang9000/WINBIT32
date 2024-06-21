@@ -1,5 +1,5 @@
 .loading_overlay {
-	position: fixed;
+	position: absolute;
 	background: rgba(0, 0, 0, 0.9);
 	color: #fff;
 	display: flex;
@@ -41,4 +41,13 @@
 
 .loading_overlay img {
 	max-width: 100%;
+}
+
+.full-desktop{
+	position: absolute;
+	top: 0;
+	left: 0;
+	bottom: 0;
+	right: 0;
+	
 }
