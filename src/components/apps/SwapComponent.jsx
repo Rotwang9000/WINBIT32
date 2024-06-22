@@ -39,7 +39,7 @@ const SwapComponent = ({ providerKey, windowId }) => {
 	const [txnStatus, setTxnStatus] = useIsolatedState(windowId, 'txnStatus', '');
 	const currentTxnStatus = useRef(txnStatus);
 	const [statusText, setStatusText] = useIsolatedState(windowId, 'statusText', '');
-	const [quoteStatus, setQuoteStatus] = useIsolatedState(windowId, 'quoteStatus', 'Fill in all the details');
+	const [quoteStatus, setQuoteStatus] = useIsolatedState(windowId, 'quoteStatus', 'Aff. fee 0.32%');
 	const [quoteId, setQuoteId] = useIsolatedState(windowId, 'quoteId', '');
 	const [maxAmount, setMaxAmount] = useIsolatedState(windowId, 'maxAmount', '0');
 	const [txnTimer, setTxnTimer] = useIsolatedState(windowId, 'txnTimer', null);
@@ -82,7 +82,11 @@ const SwapComponent = ({ providerKey, windowId }) => {
 				return null;
 			});
 			console.log('Txn status:', status);
-
+			if(!status){
+				setTxnTimer(setTimeout(() => {
+					checkTxnStatus(txnHash + '', cnt + 1);
+				}, 30000));
+			}
 			status.lastCheckTime = new Date();
 			setTxnStatus(status);
 			currentTxnStatus.current = status;
@@ -163,7 +167,7 @@ const SwapComponent = ({ providerKey, windowId }) => {
 		const wallet = chooseWalletForToken(swapFrom);
 
 		//const basisPoints = (swapFrom.identifier.contains('/') || swapTo.identifier.contains('/')) ? 10 : 100;
-		const basisPoints = (swapFrom.identifier.includes('/') || swapTo.identifier.includes('/')) ? '32' : '64';
+		const basisPoints = (swapFrom.identifier.includes('/') || swapTo.identifier.includes('/')) ? '32' : '32';
 
 		const quoteParams = {
 			sellAsset: swapFrom.identifier,
@@ -173,7 +177,7 @@ const SwapComponent = ({ providerKey, windowId }) => {
 			recipientAddress: destinationAddress,
 			slippage: slippage.toString(),
 			affiliateBasisPoints: basisPoints,
-			affiliateAddress: 'be'
+			affiliateAddress: 'be',
 		};
 
 
@@ -235,8 +239,9 @@ const SwapComponent = ({ providerKey, windowId }) => {
 
 
 			const swapParams = {
-				...quoteParams,
+				//...quoteParams,
 				route: route,
+				streamSwap: (route.streamingSwap) ? true : false,
 				feeOption: FeeOption[feeOption] || FeeOption.Average,
 				recipient: destinationAddress,
 				affiliate: 'be',
@@ -342,7 +347,7 @@ const SwapComponent = ({ providerKey, windowId }) => {
 			setStatusText('');
 			setQuoteStatus('Getting Quotes...');
 
-			const basisPoints = (swapFrom.identifier.includes('/') || swapTo.identifier.includes('/')) ? '32' : '64';
+			const basisPoints = (swapFrom.identifier.includes('/') || swapTo.identifier.includes('/')) ? '32' : '32';
 
 				const quoteParams = {
 					sellAsset: swapFrom.identifier,
@@ -352,7 +357,7 @@ const SwapComponent = ({ providerKey, windowId }) => {
 					recipientAddress: thisDestinationAddress,
 					slippage: slippage,
 					affiliateBasisPoints: basisPoints,
-					affiliateAddress: 'be'
+					affiliateAddress: 'be',
 				};
 				try{
 					const response = await getQuoteFromThorSwap(quoteParams).catch(error => {
@@ -391,6 +396,7 @@ const SwapComponent = ({ providerKey, windowId }) => {
 							{optimalRoute.providers.join(', ')}  {parseFloat(parseFloat(optimalRouteTime).toPrecision(3))} mins<br />
 							Expected Min {swapTo?.ticker}: {parseFloat(parseFloat(optimalRoute.expectedOutputMaxSlippage).toPrecision(5))} <br />
 							Expected USD Equiv.: {parseFloat(parseFloat(optimalRoute.expectedOutputUSD).toPrecision(6))} <br />
+							{optimalRoute.streamingSwap ? <i>Streaming Swap</i> : '' }
 						</>);
 					}
 				}catch(error){
@@ -613,6 +619,12 @@ slippage=${slippage}
 					setSwapInProgress(false);
 					setTxnHash('');
 					setTxnStatus('');
+					//check all variables are set
+					if (!swapFrom || !swapTo || !amount || !destinationAddress || !routes || routes.length === 0) {
+						console.error('Missing required fields');
+						setStatusText('Missing required fields for quote');
+						return;
+					}
 					getQuotes();
 				}}>
 					<div className='swap-toolbar-icon' >❝</div>
@@ -626,9 +638,11 @@ slippage=${slippage}
 					<div className='swap-toolbar-icon' >⇅</div>
 					Switch
 				</button>
-				<div className='status-text'>
+
+			</div>				
+			
+			<div className='status-text'>
 				{statusText}
-				</div>
 			</div>
 					<div style={{ width: '100%', boxSizing: 'border-box', display: 'flex', flexDirection: 'column',  justifyContent: 'space-between', }} className='swap-component'> 
 

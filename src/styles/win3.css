@@ -160,7 +160,7 @@ button {
 }
 
 .window .window{
-	max-width: calc(100vw - 10px);
+	max-width: calc(100vw - 4px);
 }
 
 input{

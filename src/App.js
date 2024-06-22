@@ -95,6 +95,7 @@ const App = () => {
 									setStateAndSave={setStateAndSave}
 									providerKey={"desktop"}
 									handleOpenArray={[]}
+									handleExit={handleExit}
 								/>
 							</WindowDataProvider>
 						</div>
