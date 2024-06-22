@@ -114,7 +114,7 @@ const reducer = (state, action) => {
 	}
 };
 
-const WindowManager = ({ programs, windowName, handleOpenFunction, setStateAndSave, providerKey, setWindowMenu, programData, setProgramData, handleOpenArray }) => {
+const WindowManager = ({ programs, windowName, handleOpenFunction, setStateAndSave, providerKey, setWindowMenu, programData, setProgramData, handleOpenArray, handleExit }) => {
 	const [state, dispatch] = useIsolatedReducer(windowName, 'windowManagerState', reducer, initialState);
 	const { windows, minimizedWindows, contextMenuVisible, contextMenuPosition, highestZIndex, windowHistory, programList } = state;
 
@@ -373,6 +373,7 @@ const WindowManager = ({ programs, windowName, handleOpenFunction, setStateAndSa
 											programData={programData}
 											setProgramData={setProgramData}
 											onOpenWindow={handleOpenWindow}
+											handleExit={handleExit}
 										/>
 									</div>
 								</>

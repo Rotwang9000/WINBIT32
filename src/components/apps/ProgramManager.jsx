@@ -1,7 +1,7 @@
 import React from 'react';
 import { useMemo, useCallback, useEffect, useRef } from 'react';
 
-const ProgramManager = ({ params, programs, onOpenWindow, onMenuAction, windowA}) => {
+const ProgramManager = ({ params, programs, onOpenWindow, onMenuAction, windowA, handleExit}) => {
 
 	//const onOpenWindow = params.onOpenWindow;
 
@@ -25,6 +25,10 @@ const ProgramManager = ({ params, programs, onOpenWindow, onMenuAction, windowA}
 		// const currentInput = currentRef.current; // Get the current input from `useRef`
 
 		switch (action) {
+			case 'exit':
+				handleExit();
+				break;
+
 			
 			default:
 				console.log(`Unknown action: ${action}`);

@@ -163,7 +163,6 @@ export const SKClientProviderManager = ({ children }) => {
 					provider.provider !== "MAYACHAIN" && provider.provider !== "CHAINFLIP"
 			);
 
-
 			console.log("Fetching tokens for providers...");
 			const tokensResponse = await Promise.all(
 				filteredProviders.map(async (provider) => {
@@ -171,18 +170,46 @@ export const SKClientProviderManager = ({ children }) => {
 						`https://api.swapkit.dev/tokens?provider=${provider.provider}`
 					);
 					const tokenData = await tokenResponse.json();
-					//filter out bnb chain 
-					return tokenData.tokens.filter((token) => token.chain !== "BNB").map((token) => ({
-						...token,
-						provider: provider.provider,
-					}));
-					
+					//if token has a / in it, change the last / in the image url to a .
+					const tokenData2 = tokenData.tokens.map((token) => {
+						if (token.identifier.includes("/")) {
+							const splitImage = token.logoURI.split("/");
+							const last = splitImage.pop();
+							const newUrl = splitImage.join("/") + "." + last;
+							//console.log("old url:", token.logoURI);
+							token.logoURI = newUrl;
+							//console.log("new url:", newUrl);
+						}
+						return token;
+					});
+
+					//filter out bnb chain
+					return tokenData2
+						.filter((token) => token.chain !== "BNB")
+						.map((token) => ({
+							...token,
+							provider: provider.provider,
+						}));
 				})
 			);
 			console.log("Tokens fetched:", tokensResponse);
+
+			//sort the tokens so that any that have a shortCode key or are have the same chain and ticker are at the top, the rest are sorted alphabetically
+			const sortedTokens = tokensResponse.flat().sort((a, b) => {
+				if (a.shortCode || b.shortCode) {
+					return a.shortCode ? -1 : 1;
+				}
+				if (a.chain === a.ticker || b.chain === b.ticker) {
+					return a.chain === a.ticker ? -1 : 1;
+				}
+				return a.chain < b.chain ? -1 : 1;
+			});
+
+			// console.log("Tokens sorted:", sortedTokens);
+
 			dispatch({
 				type: "SET_TOKENS",
-				tokens: tokensResponse.flat(),
+				tokens: sortedTokens,
 			});
 		} catch (error) {
 			console.error("Error loading initial data:", error);

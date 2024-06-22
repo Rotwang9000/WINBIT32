@@ -123,7 +123,7 @@ const TokenChooserDialog = ({ isOpen, onClose, onConfirm, providerKey, wallets, 
 				console.log("tokens in category already", selectedCategory, tokensByCategory[selectedCategory]);
 			}
 		}
-	}, [selectedCategory]);
+	}, [selectedCategory, wallets, tokens, tokensByCategory]);
 
 
 
