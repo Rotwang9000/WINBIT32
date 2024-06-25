@@ -1,5 +1,6 @@
 import { resetState } from "./StateFunctions";
 
+
 export const handleQRRead = (dispatch) => (data) => {
 	dispatch({ type: "SET_QR_RESULT", payload: data });
 	dispatch({ type: "SET_SHOW_QR_POP", payload: false });
@@ -13,12 +14,12 @@ export const handleExit = (dispatch) => () => {
 	dispatch({ type: "SET_SHOW_DOS_PROMPT", payload: true });
 };
 
-export const handleHashChange = (dispatch) => () => {
+export const handleHashChange = (dispatch, getState) => () => {
 	console.log("hash change");
 	const hash = window.location.hash.replace("#", "");
 	if (hash) {
 		console.log(`Hash found: ${hash}`);
-		dispatch(openWindowByProgName(hash));
+		dispatch(openWindowByProgName(hash)(dispatch, getState));
 	}
 };
 
@@ -79,6 +80,7 @@ export const handleMenuAction = (dispatch) => (menu, window, menuHandler) => {
 		payload: { windowId: window.windowId, menu, menuHandler },
 	});
 };
+
 export const bringToFront = (windowId) => (dispatch, getState) => {
 	const state = getState();
 	const { windows, highestZIndex, contextMenuVisible, windowHistory } = state;
@@ -113,13 +115,6 @@ export const bringToFront = (windowId) => (dispatch, getState) => {
 			hash: window.progID === 0 ? "" : window.progName,
 		},
 	});
-
-	// Update the hash without causing a hashchange event
-	const newHash = window.progID === 0 ? "" : `#${window.progName}`;
-	console.log(`Setting hash to ${newHash}`);
-	if (window.location.hash !== newHash) {
-		window.history.replaceState(null, null, newHash);
-	}
 };
 
 export const handleOpenWindow = (program) => (dispatch, getState) => {

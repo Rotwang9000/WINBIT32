@@ -1,6 +1,6 @@
 import React, { useEffect, useCallback, useMemo } from 'react';
-import '../styles/Wallet.css';
-import '../styles/smart.css';
+import './styles/Wallet.css';
+
 import { QRCodeSVG } from 'qrcode.react';
 import { FaQrcode } from 'react-icons/fa';
 

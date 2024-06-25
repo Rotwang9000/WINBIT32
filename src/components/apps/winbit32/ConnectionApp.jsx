@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 
-import ProgressBar from '../win/ProgressBar';
+import ProgressBar from '../../win/ProgressBar';
 import { generateMnemonic } from '@scure/bip39';
 import { wordlist } from '@scure/bip39/wordlists/english';
 import './styles/ConnectionApp.css';
-import { useIsolatedState } from '../win/includes/customHooks';
+import { useIsolatedState } from '../../win/includes/customHooks';
 
 
 // Function to generate a random phrase
@@ -50,15 +50,14 @@ function ConnectionApp({ windowId, providerKey, phrase, setPhrase, connectionSta
 						onChange={(e) => setPhrase(e.target.value.replace(/[^a-zA-Z ]/g, '').replace(/  +/g, ' '))}
 						style = {{'color': (phraseSaved ? 'black' : 'red')}}
 					></textarea>
-					<button onClick={() => {
-						console.log('button clicked');
-						
-						handleConnect(true);
-					}
-					} className="connect-button">{
-						(connectionStatus === 'connecting' ? 'Connecting...' : connectionStatus === 'connected' ? 'Refresh' : 'Connect')
-					}</button>
-					<div className="traffic-light" style={{ backgroundColor: trafficLightColor() }}></div>
+					<div
+						onClick={() => {
+							console.log('button clicked');
+
+							handleConnect(true);
+						}
+						}
+					className="traffic-light" style={{ backgroundColor: trafficLightColor() }}></div>
 				</div>
 				<div className="status-row">
 					<div className="status-message">

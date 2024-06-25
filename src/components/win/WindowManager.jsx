@@ -3,120 +3,24 @@ import WindowBorder from './WindowBorder';
 import Taskbar from './Taskbar';
 import ContextMenu from './ContextMenu';
 import MenuBar from './MenuBar';
-import * as HandleFunctions from './includes/HandleFunctions';
+import * as HandleFunctions from './includes/WindowManagerActions';
+import { reducer, initialState } from './includes/WindowManagerReducer';
 import { loadWindowState, saveWindowState, initializeWindows } from './includes/StateFunctions';
 import { useIsolatedRef, useIsolatedReducer } from './includes/customHooks';
 import { getPrograms } from './programs';
 import { useWindowData } from './includes/WindowContext';
 import './styles/scrollbar.css';
 import { createNewWindow, convertObjectFunctions } from './includes/WindowManagerFunctions';
-import debounce from 'lodash.debounce';
-
-const ADD_WINDOW = 'ADD_WINDOW';
-
-const addWindowAction = (newWindow) => ({
-	type: ADD_WINDOW,
-	payload: newWindow,
-});
-
-const initialState = {
-	windows: [],
-	minimizedWindows: [],
-	contextMenuVisible: false,
-	contextMenuPosition: { x: 0, y: 0 },
-	highestZIndex: 1,
-	windowHistory: [],
-	programList: [],
-};
-
-const reducer = (state, action) => {
-	switch (action.type) {
-		case 'SET_WINDOWS':
-			return { ...state, windows: Array.isArray(action.payload) ? action.payload : [] };
-		case 'SET_MINIMIZED_WINDOWS':
-			return { ...state, minimizedWindows: Array.isArray(action.payload) ? action.payload : [] };
-		case 'SET_CONTEXT_MENU_VISIBLE':
-			return { ...state, contextMenuVisible: action.payload };
-		case 'SET_CONTEXT_MENU_POSITION':
-			return { ...state, contextMenuPosition: action.payload };
-		case 'SET_HIGHEST_Z_INDEX':
-			return { ...state, highestZIndex: action.payload };
-		case 'SET_WINDOW_HISTORY':
-			return { ...state, windowHistory: Array.isArray(action.payload) ? action.payload : [] };
-		case 'SET_PROGRAM_LIST':
-			return { ...state, programList: Array.isArray(action.payload) ? action.payload : [] };
-		case ADD_WINDOW:
-			return { ...state, windows: [...state.windows, action.payload] };
-		case 'MINIMIZE_WINDOW':
-			return {
-				...state,
-				minimizedWindows: [...state.minimizedWindows, action.payload],
-				windows: state.windows.map(w =>
-					w.windowId === action.payload.windowId ? { ...w, minimized: true, zIndex: 0 } : w
-				),
-			};
-		case 'RESTORE_WINDOW':
-			return {
-				...state,
-				minimizedWindows: state.minimizedWindows.filter(w => w.windowId !== action.payload.windowId),
-				windows: state.windows.map(w =>
-					w.windowId === action.payload.windowId ? { ...w, minimized: false, maximized: false } : w
-				),
-			};
-		case 'MAXIMIZE_WINDOW':
-			return {
-				...state,
-				windows: state.windows.map(w => {
-					if (w.windowId !== action.payload.windowId) {
-						return { ...w, maximized: false };
-					}
-					return { ...w, maximized: true };
-				}),
-			};
-		case 'SET_CONTEXT_MENU':
-			return {
-				...state,
-				contextMenuVisible: action.payload.contextMenuVisible,
-				contextMenuPosition: action.payload.contextMenuPosition,
-				contextWindowId: action.payload.contextWindowId,
-			};
-		case 'SET_WINDOW_MENU':
-			return {
-				...state,
-				windows: state.windows.map(w =>
-					w.windowId === action.payload.windowId ? { ...w, menu: action.payload.menu, menuHandler: action.payload.menuHandler } : w
-				),
-			};
-		case 'BRING_TO_FRONT':
-			return {
-				...state,
-				windows: state.windows.map(w =>
-					w.windowId === action.payload.windowId ? { ...w, zIndex: action.payload.newZIndex } : w
-				),
-				highestZIndex: action.payload.newZIndex,
-				windowHistory: action.payload.windowHistory,
-				hash: action.payload.hash,
-			};
-		case 'OPEN_WINDOW':
-			return {
-				...state,
-				windows: [...state.windows, action.payload.window],
-				highestZIndex: state.highestZIndex + 1,
-			};
-		case 'CLOSE_WINDOW':
-			return {
-				...state,
-				windows: state.windows.filter(w => w.windowId !== action.payload),
-				windowHistory: state.windowHistory.filter(w => w.windowId !== action.payload),
-			};
-		default:
-			return state;
-	}
-};
 
 const WindowManager = ({ programs, windowName, handleOpenFunction, setStateAndSave, providerKey, setWindowMenu, programData, setProgramData, handleOpenArray, handleExit }) => {
-	const [state, dispatch] = useIsolatedReducer(windowName, 'windowManagerState', reducer, initialState);
-	const { windows, minimizedWindows, contextMenuVisible, contextMenuPosition, highestZIndex, windowHistory, programList } = state;
+
+	const updatedState = {
+		windowName,
+		...initialState
+	};
+
+	const [state, dispatch, getState] = useIsolatedReducer(windowName, 'windowManagerState', reducer, updatedState);
+	const { windows, minimizedWindows, contextMenuVisible, contextMenuPosition, highestZIndex, windowHistory, programList, closedWindows } = state;
 
 	const contextWindowId = useIsolatedRef(windowName, 'contextWindowId', null);
 	const defaultProgramsInitialized = useIsolatedRef(windowName, 'defaultProgramsInitialized', false);
@@ -124,23 +28,9 @@ const WindowManager = ({ programs, windowName, handleOpenFunction, setStateAndSa
 	const highestZIndexRef = useRef(highestZIndex);
 	const { setWindowContent } = useWindowData();
 
-	// Update the ref whenever highestZIndex changes
 	useEffect(() => {
 		if (highestZIndex !== highestZIndexRef.current) highestZIndexRef.current = highestZIndex;
 	}, [highestZIndex]);
-
-	const setWindowManagerState = useCallback((update) => {
-		const capitalize = (s) => s.charAt(0).toUpperCase() + s.slice(1);
-
-		Object.entries(update).forEach(([key, value]) => {
-			const setterName = `SET_${key.toUpperCase()}`;
-			if (typeof value === 'function') {
-				dispatch({ type: setterName, payload: value(state[key]) });
-			} else {
-				dispatch({ type: setterName, payload: value });
-			}
-		});
-	}, [state, dispatch]);
 
 	const closeWindow = useCallback((window) => {
 		console.log('closeWindow called with window:', window);
@@ -156,11 +46,10 @@ const WindowManager = ({ programs, windowName, handleOpenFunction, setStateAndSa
 			console.error("handleOpenWindow: program is undefined or null");
 			return;
 		}
-		createNewWindow(programs, handleOpenArray, programData, highestZIndexRef, (newIndex) => dispatch({ type: 'SET_HIGHEST_Z_INDEX', payload: newIndex }), dispatch, closeWindow, program, metadata, saveState);
+		createNewWindow(programs, windowName, handleOpenArray, programData, highestZIndexRef, (newIndex) => dispatch({ type: 'SET_HIGHEST_Z_INDEX', payload: newIndex }), dispatch, closeWindow, program, metadata, saveState);
 	}, [programs, handleOpenArray, programData, closeWindow, dispatch]);
 
 	useEffect(() => {
-		// set cursor back to default
 		window.document.body.style.cursor = 'default';
 		window.document.body.classList.remove('wait');
 
@@ -201,17 +90,17 @@ const WindowManager = ({ programs, windowName, handleOpenFunction, setStateAndSa
 	}, [dispatch]);
 
 	const bringToFront = useCallback((windowId) => {
-		const btf = HandleFunctions.bringToFront(dispatch, windowId);
-		btf(state);
-	}, [dispatch, state]);
+		console.log('bringToFront called with windowId:', windowId);
+		dispatch(HandleFunctions.bringToFront(windowId));
+	}, [dispatch]);
 
 	const openWindowByProgName = useCallback((progName) => {
-		HandleFunctions.openWindowByProgName(dispatch, progName);
-	}, [dispatch]);
+		createNewWindow(programs, windowName, handleOpenArray, programData, highestZIndexRef, (newIndex) => dispatch({ type: 'SET_HIGHEST_Z_INDEX', payload: newIndex }), dispatch, closeWindow, progName);
+	}, [closeWindow, dispatch, handleOpenArray, programData, programs]);
 
 	const handleHashChange = useCallback(() => {
-		HandleFunctions.handleHashChange(dispatch);
-	}, [dispatch]);
+		HandleFunctions.handleHashChange(dispatch, getState)();
+	}, [dispatch, getState]);
 
 	const getCurrentFrontWindow = useMemo(() => {
 		if (!Array.isArray(windows) || windows.length === 0) return null;
@@ -291,26 +180,40 @@ const WindowManager = ({ programs, windowName, handleOpenFunction, setStateAndSa
 
 				programs.forEach(program => convertObjectFunctions(program, functionMap));
 				dispatch({ type: 'SET_PROGRAM_LIST', payload: mappedPrograms });
+				dispatch({ type: 'SET_PROGRAMS', payload: programs });
 
 				defaultProgramsInitialized.current = true;
 				const defaultPrograms = programs.filter(program => program.defaultOpen);
 				defaultPrograms.forEach(program => handleOpenWindow(program, {}, false));
 				console.log('Default programs initialized:', defaultPrograms);
+
+				if (windowName === 'desktop') {
+					const hash = window.location.hash.replace("#", "");
+					if (hash) {
+						console.log('Hash:', hash);
+						openWindowByProgName(hash);
+					}
+				}
 			}
 		};
 
 		initialize();
-		window.addEventListener("hashchange", handleHashChange);
+		if (windowName === 'desktop') {
+			window.addEventListener("hashchange", handleHashChange);
 
-		return () => {
-			window.removeEventListener("hashchange", handleHashChange);
-		};
-	}, [windowName, programs, handleOpenWindow, handleHashChange, handleStateChange, functionMap]);
+			return () => {
+				window.removeEventListener("hashchange", handleHashChange);
+			};
+		}
+	}, [windowName, programs, handleOpenWindow, handleHashChange, handleStateChange, functionMap, openWindowByProgName]);
 
 	return (
 		<>
 			<div className="window-manager">
 				{Array.isArray(windows) && windows.map(window => {
+					if (closedWindows.includes(window.windowId)) {
+						return null; // Skip rendering closed windows
+					}
 					const windowId = windowName + '_' + window.windowId;
 
 					return (

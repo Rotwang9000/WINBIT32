@@ -134,6 +134,8 @@ export function useArrayState(windowId, key) {
 	};
 }
 
+
+
 export function useIsolatedReducer(windowId, key, reducer, initialState) {
 	const { getWindowContent, setWindowContent } = useWindowData();
 	const initialContent = getWindowContent(windowId)[key];
@@ -144,6 +146,8 @@ export function useIsolatedReducer(windowId, key, reducer, initialState) {
 	);
 
 	const updateCounterRef = useRef([0, 0]);
+
+	const getState = useCallback(() => state, [state]);
 
 	useEffect(() => {
 		if (updateCounterRef.current[0] !== updateCounterRef.current[1]) {
@@ -156,9 +160,13 @@ export function useIsolatedReducer(windowId, key, reducer, initialState) {
 	}, [windowId, key, state, setWindowContent]);
 
 	const isolatedDispatch = (action) => {
-		dispatch(action);
-		updateCounterRef.current[0]++;
+		if (typeof action === "function") {
+			action(isolatedDispatch, getState);
+		} else {
+			dispatch(action);
+			updateCounterRef.current[0]++;
+		}
 	};
 
-	return [state, isolatedDispatch];
+	return [state, isolatedDispatch, getState];
 }

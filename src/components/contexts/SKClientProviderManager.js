@@ -6,7 +6,6 @@ import React, {
 	useMemo,
 } from "react";
 import { createSwapKit, Chain, WalletOption } from "@swapkit/sdk";
-import { getTxnDetails } from "../helpers/transaction";
 const SKClientContext = createContext(null);
 
 export const useSKClient = () => useContext(SKClientContext);

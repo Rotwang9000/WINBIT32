@@ -1,0 +1,13 @@
+.smart-element
+{ 
+	--smart-table-row-height: 15px; 
+	--smart-table-header-footer-height: 30px;
+	--smart-table-cell-padding: 2px;
+	--smart-table-column-header-height:15px;
+		--smart-table-row-detail-height: 110px;
+	font-family: "play",
+		fixedsys,
+		consolas,
+		monospace;
+	font-weight: 600;
+}

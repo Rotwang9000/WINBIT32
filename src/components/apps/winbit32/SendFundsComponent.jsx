@@ -1,14 +1,13 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { FeeOption, AssetValue, formatBigIntToSafeValue } from '@swapkit/sdk';
-import TokenChooserDialog from '../win/TokenChooserDialog';
-import ProgressBar from '../win/ProgressBar';
-import TitleBar from '../win/TitleBar';
-import MenuBar from '../win/MenuBar';
+import React, { useEffect, useCallback, useRef } from 'react';
+import { FeeOption, AssetValue } from '@swapkit/sdk';
+import TokenChooserDialog from './TokenChooserDialog';
+import ProgressBar from '../../win/ProgressBar';
+import TitleBar from '../../win/TitleBar';
+import MenuBar from '../../win/MenuBar';
 import { saveAs } from 'file-saver';
 import './styles/SendFundsComponent.css';
-import { useWindowSKClient } from '../contexts/SKClientProviderManager';
-import { useIsolatedState } from '../win/includes/customHooks';
-import { set } from 'lodash';
+import { useWindowSKClient } from '../../contexts/SKClientProviderManager';
+import { useIsolatedState } from '../../win/includes/customHooks';
 
 const SendFundsComponent = ({ providerKey, windowId }) => {
 	var bigInt = require("big-integer");

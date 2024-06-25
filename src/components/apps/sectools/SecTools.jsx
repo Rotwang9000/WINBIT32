@@ -1,16 +1,10 @@
 import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
-import '../styles/Calculator.css';
-import { evaluate } from 'mathjs';
-import { useIsolatedState, useIsolatedRef, useArrayState } from '../../win/includes/customHooks';
+import { useIsolatedState, useIsolatedRef } from '../../win/includes/customHooks';
 import WindowContainer from '../../win/WindowContainer';
 import { generateMnemonic } from '@scure/bip39';
 import { wordlist } from '@scure/bip39/wordlists/english';
 import { saveAs } from 'file-saver';
-import { useWindowSKClient } from '../../contexts/SKClientProviderManager';
-import { Chain } from '@swapkit/sdk';
-import { QRCodeSVG } from 'qrcode.react';
-import { renderToString, renderToStaticMarkup } from 'react-dom/server'
-import { isValidMnemonic } from '../../helpers/phrase';
+import { isValidMnemonic } from '../winbit32/helpers/phrase';
 import PhraseApp from './PhraseApp';
 import { setupFileInput, triggerFileInput, processKeyPhrase } from './includes/KeyStoreFunctions';
 
