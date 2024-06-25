@@ -4,17 +4,18 @@ import Calculator from "../apps/Calculator";
 import Clock from "../apps/Clock";
 import Paintbrush from "../apps/Paintbrush";
 import Desk from "../apps/Desk";
-import Winbit32 from "../apps/Winbit32";
-import Portfolio from "../apps/Portfolio";
+import Winbit32 from "../apps/winbit32/Winbit32";
+import Portfolio from "../apps/winbit32/Portfolio";
 import IRCWindow from "../apps/mirc/IRCWindow";
 import ChannelList from "../apps/mirc/ChannelList";
 import MessagePanel from "../apps/mirc/MessagePanel";
-import SwapComponent from "../apps/SwapComponent";
-import SendFundsComponent from "../apps/SendFundsComponent";
+import SwapComponent from "../apps/winbit32/SwapComponent";
+import SendFundsComponent from "../apps/winbit32/SendFundsComponent";
 import SecTools from "../apps/sectools/SecTools";
 import Split from "../apps/sectools/Split";
 import Unsplit from "../apps/sectools/Unsplit";
-
+import ViewQR from "../apps/winbit32/ViewQR";
+import ReadQR from "../apps/winbit32/ReadQR";
 
 
 export const getPrograms = () => {
@@ -56,7 +57,7 @@ export const getPrograms = () => {
 			progName: "clock.exe", // Added name for "File Manager"
 			component: Clock,
 			defaultOpen: false,
-			initialPosition: { x: 1, y: 1, width: 250, height: 250, smHeight: 250},	
+			initialPosition: { x: 1, y: 1, width: 250, height: 250, smHeight: 250 },
 		},
 		{
 			progID: 4,
@@ -66,6 +67,7 @@ export const getPrograms = () => {
 			component: Paintbrush,
 			initialPosition: { x: 1, y: 1, width: 425, height: 485 },
 		},
+
 		{
 			progID: 5,
 			title: "Desk",
@@ -74,9 +76,9 @@ export const getPrograms = () => {
 			component: Desk,
 			initialPosition: { x: 1, y: 1, width: 425, height: 485 },
 			menuOnly: true,
-			menuLabel: 'New Desk...'
+			menuLabel: "New Desk...",
 		},
-				{
+		{
 			progID: 6,
 			title: "Security Tools",
 			icon: "🔒",
@@ -100,7 +102,13 @@ export const getPrograms = () => {
 					progName: "unsplit.exe", // Added name for "File Manager"
 					component: Unsplit,
 					defaultOpen: false,
-					initialPosition: { x: 'auto', y: 0, width: 375, height: 650, smHeight: 350},
+					initialPosition: {
+						x: "auto",
+						y: 0,
+						width: 375,
+						height: 650,
+						smHeight: 350,
+					},
 				},
 				{
 					progID: 2,
@@ -108,8 +116,8 @@ export const getPrograms = () => {
 					icon: "💰",
 					progName: "winbit32.exe", // Added name for "Paintbrush"
 					openLevel: -1,
-					addProgramData: ["phrase"]
-				}
+					addProgramData: ["phrase"],
+				},
 			],
 		},
 
@@ -137,7 +145,13 @@ export const getPrograms = () => {
 					progName: "exchange.exe", // Added name for "File Manager"
 					component: SwapComponent,
 					defaultOpen: false,
-					initialPosition: { x: 'auto', y: 0, width: 375, height: 650, smHeight: 350},
+					initialPosition: {
+						x: "auto",
+						y: 0,
+						width: 375,
+						height: 650,
+						smHeight: 350,
+					},
 				},
 				{
 					progID: 2,
@@ -145,7 +159,13 @@ export const getPrograms = () => {
 					icon: "✉️",
 					progName: "send.exe", // Added name for "Paintbrush"
 					component: SendFundsComponent,
-					initialPosition: { x: 1, y: 1, width: 425, height: 550, smHeight: 350},
+					initialPosition: {
+						x: 1,
+						y: 1,
+						width: 425,
+						height: 550,
+						smHeight: 350,
+					},
 				},
 				{
 					progID: 3,
@@ -176,6 +196,36 @@ export const getPrograms = () => {
 							defaultOpen: false,
 						},
 					],
+				},
+				{
+					progID: 4,
+					title: "View Master Seed",
+					icon: "💰",
+					hideInToolbar: true,
+					progName: "viewqr.exe", // Added name for "Paintbrush"
+					component: ViewQR,
+					addProgramData: ["phrase"],
+					initialPosition: {
+						x: 1,
+						y: 1,
+						width: 355,
+						height: 285,
+					},
+				},
+				{
+					progID: 4,
+					title: "Read Master Seed",
+					icon: "💰",
+					hideInToolbar: true,
+					progName: "readqr.exe", // Added name for "Paintbrush"
+					component: ReadQR,
+					addProgramData: ["setPhrase", "setStatusMessage"],
+					initialPosition: {
+						x: 1,
+						y: 1,
+						width: 325,
+						height: 325,
+					},
 				},
 			],
 		},

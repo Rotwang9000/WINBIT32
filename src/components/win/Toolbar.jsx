@@ -9,7 +9,9 @@ const Toolbar = ({ subPrograms, onSubProgramClick }) => {
 
 	return (
 		<div className="toolbar">
-			{subPrograms.map((program, index) => (
+			{subPrograms
+				.filter(program => program.hideInToolbar !== true)
+				.map((program, index) => (
 				<button
 					key={index}
 					onClick={() => onSubProgramClick(program)}

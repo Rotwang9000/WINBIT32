@@ -1,5 +1,5 @@
 import React from 'react';
-import { useWindowSKClient } from '../contexts/SKClientProviderManager';
+import { useWindowSKClient } from '../../contexts/SKClientProviderManager';
 import './styles/Wallet.css';
 import './styles/smart.css';
 import DataTable, { defaultThemes } from 'react-data-table-component';

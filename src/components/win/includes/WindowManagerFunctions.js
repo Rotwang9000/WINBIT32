@@ -9,6 +9,7 @@ const addWindowAction = (newWindow) => ({
 
 export function createNewWindow(
 	programs,
+	windowName,
 	handleOpenArray,
 	programData,
 	highestZIndexRef,
@@ -19,12 +20,28 @@ export function createNewWindow(
 	metadata = {},
 	save = true
 ) {
+	if (typeof program === "string") {
+		const progString = program.toLowerCase();
+		program = programs.find((p) => p.progName.toLowerCase() === progString);
+		if (!program) {
+			program = programs.find(
+				(p) => p.progName.toLowerCase() === progString + ".exe"
+			);
+		}
+		if (!program) {
+			console.error("Program not found", progString);
+			return;
+		}
+	} else {
+		if (window.document.body.classList.contains("wait")) {
+			return;
+		}
+		window.document.body.classList.add("wait");
+		window.document.body.style.cursor = "url(/waits.png), auto";
+	}
+
 	console.log("Creating new window", program.progName);
 	console.log("Opening window", program, metadata, save);
-
-	if (typeof program === "string") {
-		program = programs.find((p) => p.progName === program);
-	}
 
 	if (!program) {
 		console.error("Program not found or undefined", program);
@@ -46,12 +63,6 @@ export function createNewWindow(
 		setHighestZIndex(1);
 		highestZIndexRef.current = 1;
 	}
-
-	if (window.document.body.classList.contains("wait")) {
-		return;
-	}
-	window.document.body.classList.add("wait");
-	window.document.body.style.cursor = "url(/waits.png), auto";
 
 	console.log(
 		"Opening window in " + program.progName,
@@ -83,6 +94,19 @@ export function createNewWindow(
 	highestZIndexRef.current = newZIndex;
 
 	dispatch(addWindowAction(newWindow));
+
+	//only do at top level... count handleOpenArray
+	if (windowName === "desktop") {
+
+		// Update the hash without causing a hashchange event
+		const newHash = newWindow.progID === 0 ? "" : `#${newWindow.progName}`;
+		console.log(`Setting hash to ${newHash}`);
+		if (window.location.hash !== newHash) {
+			window.history.replaceState(null, null, newHash);
+		}
+	// }else{
+		// console.log('Not setting hash', handleOpenArray);
+	}
 }
 
 

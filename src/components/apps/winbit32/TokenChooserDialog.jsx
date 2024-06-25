@@ -1,10 +1,9 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
-import DialogBox from "./DialogBox";
-import { useWindowSKClient } from "../contexts/SKClientProviderManager";
+import DialogBox from "../../win/DialogBox";
+import { useWindowSKClient } from "../../contexts/SKClientProviderManager";
 import './styles/TokenChooserDialog.css';
 import { chainImages, fetchCategories, fetchTokensByCategory } from "./includes/tokenUtils";
-import { useIsolatedState } from "./includes/customHooks";
-import { debounce, set } from "lodash";
+import { debounce } from "lodash";
 
 const TokenChooserDialog = ({ isOpen, onClose, onConfirm, providerKey, wallets, otherToken, windowId, inputRef }) => {
 	const { providers, tokens, providerNames } = useWindowSKClient(providerKey);

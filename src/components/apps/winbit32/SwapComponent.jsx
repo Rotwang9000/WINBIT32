@@ -1,17 +1,16 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { useWindowSKClient } from '../contexts/SKClientProviderManager';
+import { useWindowSKClient } from '../../contexts/SKClientProviderManager';
 import { SwapKitApi, FeeOption, TxStatus, ContractAddress } from '@swapkit/sdk';
-import TokenChooserDialog from '../win/TokenChooserDialog';
-import { getQuoteFromThorSwap } from '../helpers/quote';
-import { useIsolatedState } from '../win/includes/customHooks';
-import TitleBar from '../win/TitleBar';
+import TokenChooserDialog from './TokenChooserDialog';
+import { getQuoteFromThorSwap } from './helpers/quote';
+import { useIsolatedState } from '../../win/includes/customHooks';
+import TitleBar from '../../win/TitleBar';
 import './styles/SwapComponent.css';
-import ProgressBar from '../win/ProgressBar';
+import ProgressBar from '../../win/ProgressBar';
 import { saveAs } from 'file-saver';
-import MenuBar from '../win/MenuBar';
-import { getTxnDetails } from '../helpers/transaction';
-import { result, set } from 'lodash';
-import { niceErrorMessage } from '../helpers/errors';
+import MenuBar from '../../win/MenuBar';
+import { getTxnDetails } from './helpers/transaction';
+import { niceErrorMessage } from './helpers/errors';
 
 //import { AmountWithBaseDenom, AssetEntity } from '@swapkit/sdk'
 

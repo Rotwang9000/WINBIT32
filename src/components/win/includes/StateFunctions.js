@@ -56,6 +56,7 @@ export const updateAndSaveWindows = (windows, setState) => {
 };
 
 export const saveWindowState = (windowName, windows, save) => {
+	return;
 	if(!save){
 		return;
 

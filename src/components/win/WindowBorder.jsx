@@ -108,7 +108,7 @@ const WindowBorder = React.memo(({
 					resizeHandles={['se', 'ne', 'nw', 'sw']}
 					handle={<MyHandle />}
 				>
-					<span style={{ width: '100%', height: '100%' }} onMouseDownCapture={onClick}>
+					<span style={{ width: '100%', height: '100%' }} onMouseDown={onClick}>
 						<Window
 							title={title}
 							onMinimize={onMinimize}

@@ -16,14 +16,22 @@ const WindowContainer = ({
 	programData,
 	setProgramData,
 	handleOpenArray,
+	onSubProgramClick = () => { },
 	...rest
 }) => {
 	const [currentSubWindows, setCurrentSubWindows] = useIsolatedState(windowId, 'subWindows', initialSubWindows);
 	const [handleSubProgramClick, setHandleSubProgramClick] = useState(() => { });
 
 	const handleSetSubProgramClick = useCallback((handle) => {
+		//do a deep check and see if has really changed
+		if (handle === handleSubProgramClick) return;
+
+		if(((typeof handleSubProgramClick === 'function') && (typeof handle === 'function')) && (handleSubProgramClick.toString() === handle.toString())) return;
+		
+
 		setHandleSubProgramClick(() => handle);
-	}, []);
+		onSubProgramClick(handle);
+	}, [handleSubProgramClick, onSubProgramClick]);
 
 	useEffect(() => {
 		setCurrentSubWindows(initialSubWindows);

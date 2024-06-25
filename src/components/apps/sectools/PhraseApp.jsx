@@ -1,8 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { generateMnemonic } from '@scure/bip39';
 import { wordlist } from '@scure/bip39/wordlists/english';
-import '../styles/ConnectionApp.css';
-import { set } from 'lodash';
+import '../winbit32/styles/ConnectionApp.css';
 
 
 // Function to generate a random phrase
