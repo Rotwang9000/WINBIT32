@@ -6,7 +6,7 @@ import { generateMnemonic, entropyToMnemonic } from '@scure/bip39';
 import { wordlist } from '@scure/bip39/wordlists/english';
 import { saveAs } from 'file-saver';
 import { useWindowSKClient } from '../../contexts/SKClientProviderManager';
-import { Chain } from '@swapkit/sdk';
+import { Chain, ChainToChainId } from '@swapkit/sdk';
 import { QRCodeSVG } from 'qrcode.react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { isValidMnemonic } from './helpers/phrase';
@@ -122,10 +122,12 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 		resetWallets();
 		currentWalletsRef.current = [];
 		for (let i = 0; i < connectChains.length; i++) {
-			const walletPromise = skClient.getWalletByChain(connectChains[i]).then(async (result) => {
+			const walletPromise = skClient.getWalletWithBalance(connectChains[i]).then(async (result) => {
 				console.log('Connected successfully', result);
 				result.qrimage = renderToStaticMarkup(<QRCodeSVG renderAs='svg' value={result.address} />).toString();
 				result.chain = connectChains[i].toString();
+				result.chainObj = connectChains[i];
+				result.chainId = ChainToChainId[connectChains[i]];
 				if (await addSingleWallet(result) === false) {
 					console.log('Phrase changed, not updating wallets!!', phrase, currentRef.current);
 					return false;
@@ -141,8 +143,10 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 			if (refresh !== true) {
 				setConnectionStatus('connecting');
 				setStatusMessage('Connecting...');
+				setShowProgress(true);
 			}
-			setShowProgress(true);
+
+			
 			setProgress(13);
 
 			const phrase = currentPhraseRef.current;
@@ -155,22 +159,25 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 						setConnectedPhrase(phrase);
 						setProgress(98);
 
-						skClient.getWalletByChain(Chain.Ethereum).then(async (result) => {
+						skClient.getWalletWithBalance(Chain.Ethereum).then(async (result) => {
 							setProgress(99);
 							await getWallets();
 							if (currentRef.current !== phrase) {
 								console.log('Phrase changed, not updating wallets', phrase, currentRef.current);
 								return false;
 							}
-							setProgress(100);
-							console.log('Connected successfully', wallets);
-							setPhraseSaved(false);
-							setConnectionStatus('connected');
-							setStatusMessage('Connected successfully.');
 							setTimeout(() => {
-								setShowProgress(false);
-								setProgress(0);
-							}, 2000);
+								setProgress(100);
+								console.log('Connected successfully', wallets);
+								setPhraseSaved(false);
+								setConnectionStatus('connected');
+								setStatusMessage('Connected successfully.');
+								setTimeout(() => {
+									console.log('Connected successfully, hiding progress', wallets);
+									setShowProgress(false);
+									setProgress(0);
+								}, 2000);
+							},1500);
 						});
 					})
 					.catch((error) => {
@@ -211,11 +218,11 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 	}, [checkValidPhrase, currentPhraseRef, disconnect, handleConnect, setConnectionStatus, setShowProgress, setShowScanner, setStatusMessage]);
 
 	useEffect(() => {
-		if (phrase === connectedPhrase) {
-			setConnectionStatus('connected');
-			setShowProgress(false);
-			return;
-		}
+		// if (phrase === connectedPhrase) {
+		// 	setConnectionStatus('connected');
+		// 	setShowProgress(false);
+		// 	return;
+		// }
 		if (connectionStatus !== 'connecting') {
 			const to = setTimeout(() => {
 				checkHandleConnect(currentPhraseRef.current + '');

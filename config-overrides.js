@@ -1,9 +1,11 @@
 const webpack = require("webpack");
+const path = require("path");
+
 
 module.exports = function override(config) {
   const fallback = config.resolve.fallback || {};
   Object.assign(fallback, {
-    crypto: require.resolve("crypto-browserify"),
+    crypto: false,//require.resolve("crypto-browserify"),
     stream: require.resolve("stream-browserify"),
 	path: require.resolve("path-browserify"),
     assert: false, // require.resolve("assert") 
@@ -16,6 +18,13 @@ module.exports = function override(config) {
     fs: false
   });
   config.resolve.fallback = fallback;
+  config.resolve.alias = {
+		"tiny-secp256k1": path.resolve(
+			__dirname,
+			"node_modules/@bitcoinerlab/secp256k1"
+		),
+	};
+
   config.plugins = (config.plugins || []).concat([
     new webpack.ProvidePlugin({
       process: "process/browser",

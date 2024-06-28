@@ -30,6 +30,7 @@ const initialState = {
 		Chain.Maya,
 		Chain.Kujira,
 		Chain.Arbitrum,
+		Chain.Maya,
 	],
 	providers: [],
 	tokens: [],
@@ -157,14 +158,14 @@ export const SKClientProviderManager = ({ children }) => {
 			dispatch({ type: "SET_PROVIDERS", providers });
 
 			//filter out provider.provider that aren't on thowswap: MAYACHAIN, CHAINFLIP
-			const filteredProviders = providers.filter(
-				(provider) =>
-					provider.provider !== "MAYACHAIN" && provider.provider !== "CHAINFLIP"
-			);
+			// const filteredProviders = providers.filter(
+			// 	(provider) =>
+			// 		provider.provider !== "MAYACHAIN" && provider.provider !== "CHAINFLIP"
+			// );
 
 			console.log("Fetching tokens for providers...");
 			const tokensResponse = await Promise.all(
-				filteredProviders.map(async (provider) => {
+				providers.map(async (provider) => {
 					const tokenResponse = await fetch(
 						`https://api.swapkit.dev/tokens?provider=${provider.provider}`
 					);

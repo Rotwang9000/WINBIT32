@@ -4,7 +4,7 @@
   max-width: 100vw;
   height: 100%;
   flex-grow: 1;
-  overflow-y: scroll;
+  overflow-y: auto;
 }
 
 .swap-component>div {
@@ -33,7 +33,7 @@
   /* Grow to fill space */
   min-width: 20px;
   /* Minimum width of inputs and button */
-  margin-right: 10px;
+  margin-right: 5px;
   /* Spacing between elements */
 }
 
@@ -159,20 +159,133 @@ display: flex;
 }
 
 .optimal-route{
-  width: calc(100% - 20px);
-  text-align: right;
+  width: 100%;
+  /* text-align: right; */
   
 }
 
 .token-select{
   width: 100%;
   display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  align-items:stretch;
-  justify-content: space-between ; 
+  align-items: center;
+  margin-bottom: 10px;
+  flex-direction: column;
+  align-self: baseline;
+  flex-grow: 1;
+}
+
+
+.token-select-group{
+  display: flex;
+  align-items: center;
   margin-bottom: 10px;
   flex-direction: row;
-  
   flex-grow: 1;
+}
+
+.amt-box{
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+  flex-direction: row;
+  flex-grow: 1;
+}
+.amt-box>div{
+  flex-grow: 1;
+  width: 50%;
+  display: flex;
+}
+.amt-box input{
+  flex-grow: 1;
+  width: 100%;
+  text-align: right;
+  position: relative;
+  /* padding-right: 20px; */
+}
+
+input[type="number"]::-webkit-outer-spin-button ,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: inner-spin-button !important;
+    opacity: 1 !important;
+  /* background: #999 url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAwCAIAAAD/zu84AAAALHRFWHRDcmVhdGlvbiBUaW1lAGZyZSAyOCBqdW4gMjAyNCAxMDoyNjozNCArMDEwMPdP+bUAAAAHdElNRQfoBhwILAp0u/3AAAAACXBIWXMAAAsSAAALEgHS3X78AAAABGdBTUEAALGPC/xhBQAABOBJREFUeNq1l8dLZFkUxgtcCf4pLnSriAou3YgLwY3iRhTDqKBi1jFnMeec2tC2AXMYQ6lt2oiMgghiGBExZ5zuH+++trqqy7ZuVftBPR73nXO+e889qTSfPhgafgMDA7Ozs8vLy18VrKysfLUAa2tr6+vri4uLQ0NDKgHWDw8Pb29v7+7ubi3Azc0Nz8fHx6enp9PT04WFBZWAvfPhm4L/LYYwcnZ2piPAJ/f393x4eHg4OTnhNMfHx//JA10U9/b2Njc3tVrt4OCgjoATQIsQHoR5aWlJ1vWrq6u4HsX+/v6ysrLCwsKGhgYdAd5/eXk5ODiYn58fHx+fnp7+RxJzc3PsDMWmpqa4uLiYmJjKykq9E0CAc7j9qakprn1eEviE7aPY3t6elpaWnJxcXV1t6KKjoyMunO1ofwC+FQXEXHR0tI2NjY+PT0dHB7bwCU/tT0AXpq6urpycnIyMjNra2jcJFhUgzTunHhkZaWxsDAgIsLa29vT0LC0t5QInJydnZmbwjNgHZBIEPFHDV9xYfX19enp6YGCgi4uLlZWVvb29r69vYmJiRUVFT08PFwbHa1CYSoB1nmQ41rkuV1dXjT5sbW2DgoKIFjgmJia4XlEITCVAh70TBvHx8R4eHhpjcHJyioiIKCoqwsLo6CjXyzlMJeju7q6pqQkLC3N2dta8DTs7Oz8/v4KCAq6de+IcphK0tLSQKd7e3pr34ObmlpSUhCc5MZdhKkFvby9hk5qa+peCyMjI6F8QHh4eEhISGxvLTWBkeHgY6xzCOAGZDAGVRBAQP2NjY1zyZwVfjIF19sELpglZtLBOdOBeQwLqDwWWYkeNJX1EWpoNWHNzc/UIMEodhYByyGlE7ixJQtQ7FAlcQwIibH9/n1JKmSVxyFJOPSoJXEpwo0ixy8zMhKCurk4l4FC4G2+2tbVVVVWVl5dXygNFqhvpnZeXR6WDg9BSCSjc2dnZCQkJFIC/LQbWU1JSoCEOVQKosrKyIOADzLxnWgDUiaKSkpLm5maVAM/gr2oFtRaDEsATr9AYVAIimkSf/EOYUsCd9/X1qQSsbm9vk8YE0rHFIJkYKWj9dAuVgHZxcXHx7Y/i6uqK5DAcWwA1Q8xPsrhTwMv19TUn2N3dxVF6tQjr5+fnOzs7pNvW1ta/ksDJ6KKIP8RE1NnZaWSqEJ1SjCFSoNJhGkVikmyghhtOFWIuQo6MN6PGiRLJxdJLSClGI3L7zX5gYrkGyCCJPNt/7cnUBeaEdxoOmcJJQ0NDaThRUVEG3YYV1vmKDJLIi4Iq0TLptF5eXu+2TGSQRF6OgK7EFbFBRoffWOcrMkgiL0fAPeNlai8t193d3ah11vmKDJLIyxGIwYtBASHc7ejoaGCdFdb5ioyQlyMQoyM1it0hx3jh7+/v4OCAaZ68s8I6X5ERY68cwc/DLyFII0SakRQCnryzIvIRGSEs7aLX8Z1WjiabDQ4OhoAn76LF8/VV8ncEHz5VMBc9Pz+Lucjy/2hG5iLccnl5yf9bhhfLix1F1NBF9Es2vrGxwZ8ZUoZeKiqtFHA9zkGRzCDG6P66uai1tZXKV1xcnJ+fD3m2ghyzgCLWqdW86OYiMbbwX4ORhqOJ6SPDXKCLdb2xhRMwazCdibGlToF5M4vQpb5inX8lKsGH4jvtTlxiE0lhiQAAAABJRU5ErkJggg==') !important; */
+  background-size:cover !important;
+  margin: 0;
+  border: 0;
+  height: 100%;
+  aspect-ratio: 13/19;
+  cursor: pointer;
+  /* position: absolute; */
+  top:0;
+  right: 0;
+ transform: translateX(4px);
+
+
+}
+
+.swap-component button{
+  margin: 2px 5px 2px 2px;  
+  border: #d1d1d0 outset 2px;
+  background-color: #c0c0c0;
+  font-weight: 600;
+}
+
+.swap-component button:hover{
+  background-color: #d1d1d0;
+}
+
+.swap-component button:active{
+  background-color: #bebebe;
+  border: #bebebe inset 2px;
+}
+
+
+.infobox{
+
+  margin: 5px 5px 2px 2px;
+    border: #d1d1d0 inset 2px;
+    background-color: #c0c0c0;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 5px;
+  color: #000;
+  display: flex;
+  flex-direction: column;
+}
+.infobox>div{
+  display: flex;
+  flex-direction: row;
+}
+.infobox>div>span{
+  margin-right: 5px;
+  flex-grow: 1;
+}
+
+.inibox{
+      flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+        margin:0;
+        padding: 0 ;
+        width: auto;
+}
+
+.inibox textarea{
+  flex-grow: 1;
+  width: 100%;
+  height: 100%;
+  resize: none;
+
+}
+
+.field-group select{
+  margin-right: 5px;
+}
+
+.field-group input[type="range"]{
+  margin:0 
+}
+
+.swap-progress-container{
+  border: 0!important;
 }

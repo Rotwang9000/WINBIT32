@@ -1,13 +1,16 @@
 {
   "name": "winbit32",
-  "version": "0.1.0",
+  "version": "0.1.1 ",
   "private": true,
   "homepage": "https://winbit32.com",
   "dependencies": {
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
+    "@bitcoinerlab/secp256k1": "^1.1.1",
     "@scure/bip39": "^1.2.1",
-    "@swapkit/sdk": "^1.0.0-rc.136",
+    "@swapkit/plugin-chainflip": "^1.0.0-rc.72",
+    "@swapkit/sdk": "^1.0.0-rc.203",
     "@swapkit/tokens": "nightly",
+    "@swapkit/toolbox-radix": "^1.0.0-rc.5",
     "@swapkit/toolbox-substrate": "^1.0.0-rc.42",
     "@testing-library/jest-dom": "^5.17.0",
     "@testing-library/react": "^13.4.0",

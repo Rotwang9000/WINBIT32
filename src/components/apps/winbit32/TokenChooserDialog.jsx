@@ -122,7 +122,7 @@ const TokenChooserDialog = ({ isOpen, onClose, onConfirm, providerKey, wallets, 
 				console.log("tokens in category already", selectedCategory, tokensByCategory[selectedCategory]);
 			}
 		}
-	}, [selectedCategory, wallets, tokens, tokensByCategory]);
+	}, [selectedCategory, wallets, tokens]);
 
 
 
@@ -324,7 +324,7 @@ const TokenChooserDialog = ({ isOpen, onClose, onConfirm, providerKey, wallets, 
 					<div className="token-list">
 						<ul>
 							{filteredTokens.map(token => (
-								<li key={`${token.chain}-${token.identifier}`} onClick={() => handleTokenClick(token)} className={(selectedToken && selectedToken.identifier === token.identifier) ? "active" : ""}>
+								<li key={`${token.chain}-${token.identifier}`} onClick={() => handleTokenClick(token)} onDoubleClick={() => beforeOnConfirm(token)} className={(selectedToken && selectedToken.identifier === token.identifier) ? "active" : ""}>
 									{token.logoURI ? (
 										<img
 											ref={img => img && observer.current.observe(img)}
