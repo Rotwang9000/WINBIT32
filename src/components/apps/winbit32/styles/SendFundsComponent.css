@@ -27,18 +27,6 @@
 	margin-right: 10px;
 }
 
-.field-group button,
-.field-group input,
-.field-group select,
-.field-group span {
-	flex: 1;
-	/* Grow to fill space */
-	min-width: 20px;
-	/* Minimum width of inputs and button */
-	margin-right: 10px;
-	/* Spacing between elements */
-}
-
 @media (max-width: 600px) {
 
 	/* Adjust breakpoint as needed */

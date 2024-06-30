@@ -1,3 +1,5 @@
+import BigNumber from "bignumber.js";
+
 export async function getQuoteFromThorSwap(quoteParams) {
 	//const apiUrl = "https://api.swapkit.dev"; // Adjust this URL as needed
 	const apiUrl = "https://api.thorswap.net/aggregator/tokens/quote"; // Adjust this URL as needed
@@ -68,3 +70,8 @@ export async function getQuoteFromSwapKit(quoteParams) {
 // getQuoteFromThorSwap(apiUrl, quoteParams)
 // 	.then((data) => console.log("Quote:", data))
 // 	.catch((error) => console.error("Error fetching quote:", error));
+
+
+export function amountInBigNumber(amount, decimals) {
+	return new BigNumber(amount).times(new BigNumber(10).pow(decimals));
+}

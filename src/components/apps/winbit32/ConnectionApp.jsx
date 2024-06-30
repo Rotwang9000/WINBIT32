@@ -24,6 +24,7 @@ function ConnectionApp({ windowId, providerKey, phrase, setPhrase, connectionSta
 	const trafficLightColor = () => {
 		switch (connectionStatus) {
 			case 'connecting':
+			case 'refreshing':
 				return 'yellow';
 			case 'connected':
 				return 'green';
@@ -53,8 +54,11 @@ function ConnectionApp({ windowId, providerKey, phrase, setPhrase, connectionSta
 					<div
 						onClick={() => {
 							console.log('button clicked');
-
-							handleConnect(true);
+							if (connectionStatus !== 'refreshing'){
+								setConnectionStatus('refreshing');
+								setStatusMessage('Refreshing Wallets...');
+								handleConnect(true);
+							}
 						}
 						}
 					className="traffic-light" style={{ backgroundColor: trafficLightColor() }}></div>

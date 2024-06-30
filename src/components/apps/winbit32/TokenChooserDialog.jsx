@@ -122,7 +122,7 @@ const TokenChooserDialog = ({ isOpen, onClose, onConfirm, providerKey, wallets, 
 				console.log("tokens in category already", selectedCategory, tokensByCategory[selectedCategory]);
 			}
 		}
-	}, [selectedCategory, wallets, tokens, tokensByCategory]);
+	}, [selectedCategory, wallets, tokens]);
 
 
 
@@ -179,7 +179,14 @@ const TokenChooserDialog = ({ isOpen, onClose, onConfirm, providerKey, wallets, 
 	const uniqueChains = useMemo(() => {
 		const chainSet = new Set();
 		providerFilteredTokens.forEach(token => chainSet.add(token.chain));
-		return Array.from(chainSet);
+		//sort MAYA then THORCHAIN then alphabetical
+		return Array.from(chainSet).sort((a, b) => {
+			if (a === 'MAYA') return -1;
+			if (b === 'MAYA') return 1;
+			if (a === 'THOR') return -1;
+			if (b === 'THOR') return 1;
+			return a.localeCompare(b);
+		});
 	}, [providerFilteredTokens]);
 
 	const handleTokenClick = useCallback( token => {
@@ -324,7 +331,7 @@ const TokenChooserDialog = ({ isOpen, onClose, onConfirm, providerKey, wallets, 
 					<div className="token-list">
 						<ul>
 							{filteredTokens.map(token => (
-								<li key={`${token.chain}-${token.identifier}`} onClick={() => handleTokenClick(token)} className={(selectedToken && selectedToken.identifier === token.identifier) ? "active" : ""}>
+								<li key={`${token.chain}-${token.identifier}`} onClick={() => handleTokenClick(token)} onDoubleClick={() => beforeOnConfirm(token)} className={(selectedToken && selectedToken.identifier === token.identifier) ? "active" : ""}>
 									{token.logoURI ? (
 										<img
 											ref={img => img && observer.current.observe(img)}
