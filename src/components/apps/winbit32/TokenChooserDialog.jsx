@@ -179,7 +179,14 @@ const TokenChooserDialog = ({ isOpen, onClose, onConfirm, providerKey, wallets, 
 	const uniqueChains = useMemo(() => {
 		const chainSet = new Set();
 		providerFilteredTokens.forEach(token => chainSet.add(token.chain));
-		return Array.from(chainSet);
+		//sort MAYA then THORCHAIN then alphabetical
+		return Array.from(chainSet).sort((a, b) => {
+			if (a === 'MAYA') return -1;
+			if (b === 'MAYA') return 1;
+			if (a === 'THOR') return -1;
+			if (b === 'THOR') return 1;
+			return a.localeCompare(b);
+		});
 	}, [providerFilteredTokens]);
 
 	const handleTokenClick = useCallback( token => {

@@ -153,9 +153,19 @@ export const SKClientProviderManager = ({ children }) => {
 		try {
 			console.log("Fetching token list providers...");
 			const providerResponse = await fetch("https://api.swapkit.dev/providers");
-			const providers = await providerResponse.json();
+			const providersUnsorted = await providerResponse.json();
+			const providers = providersUnsorted.sort((a, b) => {
+				if (a.provider === "THORSWAP" || b.provider === "MAYA") {
+					return -1;
+				}
+				if (b.provider === "THORSWAP"  || a.provider === "MAYA") {
+					return 1;
+				}
+				return a.provider < b.provider ? -1 : 1;
+			});
+
 			console.log("Providers fetched:", providers);
-			dispatch({ type: "SET_PROVIDERS", providers });
+			dispatch({ type: "SET_PROVIDERS", providers});
 
 			//filter out provider.provider that aren't on thowswap: MAYACHAIN, CHAINFLIP
 			// const filteredProviders = providers.filter(

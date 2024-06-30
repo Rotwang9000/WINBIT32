@@ -53,7 +53,7 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 	currentRef.current = phrase;
 
 	useEffect(() => {
-		currentRef.current = phrase;
+		if(currentRef.current !== phrase) currentRef.current = phrase;
 		setProgramData({ phrase, statusMessage, setPhrase, setStatusMessage });
 	}, [phrase, setPhrase, setProgramData, setStatusMessage, statusMessage]);
 
@@ -132,6 +132,9 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 					console.log('Phrase changed, not updating wallets!!', phrase, currentRef.current);
 					return false;
 				}
+			}).catch((error) => {
+				console.error('Connection failed', error);
+				setStatusMessage('Not all wallets could be connected, please try later.');
 			});
 			walletPromises.push(walletPromise);
 		}

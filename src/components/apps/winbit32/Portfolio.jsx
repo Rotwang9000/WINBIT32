@@ -6,6 +6,7 @@ import DataTable, { defaultThemes } from 'react-data-table-component';
 import { QRCodeSVG } from 'qrcode.react';
 import { FaCopy } from 'react-icons/fa';
 import { toast } from 'react-hot-toast';
+import { getExplorerAddressUrl, formatNumber } from './helpers/transaction';
 
 const Portfolio = ({ providerKey }) => {
 	const { wallets } = useWindowSKClient(providerKey);
@@ -79,7 +80,7 @@ const Portfolio = ({ providerKey }) => {
 			{data.tokens.map((token, index) => (
 				<tr key={index} style={{ marginBottom: '10px', padding: '10px', borderBottom: '1px solid grey' }}>
 					<td title={token.symbol} style={{maxWidth:'300px', overflow:'hidden', 'whiteSpace': 'nowrap', 'textOverflow': 'ellipsis'}}>	 {token.ticker}</td>
-					<td style={{ maxWidth: '300px', overflow: 'hidden', 'whiteSpace': 'nowrap', 'textOverflow': 'ellipsis' }}>{token.balance.toFixed(2)}</td>
+					<td style={{ maxWidth: '300px', overflow: 'hidden', 'whiteSpace': 'nowrap', 'textOverflow': 'ellipsis' }}>{formatNumber(token.balance)}</td>
 				</tr>
 			))}
 			</table>
@@ -96,7 +97,9 @@ const Portfolio = ({ providerKey }) => {
 				</div>
 			)
 		},
-		{ name: 'Balance', selector: row => row.balance.toFixed(2), right: true, hide: 'sm', sortable: true},
+		{ name: 'Balance', selector: row => formatNumber(row.balance), right: true, hide: 'sm', sortable: true, sortField: row => row.balance },
+		{ name: 'Explorer', selector: row => (<a href={row.link} target="_blank" rel="noreferrer">⛓</a>), right: true, width: '50px'}
+
 	];
 
 	const datasource = wallets.map(wallet => ({
@@ -104,6 +107,7 @@ const Portfolio = ({ providerKey }) => {
 		symbol: wallet.balance?.find(b => b.isGasAsset)?.symbol || wallet.balance[0]?.symbol,
 		address: wallet.address,
 		balance: wallet.balance.find(b => b.isGasAsset)?.bigIntValue ? Number(wallet.balance.find(b => b.isGasAsset).bigIntValue) / Number(wallet.balance.find(b => b.isGasAsset).decimalMultiplier) : Number(wallet.balance[0].bigIntValue) / Number(wallet.balance[0].decimalMultiplier),
+		link: getExplorerAddressUrl(wallet.chain, wallet.address),
 		tokens: wallet.balance ? wallet.balance.map(token => ({
 			symbol: token.symbol,
 			ticker: token.ticker,

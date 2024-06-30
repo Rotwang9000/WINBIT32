@@ -1,99 +1,161 @@
 import { RequestClient } from "@swapkit/helpers";
+import { ChainToExplorerUrl, Chain } from "@swapkit/sdk";
+import bigInt from "big-integer";
 
 const baseUrlV1 = "https://api.thorswap.net";
-//https://api.thorswap.net/tracker/v2/txn
 
-export function getTxnDetails(txHash) {
-	console.log('getTxnDetails', txHash);
-	return RequestClient.post(`${baseUrlV1}/tracker/v2/txn`,{ 
-		body: 
-		JSON.stringify(txHash),
-		headers: {
-			"Content-Type": "application/json",
-		},
-	});
+export const formatNumber = (number, precision = 8) => {
+	if (number < 1) {
+		return number.toFixed(precision);
+	} else if (number < 10) {
+		return number.toFixed(2);
+	}
+	return number.toFixed(0);
+};
+
+
+export const formatBalance = (bigIntValue, decimals, precision = 8) => {
+	const factor = bigInt(10).pow(decimals);
+	const integerPart = bigIntValue.divide(factor);
+	const fractionalPart = bigIntValue.mod(factor).toJSNumber() / factor.toJSNumber();
+	const balance = integerPart.toJSNumber() + fractionalPart;
+
+	return formatNumber(balance, precision);
 };
 
 
 
-// {
-//     "done": false,
-//     "status": "pending",
-//     "result": {
-//         "quoteId": "fdcf80e6-26d8-49d7-9597-93afeac26be9",
-//         "firstTransactionHash": "0067f9ab73c184d0447237f7af6e81ef8cb30a38e74747464bda35728a769627",
-//         "estimatedDuration": "65000",
-//         "startTimestamp": 1718006187627,
-//         "currentLegIndex": "0",
-//         "legs": [
-//             {
-//                 "chain": "DOGE",
-//                 "hash": "0067f9ab73c184d0447237f7af6e81ef8cb30a38e74747464bda35728a769627",
-//                 "provider": "",
-//                 "txnType": "TRANSFER:IN",
-//                 "fromAsset": "DOGE.DOGE",
-//                 "fromAssetImage": "https://static.thorswap.net/token-list/images/doge.doge.png",
-//                 "toAsset": "DOGE.DOGE",
-//                 "toAssetImage": "https://static.thorswap.net/token-list/images/doge.doge.png",
-//                 "fromAmount": "46.7393",
-//                 "toAmount": "46.7393",
-//                 "startTimestamp": 1718006187627,
-//                 "updateTimestamp": 1718006187632,
-//                 "estimatedEndTimestamp": 1718006252627,
-//                 "estimatedDuration": 65000,
-//                 "status": "pending",
-//                 "isStreamingSwap": false
-//             },
-//             {
-//                 "chain": "THOR",
-//                 "provider": "THORCHAIN",
-//                 "txnType": "SWAP:TC-TC",
-//                 "fromAsset": "DOGE.DOGE",
-//                 "fromAssetImage": "https://static.thorswap.net/token-list/images/doge.doge.png",
-//                 "toAsset": "THOR.RUNE",
-//                 "toAssetImage": "https://static.thorswap.net/token-list/images/thor.rune.png",
-//                 "fromAmount": "46.7393",
-//                 "toAmount": "1.27453423",
-//                 "updateTimestamp": 1718006187633,
-//                 "estimatedEndTimestamp": 1718006270627,
-//                 "estimatedDuration": 18000,
-//                 "status": "not_started",
-//                 "isStreamingSwap": false,
-//                 "fees": {
-//                     "liquidity": 0.00000186
-//                 },
-//                 "thorEstimatesSeconds": {
-//                     "inbound": 120,
-//                     "streaming": 0,
-//                     "outbound": 0
-//                 }
-//             },
-//             {
-//                 "chain": "THOR",
-//                 "provider": "",
-//                 "txnType": "TRANSFER:OUT",
-//                 "fromAsset": "THOR.RUNE",
-//                 "fromAssetImage": "https://static.thorswap.net/token-list/images/thor.rune.png",
-//                 "toAsset": "THOR.RUNE",
-//                 "toAssetImage": "https://static.thorswap.net/token-list/images/thor.rune.png",
-//                 "fromAmount": "1.27453423",
-//                 "toAmount": "1.27453423",
-//                 "updateTimestamp": 1718006187633,
-//                 "estimatedEndTimestamp": 1718006288627,
-//                 "estimatedDuration": 18000,
-//                 "status": "not_started",
-//                 "isStreamingSwap": false,
-//                 "thorEstimatesSeconds": {
-//                     "inbound": 120,
-//                     "streaming": 0,
-//                     "outbound": 0
-//                 }
-//             }
-//         ],
-//         "opaque": {},
-//         "isStreamingSwap": false,
-//         "isLending": false,
-//         "reprocessCount": 0,
-//         "status": "pending"
-//     }
-// }
+export function getExplorerAddressUrl(
+	chain,
+	address,
+) {
+	const baseUrl = ChainToExplorerUrl[chain];
+
+	switch (chain) {
+		case Chain.Solana:
+			return `${baseUrl}/account/${address}`;
+
+		default:
+			return `${baseUrl}/address/${address}`;
+	}
+}
+//https://api.thorswap.net/tracker/v2/txn
+
+export function getTxnDetails(txHash) {
+	console.log("getTxnDetails", txHash);
+	return RequestClient.post(`${baseUrlV1}/tracker/v2/txn`, {
+		body: JSON.stringify(txHash),
+		headers: {
+			"Content-Type": "application/json",
+		},
+	});
+}
+
+export function getTxnDetailsV2(txHash, from) {
+	console.log("getTxnDetails", txHash);
+	//https://api.thorswap.net/tracker/txn?txid=B0E4F485F65F0771DABE3004B30E8CDD5AF85639745DEF6C7737F92D1527D044&from=thor1wjr2az7ccjvyvuuw3mp9j60vx0rcazyzy2mqs7&type=SWAP%3ATC-TC
+	return RequestClient.get(`${baseUrlV1}/tracker/txn?txid=${txHash}&from=${from}&type=SWAP%3ATC-TC`);
+}
+
+
+export const checkTxnStatus = async (
+	txnHash,
+	_txnHash,
+	cnt,
+	swapInProgress,
+	txnStatus,
+	setStatusText,
+	setSwapInProgress,
+	setShowProgress,
+	setProgress,
+	setTxnStatus,
+	setTxnTimer,
+	txnTimerRef
+) => {
+	if (
+		swapInProgress &&
+		txnHash &&
+		txnHash !== "" &&
+		txnHash === _txnHash &&
+		txnStatus?.done !== true &&
+		txnStatus?.lastCheckTime &&
+		new Date() - txnStatus?.lastCheckTime > 1000 &&
+		cnt < 100
+	) {
+		const status = await getTxnDetails({ hash: txnHash.toString() }).catch(
+			(error) => {
+				setStatusText("Error getting transaction details");
+				setSwapInProgress(false);
+				setShowProgress(false);
+				return null;
+			}
+		);
+		if (!status) {
+			setTxnTimer(
+				setTimeout(() => {
+					checkTxnStatus(
+						txnHash,
+						txnHash + "",
+						cnt + 1,
+						swapInProgress,
+						txnStatus,
+						setStatusText,
+						setSwapInProgress,
+						setShowProgress,
+						setProgress,
+						setTxnStatus,
+						setTxnTimer,
+						txnTimerRef
+					);
+				}, 30000)
+			);
+		}
+		status.lastCheckTime = new Date();
+		setTxnStatus(status);
+		if (status?.done === false && status?.result?.legs?.length > 0) {
+			setProgress((prev) => (prev < 95 ? prev + 1 : 95));
+			const delay =
+				((status.result.legs.slice(-1).estimatedEndTimestamp -
+					status.result.startTimestamp) /
+					80) *
+					1000 || 10000;
+			if (!cnt) cnt = 0;
+
+			if (txnTimerRef.current) clearTimeout(txnTimerRef.current);
+
+			setTxnTimer(
+				setTimeout(() => {
+					checkTxnStatus(
+						txnHash,
+						txnHash + "",
+						cnt + 1,
+						swapInProgress,
+						txnStatus,
+						setStatusText,
+						setSwapInProgress,
+						setShowProgress,
+						setProgress,
+						setTxnStatus,
+						setTxnTimer,
+						txnTimerRef
+					);
+				}, delay)
+			);
+		} else if (status?.done === true) {
+			setProgress(100);
+			setSwapInProgress(false);
+		}
+	} else if (
+		txnStatus?.done === true ||
+		txnStatus?.error ||
+		txnStatus?.txn?.route?.complete === true
+	) {
+		if (txnStatus?.error?.message) {
+			setStatusText("Please follow the transaction on the link below");
+		} else {
+			setStatusText("Transaction complete");
+		}
+		setProgress(100);
+		setSwapInProgress(false);
+	}
+};
