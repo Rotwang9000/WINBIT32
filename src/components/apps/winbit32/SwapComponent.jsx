@@ -135,7 +135,7 @@ slippage=${slippage}
 		console.log('Balance:', balance);
 		if (balance) {
 			//const readableBalance = formatBigIntToSafeValue(bigInt(balance.bigIntValue), balance.decimal, balance.decimal);
-			const readableBalance = formatBalance(bigInt(balance.bigIntValue), balance.decimal);
+			const readableBalance = formatBalance(bigInt(balance.bigIntValue), (token.chain == 'GAIA')? 8:  balance.decimal);
 			console.log('Readable balance:', readableBalance.toString(), bigInt(balance.bigIntValue), balance.decimal, token.identifier);
 			setMaxAmount(readableBalance.toString());
 		} else {

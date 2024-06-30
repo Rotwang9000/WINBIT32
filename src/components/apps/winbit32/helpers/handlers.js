@@ -270,10 +270,11 @@ export const handleSwap = async (
 			},
 		};
 		logObjectProperties(txDetailsToSend, "txDetailsToSend");
+		setStatusText("Transaction Sent");
 
 		// Send the transaction details
 		const txDetails = await getTxnDetails(txDetailsToSend).catch((error) => {
-			const txDetailsV2 = getTxnDetailsV2(swapResponse, route.sourceAdddress).then((txDetailsV2) => {
+			const txDetailsV2 = getTxnDetailsV2(swapResponse, route.sourceAddress).then((txDetailsV2) => {
 				console.log("txDetailsV2", txDetailsV2);
 				if (txDetailsV2) {
 					txDetailsV2.done = false;
@@ -293,7 +294,7 @@ export const handleSwap = async (
 			return txDetailsV2;
 		});
 		console.log("txDetails", txDetails);
-		
+
 		if (txDetails?.done === true) {
 			setStatusText("Transaction complete");
 			setSwapInProgress(false);
@@ -312,7 +313,7 @@ export const handleSwap = async (
 		setProgress(13);
 	} catch (error) {
 		setStatusText("Error swapping: " + error.message);
-	} finally {
+	//} finally {
 		setSwapInProgress(false);
 		setShowProgress(false);
 	}
