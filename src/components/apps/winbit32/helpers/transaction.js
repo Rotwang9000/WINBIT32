@@ -72,6 +72,16 @@ export const checkTxnStatus = async (
 	setTxnTimer,
 	txnTimerRef
 ) => {
+	console.log(
+		"checkTxnStatus",
+		txnHash,
+		_txnHash,
+		cnt,
+		swapInProgress,
+		txnStatus,
+		txnStatus?.lastCheckTime,
+		new Date() - txnStatus?.lastCheckTime > 1000
+	);
 	if (
 		swapInProgress &&
 		txnHash &&
@@ -82,6 +92,8 @@ export const checkTxnStatus = async (
 		new Date() - txnStatus?.lastCheckTime > 1000 &&
 		cnt < 100
 	) {
+		console.log("Getting txn details", txnHash.toString());
+		
 		const status = await getTxnDetails({ hash: txnHash.toString() }).catch(
 			(error) => {
 				setStatusText("Error getting transaction details");
@@ -91,6 +103,7 @@ export const checkTxnStatus = async (
 			}
 		);
 		if (!status) {
+			console.log("no status", status);
 			setTxnTimer(
 				setTimeout(() => {
 					checkTxnStatus(
@@ -109,9 +122,11 @@ export const checkTxnStatus = async (
 					);
 				}, 30000)
 			);
+			return;
 		}
 		status.lastCheckTime = new Date();
 		setTxnStatus(status);
+		console.log("status", status);
 		if (status?.done === false && status?.result?.legs?.length > 0) {
 			setProgress((prev) => (prev < 95 ? prev + 1 : 95));
 			const delay =
@@ -142,6 +157,8 @@ export const checkTxnStatus = async (
 				}, delay)
 			);
 		} else if (status?.done === true) {
+			setStatusText("Transaction complete");
+			console.log("status done", status);
 			setProgress(100);
 			setSwapInProgress(false);
 		}
@@ -155,6 +172,7 @@ export const checkTxnStatus = async (
 		} else {
 			setStatusText("Transaction complete");
 		}
+		console.log("status done2 ", txnStatus);
 		setProgress(100);
 		setSwapInProgress(false);
 	}
