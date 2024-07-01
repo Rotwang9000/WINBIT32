@@ -135,8 +135,8 @@ slippage=${slippage}
 		console.log('Balance:', balance);
 		if (balance) {
 			//const readableBalance = formatBigIntToSafeValue(bigInt(balance.bigIntValue), balance.decimal, balance.decimal);
-			const readableBalance = formatBalance(bigInt(balance.bigIntValue), (token.chain == 'GAIA')? 8:  balance.decimal);
-			console.log('Readable balance:', readableBalance.toString(), bigInt(balance.bigIntValue), balance.decimal, token.identifier);
+			const readableBalance = formatBalance(bigInt(balance.bigIntValue), (balance.decimal === 6)? 8 :  balance.decimal);
+			console.log('Readable balance:', readableBalance.toString(), bigInt(balance.bigIntValue), (balance.decimal === 6) ? 8 : balance.decimal, token.identifier);
 			setMaxAmount(readableBalance.toString());
 		} else {
 			setMaxAmount('0');
@@ -324,7 +324,7 @@ slippage=${slippage}
 					{statusText}
 				</div>
 			}
-			<div style={{ width: '100%', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', }} className='swap-component'>
+			<div style={{ width: '100%', boxSizing: 'border-box', display: 'flex', flexDirection: 'column' }} className='swap-component'>
 
 				<div style={{ display: (swapInProgress || explorerUrl ? 'flex' : 'none') }} className="swap-progress-container">
 					{swapInProgress ? <div>

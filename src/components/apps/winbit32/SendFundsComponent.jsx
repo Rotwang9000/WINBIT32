@@ -8,6 +8,8 @@ import { saveAs } from 'file-saver';
 import './styles/SendFundsComponent.css';
 import { useWindowSKClient } from '../../contexts/SKClientProviderManager';
 import { useIsolatedState } from '../../win/includes/customHooks';
+import { formatBalance } from './helpers/transaction';
+import { getAssetValue } from './helpers/quote';
 
 const SendFundsComponent = ({ providerKey, windowId }) => {
 	var bigInt = require("big-integer");
@@ -41,7 +43,7 @@ const SendFundsComponent = ({ providerKey, windowId }) => {
 		console.log('Balance:', balance);
 		if (balance) {
 			//const readableBalance = formatBigIntToSafeValue(bigInt(balance.bigIntValue), balance.decimal, balance.decimal);
-			const readableBalance = bigInt(balance.bigIntValue).divide(bigInt(10n).pow(balance.decimal));
+			const readableBalance = formatBalance(bigInt(balance.bigIntValue), (balance.decimal === 6) ? 8 : balance.decimal);
 			console.log('Readable balance:', readableBalance, bigInt(balance.bigIntValue), balance.decimal);
 			setMaxAmount(readableBalance.toString());
 		}else{
@@ -82,10 +84,10 @@ const SendFundsComponent = ({ providerKey, windowId }) => {
 		setTxUrl('');
 		setProgress(0);
 
-		const assetAmount = await AssetValue.fromIdentifier(selectedToken.identifier, amount);
+		const { assetValue, otherBits } = await getAssetValue(selectedToken, amount);
 
 		const txData = {
-			assetValue: assetAmount,
+			assetValue: assetValue,
 			recipient: recipientAddress,
 			from: sendingWallet.address,
 			feeOptionKey: FeeOption.Average,
@@ -93,7 +95,7 @@ const SendFundsComponent = ({ providerKey, windowId }) => {
 			memo: memo
 		};
 		setProgress(13);
-		console.log('Sending funds:', txData);
+		console.log('Sending funds:', txData, sendingWallet);
 
 		try {
 			const txID = await skClient.transfer(txData);

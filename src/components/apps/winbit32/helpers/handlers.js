@@ -1,14 +1,11 @@
 import { saveAs } from "file-saver";
-import {
-	amountInBigNumber,
-	getQuoteFromThorSwap,
-	getQuoteFromSwapKit,
-} from "./quote";
+import { amountInBigNumber, getAssetValue, getQuoteFromSwapKit } from "./quote";
 import { AssetValue, RequestClient, SwapKitNumber } from "@swapkit/helpers";
 import { FeeOption, SwapKitApi } from "@swapkit/sdk";
 import { ChainIdToChain } from "@swapkit/sdk";
 import { getTxnDetails, getTxnDetailsV2 } from "./transaction";
-import { set } from "lodash";
+import bigInt from "big-integer";
+
 
 export const chooseWalletForToken = (token, wallets) => {
 	if (!token) return null;
@@ -43,17 +40,16 @@ export const handleApprove = async (
 	const wallet = chooseWalletForToken(swapFrom, wallets);
 
 	setStatusText("Approving...");
-
-	const assetValue = await AssetValue.fromIdentifier(
-		swapFrom.identifier,
-		amount
+				console.log("Approving...", swapFrom, amount, route, wallet, swapFrom.decimals);
+	const assetValue = await getAssetValue(
+		swapFrom,
+		amount,
 	);
 	const ApproveParams = {
 		assetValue,
 		spenderAddress: route.contract || route.targetAddress,
 	};
 	console.log("ApproveParams", ApproveParams, route);
-
 	setProgress(13);
 
 	const approveTxnHash = await skClient.evm
@@ -153,6 +149,7 @@ export const handleSwap = async (
 		setExplorerUrl("");
 		setTxnStatus(null);
 		setProgress(8);
+		const { assetValue, otherBits } = await getAssetValue(swapFrom, amount);
 
 		if (
 			wallet.chain === "ETH" ||
@@ -163,10 +160,6 @@ export const handleSwap = async (
 			wallet.chain === "OP"
 		) {
 			console.log("wallet.chain", wallet.chain);
-			const assetValue = await AssetValue.fromIdentifier(
-				swapFrom.identifier,
-				amount
-			);
 			const ApproveParams = {
 				assetValue,
 				spenderAddress: route.contract || route.targetAddress,
@@ -190,8 +183,13 @@ export const handleSwap = async (
 				return;
 			}
 		}
+		console.log("route.sellAmount Before", route.sellAmount);
 
 		setProgress(12);
+		if(otherBits.decimalDifference > 0){
+			route.sellAmount = parseFloat(route.sellAmount / 10 ** otherBits.decimalDifference) 
+		}
+		console.log("route.sellAmount", route.sellAmount);
 
 		const swapParams = {
 			route: route,

@@ -1,4 +1,8 @@
 import BigNumber from "bignumber.js";
+import { AssetValue } from "@swapkit/helpers";
+import { BigIntArithmetics } from "@swapkit/helpers";
+import bigInt from "big-integer";
+
 
 export async function getQuoteFromThorSwap(quoteParams) {
 	//const apiUrl = "https://api.swapkit.dev"; // Adjust this URL as needed
@@ -74,4 +78,52 @@ export async function getQuoteFromSwapKit(quoteParams) {
 
 export function amountInBigNumber(amount, decimals) {
 	return new BigNumber(amount).times(new BigNumber(10).pow(decimals));
+}
+
+export async function getAssetValue(asset, value){
+	//value is float
+	let assetValue = await AssetValue.from({
+		asset: asset.identifier,
+		//convert amount to bigint with decimals
+		value: amountInBigNumber(value, asset.decimals),
+		fromBaseDecimal: asset.decimals,
+		asyncTokenLookup: false,
+
+	});
+
+	// assetValue: G;
+	// address: "0xaf88d065e77c8cc2239327c5edb3a432268e5831";
+	// bigIntValue: 17914600000000000000n;
+	// chain: "ARB";
+	// chainId: "42161";
+	// decimal: 18;
+	// decimalMultiplier: 1000000000000000000n;
+	// isGasAsset: false;
+	// isSynthetic: false;
+	// symbol: "USDC-0xaf88d065e77c8cc2239327c5edb3a432268e5831";
+	// tax: undefined;
+	// ticker: "USDC";
+	// type: "ARBITRUM";
+	
+	//fix decimal, decimalMultiplier and bigIntValue to be correct decimals for asset.decimals
+	const { bigIntValue, decimalMultiplier} = BigIntArithmetics.fromBigInt(
+		bigInt(value * 10 ** asset.decimals), asset.decimals);
+
+	let otherBits = {
+		decimalMultiplier,
+	};
+	otherBits.decimalDifference = assetValue.decimal - asset.decimals;
+	otherBits.decimalDifferenceDivider = bigInt(10).pow(
+		otherBits.decimalDifference
+	);
+
+	otherBits.decimal = asset.decimals;
+
+	assetValue.decimal = asset.decimals;
+	assetValue.decimalMultiplier = decimalMultiplier;
+	
+	assetValue.bigIntValue = bigIntValue;
+	
+	return { assetValue, otherBits } ;
+
 }

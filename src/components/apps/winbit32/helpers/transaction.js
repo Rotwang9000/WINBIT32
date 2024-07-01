@@ -9,8 +9,12 @@ export const formatNumber = (number, precision = 8) => {
 		return number.toFixed(precision);
 	} else if (number < 10) {
 		return number.toFixed(2);
+	} else if (number < 100) {
+		return number.toFixed(3);
+	} else if (number < 1000) {
+		return number.toFixed(2);
 	}
-	return number.toFixed(0);
+	return Math.floor(number);
 };
 
 

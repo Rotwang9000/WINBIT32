@@ -1,6 +1,8 @@
+import { AssetValue } from "@swapkit/sdk";
 import { getQuoteFromThorSwap } from "./quote";
 import { amountInBigNumber } from "./quote";
 import { SwapKitApi } from "@swapkit/api";
+import bigInt from "big-integer";
 
 export const getQuotes = async (
 	swapFrom,
@@ -41,6 +43,9 @@ export const getQuotes = async (
 			affiliate: "be",
 		};
 
+		console.log('AssetValue',swapFrom.identifier, swapTo.identifier);
+
+
 		const thorSwapQuoteParams = {
 			sellAsset: swapFrom.identifier,
 			sellAmount: amount,
@@ -60,7 +65,7 @@ export const getQuotes = async (
 
 			const swapKitRoutes =
 				swapKitResponse.status === "fulfilled"
-					? processSwapKitRoutes(swapKitResponse.value)
+					? processSwapKitRoutes(swapKitResponse.value, swapTo.decimals)
 					: [];
 			const thorSwapRoutes =
 				thorSwapResponse.status === "fulfilled"
@@ -72,7 +77,7 @@ export const getQuotes = async (
 			if (combinedRoutes.length === 0) {
 				throw new Error("No routes found from either source.");
 			}
-
+			console.log("combinedRoutes", combinedRoutes);
 			setRoutes(combinedRoutes);
 			setQuoteId(
 				swapKitResponse.status === "fulfilled"
@@ -160,7 +165,7 @@ export const getQuotes = async (
 	}
 };
 
-const processSwapKitRoutes = (response) => {
+const processSwapKitRoutes = (response, swapToDecimals) => {
 	const routes = response.routes;
 
 	routes.forEach((route) => {
@@ -173,7 +178,7 @@ const processSwapKitRoutes = (response) => {
 					amountInBigNumber(
 						route.expectedOutputMaxSlippage ||
 							route.expectedBuyAmountMaxSlippage,
-						8
+						swapToDecimals > 8 ? 8 : swapToDecimals
 					)
 				).toString();
 				if (splitP3.length > 1) {
