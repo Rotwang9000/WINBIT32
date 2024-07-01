@@ -182,6 +182,11 @@ export const SKClientProviderManager = ({ children }) => {
 					const tokenData = await tokenResponse.json();
 					//if token has a / in it, change the last / in the image url to a .
 					const tokenData2 = tokenData.tokens.map((token) => {
+						// if(!token.identifier){
+						// 	token.identifier = token.chain + '.'  + token.symbol;
+						// }
+
+						
 						if (token.identifier.includes("/")) {
 							const splitImage = token.logoURI.split("/");
 							const last = splitImage.pop();

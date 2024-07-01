@@ -100,18 +100,23 @@ const TokenChooserDialog = ({ isOpen, onClose, onConfirm, providerKey, wallets, 
 				const walletTokens = wallets.reduce((acc, wallet) => {
 					const balances = wallet.balance || [];
 					const nonZeroBalances = balances.filter(balance => balance.bigIntValue !== '0');
+					console.log("nonZeroBalances", nonZeroBalances);
 					//filter out tokens that have a balance.bigIntValue of zero
 					if (nonZeroBalances.length === 0){
 						console.log("No tokens with non-zero balance in wallet", wallet);
 						const tokenIdentifiers = balances.map(balance => identifierFromBalance(balance));
-						const walletTokens = tokens.filter(token => tokenIdentifiers.includes(token.identifier.replace('/', '.')));
+						console.log("tokenIdentifiers", tokenIdentifiers);
+						const walletTokens = tokens.filter(token => tokenIdentifiers.includes(token.identifier.replace('/', '.').toUpperCase()  ));
 						return acc.concat(walletTokens);
 					}
-					// console.log("nonZero Wallet tokens", wallet, nonZeroBalances);
+					 console.log("nonZero Wallet tokens", wallet, nonZeroBalances);
 					const tokenIdentifiers = nonZeroBalances.map(balance => identifierFromBalance(balance));
-					const walletTokens = tokens.filter(token => tokenIdentifiers.includes(token.identifier));
+					console.log("tokenIdentifiers", tokenIdentifiers);	
+					const walletTokens = tokens.filter(token => tokenIdentifiers.includes(token.identifier.toUpperCase()));
+					console.log("walletTokens", walletTokens);
 					return acc.concat(walletTokens);
 				}, []);
+				console.log("walletTokens All", walletTokens);
 				setTokensByCategory({ ...tokensByCategory, [selectedCategory]: walletTokens });
 			}else if(!tokensByCategory[selectedCategory]) {
 				fetchTokensByCategory(selectedCategory).then((tokens) => {
@@ -130,7 +135,7 @@ const TokenChooserDialog = ({ isOpen, onClose, onConfirm, providerKey, wallets, 
 	const categoryFilteredTokens = useMemo(() => {
 		console.log("categoryFilteredTokens", selectedCategory, tokensByCategory, wallets, otherToken);
 		if (!selectedCategory || selectedCategory === "") return tokens;
-		if (selectedCategory === "wallet") return tokens.filter(token => wallets.some(wallet => wallet.balance?.some(balance => identifierFromBalance(balance) === token.identifier.replace('/', '.'))));
+		if (selectedCategory === "wallet") return tokens.filter(token => wallets.some(wallet => wallet.balance?.some(balance => identifierFromBalance(balance) === token.identifier.replace('/', '.').toUpperCase() )));
 		if (selectedCategory === "other") return tokens.filter(token => otherToken.some(other => other.providers.some(provider => provider.includes(token.provider))));
 
 		// if a token is in the selected category, it will be in the tokensByCategory[selectedCategory] array with the same identifier
