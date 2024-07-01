@@ -76,7 +76,7 @@ input[type="range"] {
 	background: transparent;
 	cursor: pointer;
 	width: -webkit-fill-available;
-	max-width: 80dvw;
+	max-width: 100dvw;
 	box-sizing: border-box;
 }
 
