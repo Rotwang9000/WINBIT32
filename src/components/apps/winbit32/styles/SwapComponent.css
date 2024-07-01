@@ -37,7 +37,7 @@
   /* Spacing between elements */
 }
 
-@media (max-width: 600px) {
+@media (max-width: 300px) {
 
   /* Adjust breakpoint as needed */
   .field-group {
@@ -68,6 +68,15 @@
 .select-button{
   max-width: 50px;
   min-width: none!important;
+  display: flex ;
+  align-items: center;
+}
+
+.select-button .token{
+  display: flex;
+  flex-grow: 1;
+  align-self: center;
+  margin-top: 4px;
 }
 
 .swap-toolbar{

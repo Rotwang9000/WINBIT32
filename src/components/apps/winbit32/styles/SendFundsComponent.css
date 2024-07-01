@@ -30,7 +30,7 @@
 @media (max-width: 600px) {
 
 	/* Adjust breakpoint as needed */
-	.field-group {
+	.send-component .field-group {
 		flex-direction: column;
 		align-items: stretch;
 	}
