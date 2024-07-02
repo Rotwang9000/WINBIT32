@@ -405,7 +405,7 @@ input{
 .window-border {
 	background: #cdcdcd;
 	position: absolute;
-	padding: 2px 4px 4px 2px;
+	padding: 2px;
 	border: 1px solid #000;
 	display: flex;
 	width: 100%;
