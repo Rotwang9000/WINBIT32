@@ -39,7 +39,7 @@ const SwapComponent = ({ providerKey, windowId }) => {
 	const [txnStatus, setTxnStatus] = useIsolatedState(windowId, 'txnStatus', '');
 	const currentTxnStatus = useRef(txnStatus);
 	const [statusText, setStatusText] = useIsolatedState(windowId, 'statusText', '');
-	const [quoteStatus, setQuoteStatus] = useIsolatedState(windowId, 'quoteStatus', 'Aff. fee 0.32%');
+	const [quoteStatus, setQuoteStatus] = useIsolatedState(windowId, 'quoteStatus', 'Aff. fee 0.10%');
 	const [quoteId, setQuoteId] = useIsolatedState(windowId, 'quoteId', '');
 	const [maxAmount, setMaxAmount] = useIsolatedState(windowId, 'maxAmount', '0');
 	const [txnTimer, setTxnTimer] = useIsolatedState(windowId, 'txnTimer', null);
