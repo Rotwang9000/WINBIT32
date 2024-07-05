@@ -29,8 +29,8 @@ export const getQuotes = async (
 
 		const basisPoints =
 			swapFrom.identifier.includes("/") || swapTo.identifier.includes("/")
-				? 32
-				: 32;
+				? 10
+				: 10;
 
 		const swapKitQuoteParams = {
 			sellAsset: swapFrom.identifier,
