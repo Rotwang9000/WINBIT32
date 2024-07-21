@@ -1,6 +1,12 @@
 .send-component {
 	box-sizing: border-box;
 	background-color: #bebebe;
+	box-sizing: border-box;
+	background-color: #bebebe;
+	max-width: 100vw;
+	height: 100%;
+	flex-grow: 1;
+	overflow-y: auto;
 }
 
 .send-component>div {
@@ -8,57 +14,6 @@
 	margin: 2px;
 }
 
-.field-group {
-	display: flex;
-	align-items: center;
-	margin-bottom: 10px;
-}
-
-.flex-wrap {
-	display: flex;
-	flex-wrap: wrap;
-
-}
-
-.field-group label {
-	flex: 0 0 120px;
-	/* Label width */
-	max-width: 100%;
-	margin-right: 10px;
-}
-
-@media (max-width: 600px) {
-
-	/* Adjust breakpoint as needed */
-	.send-component .field-group {
-		flex-direction: column;
-		align-items: stretch;
-	}
-
-	.field-group label {
-		flex: 0 0 auto;
-		/* Allow label to fit content */
-		margin-right: 0;
-		/* Remove right margin on small screens */
-	}
-
-	.field-group button,
-	.field-group input,
-	.field-group select,
-	.field-group span {
-		width: 100%;
-		/* Full width on small screens */
-		margin-right: 0;
-		/* Remove right margin on small screens */
-		margin-bottom: 5px;
-		/* Add some bottom margin for spacing */
-	}
-}
-
-.select-button {
-	max-width: 50px;
-	min-width: none !important;
-}
 
 .send-toolbar {
 	background-color: #c0c0c0;
@@ -85,14 +40,6 @@
 	
 }
 
-.field-group label {
-	font-weight: 600;
-}
-
-.status-text {
-	font-size: 0.8em;
-	font-weight: 600;
-}
 
 .send-progress-container {
 	display: flex;

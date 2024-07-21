@@ -264,9 +264,10 @@ input{
 	display: inline-block;
 	margin: 0px;
 	width: 20px;
+	min-width: 20px;
 	height: 20px;
 	font-size: 12px;
-	float: right;
+	/* float: right; */
 	border: outset 3px;
 	line-height: 20px;
 	z-index: 5555;

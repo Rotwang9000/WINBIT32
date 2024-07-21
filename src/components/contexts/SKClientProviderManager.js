@@ -4,8 +4,13 @@ import React, {
 	useReducer,
 	useEffect,
 	useMemo,
+	useCallback,
 } from "react";
-import { createSwapKit, Chain, WalletOption } from "@swapkit/sdk";
+import { ChainflipBroker } from "@swapkit/plugin-chainflip";
+import { ChainflipToolbox } from "@swapkit/toolbox-substrate";
+import { createSwapKit, Chain, WalletOption, AssetValue } from "@swapkit/sdk";
+import { getAssetValue } from "../apps/winbit32/helpers/quote";
+
 const SKClientContext = createContext(null);
 
 export const useSKClient = () => useContext(SKClientContext);
@@ -31,9 +36,12 @@ const initialState = {
 		Chain.Kujira,
 		Chain.Arbitrum,
 		Chain.Maya,
+		// Chain.Chainflip
 	],
 	providers: [],
 	tokens: [],
+	chainflipBroker: {},
+	chainflipToolbox: null,
 };
 
 const reducer = (state, action) => {
@@ -53,16 +61,26 @@ const reducer = (state, action) => {
 				...state,
 				chains: { ...state.chains, [action.key]: action.chains },
 			};
+		case "SET_CHAINFLIPBROKER":
+			return {
+				...state,
+				chainflipBroker: {
+					...state.chainflipBroker,
+					[action.key]: action.chainflipBroker,
+				},
+			};
+		case "SET_CHAINFLIPTOOLBOX":
+			return { ...state, chainflipToolbox: action.chainflipToolbox };
+
 		case "SET_PROVIDERS":
 			return { ...state, providers: action.providers };
 		case "SET_TOKENS":
 			return { ...state, tokens: action.tokens };
 		case "ADD_OR_UPDATE_WALLET":
-			console.log("Adding or updating wallet:", action.wallet);
-			console.log("Existing wallets:", state.wallets);
-			console.log("key:", action.key);
 			const existingWalletIndex = Array.isArray(state.wallets[action.key])
-				? state.wallets[action.key].findIndex((w) => w.chain === action.wallet.chain)
+				? state.wallets[action.key].findIndex(
+						(w) => w.chain === action.wallet.chain
+				  )
 				: -1;
 
 			const updatedWallets = [...state.wallets[action.key]];
@@ -88,117 +106,186 @@ const reducer = (state, action) => {
 export const SKClientProviderManager = ({ children }) => {
 	const [state, dispatch] = useReducer(reducer, initialState);
 
-	const createOrSelectSKClient = (key) => {
-		if (state.clients[key]) {
-			return state.clients[key];
-		}
-
-		const client = createSwapKit({
-			config: {
-				utxoApiKey: "A___UmqU7uQhRUl4UhNzCi5LOu81LQ1T",
-				covalentApiKey: "cqt_rQygB4xJkdvm8fxRcBj3MxBhCHv4",
-				ethplorerApiKey: "EK-8ftjU-8Ff7UfY-JuNGL",
-				walletConnectProjectId: "",
-				wallets: [WalletOption.KEYSTORE],
-			},
-		});
-
-		dispatch({ type: "ADD_CLIENT", key, client });
-		loadProvidersAndTokens();
-
-		return client;
-	};
-
-	const setWallets = (key, wallets) => {
-		
-
-		dispatch({ type: "SET_WALLETS", key, wallets });
-		
-		return wallets;
-
-	};
-
-	const addWallet = (key, wallet) => {
-		dispatch({ type: "ADD_OR_UPDATE_WALLET", wallet: wallet, key: key });
-	};
-
-	//reset
-	const resetWallets = (key) => {
-		dispatch({ type: "RESET_WALLETS", key });
-	};
-
-
-	const setChains = (key, chains) => {
-		dispatch({ type: "SET_CHAINS", key, chains });
-	};
-
-	const setProviders = (providers) => {
-		dispatch({ type: "SET_PROVIDERS", providers });
-	};
-
-	const setTokens = (tokens) => {
-		dispatch({ type: "SET_TOKENS", tokens });
-	};
-
-	const disconnect = (key) => {
-		const client = state.clients[key];
-		if (client) {
-			for (const chain of state.connectChains) {
-				client.disconnectChain(chain);
+	const createOrSelectSKClient = useCallback(
+		(key) => {
+			if (state.clients[key]) {
+				return state.clients[key];
 			}
-		}
-	};
 
-	const loadProvidersAndTokens = async () => {
+			const client = createSwapKit({
+				config: {
+					utxoApiKey: "A___UmqU7uQhRUl4UhNzCi5LOu81LQ1T",
+					covalentApiKey: "cqt_rQygB4xJkdvm8fxRcBj3MxBhCHv4",
+					ethplorerApiKey: "EK-8ftjU-8Ff7UfY-JuNGL",
+					walletConnectProjectId: "",
+					wallets: [WalletOption.KEYSTORE],
+				},
+				rpcUrls: {
+					FLIP:
+						"https://api-chainflip.dwellir.com/204dd906-d81d-45b4-8bfa-6f5cc7163dbc",
+				},
+
+			});
+			console.log("Created client", client);
+
+			dispatch({ type: "ADD_CLIENT", key, client });
+			loadProvidersAndTokens();
+
+			return client;
+		},
+		[state.clients]
+	);
+
+	const setChainflipBroker = useCallback((key, chainflipBroker) => {
+		dispatch({ type: "SET_CHAINFLIPBROKER", key, chainflipBroker });
+	}, []);
+
+	const setChainflipToolbox = useCallback((chainflipToolbox) => {
+		dispatch({ type: "SET_CHAINFLIPTOOLBOX", chainflipToolbox });
+	}, []);
+
+	const setWallets = useCallback((key, wallets) => {
+		dispatch({ type: "SET_WALLETS", key, wallets });
+		return wallets;
+	}, []);
+
+	const addWallet = useCallback((key, wallet) => {
+		dispatch({ type: "ADD_OR_UPDATE_WALLET", wallet: wallet, key: key });
+	}, []);
+
+	const resetWallets = useCallback((key) => {
+		dispatch({ type: "RESET_WALLETS", key });
+	}, []);
+
+	const setChains = useCallback((key, chains) => {
+		dispatch({ type: "SET_CHAINS", key, chains });
+	}, []);
+
+	const setProviders = useCallback((providers) => {
+		dispatch({ type: "SET_PROVIDERS", providers });
+	}, []);
+
+	const setTokens = useCallback((tokens) => {
+		dispatch({ type: "SET_TOKENS", tokens });
+	}, []);
+
+	const disconnect = useCallback(
+		(key) => {
+			const client = state.clients[key];
+			if (client) {
+				for (const chain of state.connectChains) {
+					client.disconnectChain(chain);
+				}
+			}
+		},
+		[state.clients, state.connectChains]
+	);
+
+	const getChainflipToolbox = useCallback(async (chain) => {
+		if (!state.chainflipToolbox) {
+
+			if (!chain) {
+				throw new Error("No chain provided to getChainflipToolbox");
+			}
+			try {
+				const keyRing = chain.cfKeyRing;
+
+				const chainflipToolbox = await ChainflipToolbox({
+					providerUrl: "wss://mainnet-archive.chainflip.io",
+						//"wss://api-chainflip.dwellir.com/204dd906-d81d-45b4-8bfa-6f5cc7163dbc",
+					signer: keyRing,
+					generic: false,
+				});
+				console.log("Created chainflip toolbox", chainflipToolbox);
+				await chainflipToolbox.api.isReady;
+				setChainflipToolbox(chainflipToolbox);
+				return chainflipToolbox;
+			} catch (e) {
+				console.log("Error", e);
+			}
+
+		}
+
+		return state.chainflipToolbox;
+
+	}, [setChainflipToolbox, state.chainflipToolbox]);
+
+
+	const chainflipBroker = useCallback(
+		async (key, chain) => {
+			if (!state.chainflipBroker || !state.chainflipBroker[key]) {
+				const chainflipToolbox = await getChainflipToolbox(chain);
+
+				const chainflipBroker = await ChainflipBroker(chainflipToolbox);
+
+				console.log("Created chainflip broker", chainflipBroker);
+
+				const amt = await AssetValue.from({
+					symbol: "FLIP",
+					value: 1000000000000000000n,
+					fromBaseDecimal: 18,
+					asyncTokenLookup: false,
+					asset: "ETH.FLIP",
+				});
+				//FLIP ADDRESS: 0x826180541412D574cf1336d22c0C0a287822678A
+				console.log("Funding state chain account with", amt.toString());
+				console.log(amt);
+
+				chainflipBroker.fundStateChainAccount({
+					evmToolbox: state.wallets[key].find(
+						(w) => w.chain === Chain.Ethereum
+					),
+					stateChainAccount:
+						"cFNPkRESkBV1h6ScrMHV88KvqhN252gUdF5bQaQ6JV4YfBLFM",
+					//1 FLIP
+					amount: amt,
+				});
+
+				setChainflipBroker(key, chainflipBroker);
+				return { broker: chainflipBroker, toolbox: chainflipToolbox };
+			}
+
+
+
+			return {
+				broker: state.chainflipBroker[key],
+				toolbox: state.chainflipToolbox,
+			};
+		},
+		[getChainflipToolbox, setChainflipBroker, state.chainflipBroker, state.chainflipToolbox, state.wallets]
+	);
+
+	const loadProvidersAndTokens = useCallback(async () => {
 		try {
-			console.log("Fetching token list providers...");
 			const providerResponse = await fetch("https://api.swapkit.dev/providers");
 			const providersUnsorted = await providerResponse.json();
 			const providers = providersUnsorted.sort((a, b) => {
 				if (a.provider === "THORSWAP" || b.provider === "MAYA") {
 					return -1;
 				}
-				if (b.provider === "THORSWAP"  || a.provider === "MAYA") {
+				if (b.provider === "THORSWAP" || a.provider === "MAYA") {
 					return 1;
 				}
 				return a.provider < b.provider ? -1 : 1;
 			});
 
-			console.log("Providers fetched:", providers);
-			dispatch({ type: "SET_PROVIDERS", providers});
+			dispatch({ type: "SET_PROVIDERS", providers });
 
-			//filter out provider.provider that aren't on thowswap: MAYACHAIN, CHAINFLIP
-			// const filteredProviders = providers.filter(
-			// 	(provider) =>
-			// 		provider.provider !== "MAYACHAIN" && provider.provider !== "CHAINFLIP"
-			// );
-
-			console.log("Fetching tokens for providers...");
 			const tokensResponse = await Promise.all(
 				providers.map(async (provider) => {
 					const tokenResponse = await fetch(
 						`https://api.swapkit.dev/tokens?provider=${provider.provider}`
 					);
 					const tokenData = await tokenResponse.json();
-					//if token has a / in it, change the last / in the image url to a .
 					const tokenData2 = tokenData.tokens.map((token) => {
-						// if(!token.identifier){
-						// 	token.identifier = token.chain + '.'  + token.symbol;
-						// }
-
-						
 						if (token.identifier.includes("/")) {
 							const splitImage = token.logoURI.split("/");
 							const last = splitImage.pop();
 							const newUrl = splitImage.join("/") + "." + last;
-							//console.log("old url:", token.logoURI);
 							token.logoURI = newUrl;
-							//console.log("new url:", newUrl);
 						}
 						return token;
 					});
-
-					//filter out bnb chain
 					return tokenData2
 						.filter((token) => token.chain !== "BNB")
 						.map((token) => ({
@@ -207,9 +294,7 @@ export const SKClientProviderManager = ({ children }) => {
 						}));
 				})
 			);
-			console.log("Tokens fetched:", tokensResponse);
 
-			//sort the tokens so that any that have a shortCode key or are have the same chain and ticker are at the top, the rest are sorted alphabetically
 			const sortedTokens = tokensResponse.flat().sort((a, b) => {
 				if (a.shortCode || b.shortCode) {
 					return a.shortCode ? -1 : 1;
@@ -220,8 +305,6 @@ export const SKClientProviderManager = ({ children }) => {
 				return a.chain < b.chain ? -1 : 1;
 			});
 
-			// console.log("Tokens sorted:", sortedTokens);
-
 			dispatch({
 				type: "SET_TOKENS",
 				tokens: sortedTokens,
@@ -229,11 +312,11 @@ export const SKClientProviderManager = ({ children }) => {
 		} catch (error) {
 			console.error("Error loading initial data:", error);
 		}
-	};
+	}, []);
 
 	useEffect(() => {
 		loadProvidersAndTokens();
-	}, []);
+	}, [loadProvidersAndTokens]);
 
 	const value = useMemo(
 		() => ({
@@ -244,6 +327,7 @@ export const SKClientProviderManager = ({ children }) => {
 			setChains,
 			connectChains: state.connectChains,
 			disconnect,
+			chainflipBroker: (key, chain) => chainflipBroker(key, chain),
 			getState: (key) => ({
 				skClient: state.clients[key],
 				wallets: state.wallets[key] || [],
@@ -254,12 +338,19 @@ export const SKClientProviderManager = ({ children }) => {
 			}),
 		}),
 		[
+			createOrSelectSKClient,
+			setWallets,
+			addWallet,
+			resetWallets,
+			setChains,
+			state.connectChains,
 			state.clients,
 			state.wallets,
-			state.connectChains,
 			state.chains,
 			state.providers,
 			state.tokens,
+			disconnect,
+			chainflipBroker,
 		]
 	);
 
@@ -271,19 +362,30 @@ export const SKClientProviderManager = ({ children }) => {
 };
 
 export const useWindowSKClient = (key) => {
-	const { createOrSelectSKClient, setWallets, getState, setChains, disconnect, addWallet, resetWallets } =
-		useContext(SKClientContext);
+	const {
+		createOrSelectSKClient,
+		setWallets,
+		getState,
+		setChains,
+		disconnect,
+		addWallet,
+		resetWallets,
+		chainflipBroker,
+	} = useContext(SKClientContext);
 	const skClient = useMemo(
 		() => createOrSelectSKClient(key),
 		[key, createOrSelectSKClient]
 	);
 	const { wallets, connectChains, chains, providers, tokens } = getState(key);
 
-	//extract provider names from providers, put in object with provider.provider as key
-	const providerNames = providers.reduce((acc, provider) => {
-		acc[provider.provider] = provider.name;
-		return acc;
-	}, {});
+	const providerNames = useMemo(
+		() =>
+			providers.reduce((acc, provider) => {
+				acc[provider.provider] = provider.name;
+				return acc;
+			}, {}),
+		[providers]
+	);
 
 	return {
 		skClient,
@@ -291,6 +393,7 @@ export const useWindowSKClient = (key) => {
 		addWallet: (wallet) => addWallet(key, wallet),
 		resetWallets: () => resetWallets(key),
 		setChains: (chains) => setChains(key, chains),
+		chainflipBroker: (chain) => chainflipBroker(key, chain),
 		chains,
 		wallets,
 		connectChains,

@@ -4,14 +4,13 @@ import { AssetValue, RequestClient, SwapKitNumber } from "@swapkit/helpers";
 import { FeeOption, SwapKitApi } from "@swapkit/sdk";
 import { ChainIdToChain } from "@swapkit/sdk";
 import { getTxnDetails, getTxnDetailsV2 } from "./transaction";
-import bigInt from "big-integer";
-
 
 export const chooseWalletForToken = (token, wallets) => {
 	if (!token) return null;
 	if (!wallets) return null;
 	return wallets.find((wallet) => wallet.chain === token.chain);
 };
+
 
 export const handleApprove = async (
 	swapFrom,
@@ -24,7 +23,8 @@ export const handleApprove = async (
 	setProgress,
 	setExplorerUrl,
 	routes,
-	selectedRoute
+	selectedRoute,
+	chainflipBroker
 ) => {
 	setSwapInProgress(true);
 	setShowProgress(true);
@@ -37,7 +37,49 @@ export const handleApprove = async (
 					(route) => route.providers.join(", ") === selectedRoute
 				);
 
+	if (!route) {
+		setStatusText("No route selected");
+		setSwapInProgress(false);
+		setShowProgress(false);
+		return;
+	}
+
 	const wallet = chooseWalletForToken(swapFrom, wallets);
+
+	const dotWallet = wallets.find((wallet) => wallet.chain === "DOT");
+
+	if("CHAINFLIP" === route.providers[0]){
+		setStatusText("Chainflip not yet supported");
+		return;
+
+		const {broker, toolbox} = await chainflipBroker(dotWallet);
+		console.log("broker", broker);
+		console.log("toolbox", toolbox);
+
+// 		const requestSwapDepositAddress =
+//   (toolbox: Awaited<ReturnType<typeof ChainflipToolbox>>) =>
+//   async ({
+//     route,
+//     sellAsset,
+//     buyAsset,
+//     recipient: _recipient,
+//     brokerCommissionBPS = 0,
+//     ccmMetadata,
+//     maxBoostFeeBps,
+//   }: RequestSwapDepositAddressParams) => {
+
+
+		const targetAddress = await broker.requestSwapDepositAddress({
+			route: route,
+		});
+
+		console.log("targetAddress", targetAddress);
+		setStatusText("Approving...");
+		setProgress(13);
+		return;
+	}
+
+
 
 	setStatusText("Approving...");
 				console.log("Approving...", swapFrom, amount, route, wallet, swapFrom.decimals);
@@ -103,7 +145,8 @@ export const handleSwap = async (
 	swapInProgress,
 	quoteId,
 	feeOption,
-	currentTxnStatus
+	currentTxnStatus,
+	chainflipBroker
 ) => {
 	if (swapInProgress) return;
 	setSwapInProgress(true);
@@ -121,6 +164,7 @@ export const handleSwap = async (
 		return;
 	}
 
+	
 	setShowProgress(true);
 	setProgress(0);
 
@@ -133,7 +177,7 @@ export const handleSwap = async (
 	}
 	console.log("wallet", wallet);
 
-	try {
+	// try {
 		const route =
 			selectedRoute === "optimal" && routes.length > 0
 				? routes.find(({ optimal }) => optimal) || routes[0]
@@ -142,6 +186,10 @@ export const handleSwap = async (
 			setStatusText("No route selected");
 			setSwapInProgress(false);
 			setShowProgress(false);
+			return;
+		}
+		if("CHAINFLIP" in route.providers){
+			setStatusText("Chainflip not yet supported");
 			return;
 		}
 		console.log("route", route);
@@ -201,7 +249,7 @@ export const handleSwap = async (
 		if (route.providers[0] === "MAYACHAIN") swapParams.pluginName = "mayachain";
 
 		const swapResponse = await skClient.swap(swapParams).catch((error) => {
-			setStatusText("Error swapping: " + error.message);
+			setStatusText("Error swapping:: " + error.message);
 			setSwapInProgress(false);
 			setShowProgress(false);
 			return null;
@@ -309,12 +357,12 @@ export const handleSwap = async (
 		setTxnHash(swapResponse);
 
 		setProgress(13);
-	} catch (error) {
-		setStatusText("Error swapping: " + error.message);
-	//} finally {
-		setSwapInProgress(false);
-		setShowProgress(false);
-	}
+	// } catch (error) {
+	// 	setStatusText("Error swapping: " + error.message);
+	// //} finally {
+	// 	setSwapInProgress(false);
+	// 	setShowProgress(false);
+	// }
 };
 
 export const handleTokenSelect = (

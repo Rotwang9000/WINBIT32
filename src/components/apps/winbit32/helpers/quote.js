@@ -80,12 +80,32 @@ export function amountInBigNumber(amount, decimals) {
 	return new BigNumber(amount).times(new BigNumber(10).pow(decimals));
 }
 
+export function amountInBigInt(amount, decimals) {
+	//amount is float
+	//convert to bigint
+	
+	//convert amount to bigint with decimals
+	const { bigIntValue, decimalMultiplier} = BigIntArithmetics.fromBigInt(
+		bigInt(amount * 10 ** decimals), decimals);
+	
+	return bigIntValue;
+}
+
 export async function getAssetValue(asset, value){
+
 	//value is float
+	console.log('value', value);
+	//if value in scientific notation, convert to float
+	if (value.toString().includes('e')) {
+		value = parseFloat(value);
+		console.log("value", value);
+	}
+	
+
 	let assetValue = await AssetValue.from({
 		asset: asset.identifier,
 		//convert amount to bigint with decimals
-		value: amountInBigNumber(value, asset.decimals),
+		value: amountInBigInt(value, asset.decimals),
 		fromBaseDecimal: asset.decimals,
 		asyncTokenLookup: false,
 

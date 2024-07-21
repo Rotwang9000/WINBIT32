@@ -5,11 +5,16 @@ import ProgressBar from '../../win/ProgressBar';
 import TitleBar from '../../win/TitleBar';
 import MenuBar from '../../win/MenuBar';
 import { saveAs } from 'file-saver';
+import './styles/SwapComponent.css';
+
 import './styles/SendFundsComponent.css';
 import { useWindowSKClient } from '../../contexts/SKClientProviderManager';
 import { useIsolatedState } from '../../win/includes/customHooks';
 import { formatBalance } from './helpers/transaction';
 import { getAssetValue } from './helpers/quote';
+
+
+
 
 const SendFundsComponent = ({ providerKey, windowId }) => {
 	var bigInt = require("big-integer");
@@ -27,6 +32,8 @@ const SendFundsComponent = ({ providerKey, windowId }) => {
 	const [textareaActive, setTextareaActive] = useIsolatedState(windowId, 'textareaActive', false);
 	const [maxAmount, setMaxAmount]= useIsolatedState(windowId, 'maxAmount', '');
 	const [sendInProgress, setSendInProgress] = useIsolatedState(windowId, 'sendInProgress', false);
+	const [showSwapini, setShowSwapini] = useIsolatedState(windowId, 'showSwapini', false);
+
 
 	const [isTokenDialogOpen, setIsTokenDialogOpen] = useIsolatedState(windowId, 'isTokenDialogOpen', false);
 
@@ -79,6 +86,7 @@ const SendFundsComponent = ({ providerKey, windowId }) => {
 			setError('Send in progress');
 			return;
 		}
+		setError('Sending funds...');
 		setSendInProgress(true);
 		setError('');
 		setTxUrl('');
@@ -86,22 +94,34 @@ const SendFundsComponent = ({ providerKey, windowId }) => {
 
 		const { assetValue, otherBits } = await getAssetValue(selectedToken, amount);
 
+		// export type TransferParams = {
+		// 	assetValue: AssetValue;
+		// 	fee?: StdFee;
+		// 	feeOptionKey?: FeeOption;
+		// 	from: string;
+		// 	memo?: string;
+		// 	privkey?: Uint8Array;
+		// 	recipient: string;
+		// 	signer?: OfflineDirectSigner;
+		// };
+
+	
 		const txData = {
 			assetValue: assetValue,
-			recipient: recipientAddress,
 			from: sendingWallet.address,
 			feeOptionKey: FeeOption.Average,
-			chain: selectedToken.chain,
-			memo: memo
+			memo,
+			recipient: recipientAddress,
+
 		};
 		setProgress(13);
 		console.log('Sending funds:', txData, sendingWallet);
 
-		try {
+		try { 
 			const txID = await skClient.transfer(txData);
 			console.log('Transaction ID:', txID);
 			setProgress(87);
-			const explorerUrl = skClient.getExplorerTxUrl(selectedToken.chain, txID);
+			const explorerUrl = skClient.getExplorerTxUrl({chain: sendingWallet.chainObj, txHash:txID});
 			console.log('Explorer URL:', explorerUrl);
 			setProgress(93);
 			setTxUrl(explorerUrl);
@@ -114,8 +134,9 @@ const SendFundsComponent = ({ providerKey, windowId }) => {
 		setTimeout(() => {
 			setSendInProgress(false);
 		}, 2000);
-
+		
 	};
+
 
 	const updateIniData = () => {
 		if (!textareaActive) {
@@ -123,8 +144,9 @@ const SendFundsComponent = ({ providerKey, windowId }) => {
 amount=${amount}
 recipient=${recipientAddress}
 memo=${memo}
-; memo is only used on THOR chain transactions
+; memo is NOT YET FUNCTIONAL ON ANY CHAIN
 `;
+			// only used on THOR/MAYA chain transactions
 			setIniData(data);
 		}
 	};
@@ -228,66 +250,116 @@ memo=${memo}
 
 	return (
 		<>
-			<div className="send-toolbar">
-				<button className='send-toolbar-button' onClick={sendFunds} disabled={sendInProgress}>
-					<div className='send-toolbar-icon'>💸</div>
+			<div className="swap-toolbar">
+				<button className='swap-toolbar-button' onClick={sendFunds} disabled={sendInProgress}>
+					<div className='swap-toolbar-icon'>💸</div>
 					Send
 				</button>
+				{txUrl ?
+					<button className='swap-toolbar-button' onClick={() => {
+						window.open(txUrl, '_blank');
+					}}>
+						<div className='swap-toolbar-icon' >⛓</div>
+						View TX
+					</button>
+					: ''
+				}
 			</div>
-			{sendInProgress && <><div className="send-progress">Sending...</div>
-			<div className="send-progress-container">
-				{progress > 0 && <ProgressBar percent={progress} />}
-			</div>
-			</>
-			}
-			{txUrl ?
-				<div className="swap-explorer">
-					<a href={txUrl} target="_blank" rel="noreferrer noopener">View on the Blockchain Navigator</a>
+			{(error && error !== '') &&
+				<div className='status-text'>
+					{error}
 				</div>
-				: ''
 			}
-			{error && <div className="send-error">{error}</div>}
-	<div style={{ width: '100%', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }} className='swap-component'>
+		
+			<div style={{ width: '100%', boxSizing: 'border-box', display: 'flex', flexDirection: 'column' }} className='swap-component'>
 
+				<div style={{ display: (sendInProgress || txUrl ? 'flex' : 'none') }} className="swap-progress-container">
+					{sendInProgress ? <div>
+						<div className="swap-progress" onClick={() => {
+							
+							setSendInProgress(false);
+							}
+						}>
+							{progress > 0 && <ProgressBar percent={progress} progressID={windowId} showPopup={true} />}
+						</div>
+					</div>
+						: ''}
+
+
+				</div>
 			<div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: '10px' }}>
-				<div className="field-group">
-					<label>Token</label>
-					<button onClick={openTokenDialog} className='select-button'>Select</button>
-					{selectedToken && (
-						<span>
-							<img src={selectedToken.logoURI} alt={selectedToken.name} style={{ width: '20px', height: '20px', marginRight: '5px' }} />
-							{selectedToken.ticker} {selectedToken.name} on {selectedToken.chain}
-						</span>
-					)}
-				</div>
-				<div className="field-group">
-					<label>Balance</label>
-					{selectedToken && (
-						<span>
-							{maxAmount} {selectedToken.ticker}
-						</span>
-					)}
-				</div>
-				<div className="field-group">
-					<label>Amount</label>		
-					<input type="number" value={amount} onChange={e => setAmount(e.target.value)} />
-					{maxAmount && <input type="range" min="0" max={maxAmount} value={amount} onChange={e => setAmount(e.target.value)} step={maxAmount / 100} />}
+					<div className="field-group token-select-group">
+						<div className='token-select'>
+
+							<button onClick={() => !sendInProgress && openTokenDialog()} className='select-button' style={{ minWidth: '130px', minHeight: '75px' }}>
+								{selectedToken ? (
+									<span className='token'>
+										<img src={selectedToken.logoURI} alt={selectedToken.name} style={{ width: '20px', height: '20px', 'marginRight': '5px', marginLeft: '5px' }} />
+										<span> <b>{selectedToken.ticker}</b> {selectedToken.name} on {selectedToken.chain} {(selectedToken?.ticker?.includes('/') ? ' (Synthetic)' : '')}
+										</span>
+									</span>
+								) :
+									<span className='token'>
+
+										<div className='swap-toolbar-icon' >🔍</div> <b>Select...</b>
+									</span>
+								}
+							</button>
+
+						</div>
+						</div>	
 
 
-				</div>
+					<div className="field-group amt-box" style={{ marginBottom: 0, paddingLeft: '3px' }}>
+						<div><label>Amount
+							{selectedToken && (
+								<div style={{ fontSize: '0.9em', fontWeight: 500 }}>
+									{maxAmount} {selectedToken.ticker} Available
+								</div>
+							)}
+
+						</label></div><div>
+							{!sendInProgress ? (
+								<>
+									<input type="number" value={amount} onChange={e => setAmount(e.target.value)} />
+
+								</>
+							) : (
+								amount
+							)}</div>
+					</div>
+					<div className="field-group" style={{ marginTop: 0, paddingTop: 0, flexDirection: 'column' }}>
+						{!sendInProgress ? (
+							<>
+								{maxAmount && <input type="range" min="0" max={maxAmount} value={amount} onChange={e => setAmount(e.target.value)} step={maxAmount / 100} />}
+							</>
+						) : (
+							''
+						)}
+					</div>
 				<div className="field-group">
 					<label>Recipient Address</label>
 					<input type="text" value={recipientAddress} onChange={e => setRecipientAddress(e.target.value)} />
 				</div>
-				{selectedToken?.chain === 'THOR' && (
+				{(selectedToken?.chain === 'THOR!'  || selectedToken?.chain === 'MAYA!')
+					&& (
 					<div className="field-group">
-						<label>Memo (Optional, for Thorchain)</label>
+						<label>Memo (Optional, for Thor/Maya)</label>
 						<input type="text" value={memo} onChange={e => setMemo(e.target.value)} />
 					</div>
 				)}
 			</div>
-			<div style={{ marginLeft: '4px', border: '1px solid black', marginBottom: '2px', width: 'calc(100% - 16px)' }}>
-				<TitleBar title="send.ini" showMinMax={false} />
+				{showSwapini === false &&
+					<button onClick={() => setShowSwapini(true)} style={{ padding: '8px' }}>Advanced...</button>
+				}
+
+				<div style={{
+					marginLeft: '2px', marginRight: 0, border: '1px solid black', marginBottom: '2px', width: 'calc(100% - 5px)', overflowX: 'hidden',
+					display: showSwapini ? 'flex' : 'none'
+				}} className='inibox'>				<TitleBar title="send.ini" showMinMax={false} onContextMenu={() => {
+					setShowSwapini(false)
+				}
+				} />
 				<MenuBar menu={menu} windowId={windowId} onMenuClick={handleMenuClick} />
 				<textarea
 					value={iniData}
@@ -313,7 +385,6 @@ memo=${memo}
 					}}
 				/>
 			</div>
-			{txUrl && <div><a href={txUrl} target="_blank" rel="noopener noreferrer">View Transaction</a></div>}
 			<TokenChooserDialog
 				isOpen={isTokenDialogOpen}
 				onClose={() => setIsTokenDialogOpen(false)}
@@ -322,6 +393,9 @@ memo=${memo}
 			/>
 			</div></>
     );
+	
 };
 
 export default SendFundsComponent;
+
+

@@ -16,10 +16,16 @@
   display: flex;
   align-items: center;
   margin-bottom: 10px;
+  justify-content: space-between;
+}
+.field-group>*{
+  flex-basis: 0;
+  flex-grow: 1;
+  text-align: center;
 }
 
 .field-group label {
-  flex: 0 0 120px;
+  flex: 1 0 0;
   /* Label width */
   max-width: 100%;
   margin-right: 10px;
@@ -63,6 +69,11 @@
     margin-bottom: 5px;
     /* Add some bottom margin for spacing */
   }
+}
+
+.swap-component input[type="text"], .send-component input[type="text"] {
+  margin-left: 10px;
+  text-align: right;
 }
 
 .select-button{
@@ -202,8 +213,16 @@ display: flex;
 .amt-box>div{
   flex-grow: 1;
   width: 50%;
+  /* display: flex; */
+}
+.amt-box>div:first-of-type{
   display: flex;
 }
+.amt-box>div:has(input){
+  display: flex;
+  align-items: center;
+}
+
 .amt-box input{
   flex-grow: 1;
   width: 100%;
@@ -268,7 +287,14 @@ input[type="number"]::-webkit-inner-spin-button {
 .infobox>div>span{
   margin-right: 5px;
   flex-grow: 1;
+  flex-basis: 0;
+  text-align: left;
 }
+.infobox>div>span:last-child{
+  margin-right: 0;
+  text-align: right;
+}
+
 
 .inibox{
       flex-grow: 1;
@@ -298,4 +324,25 @@ input[type="number"]::-webkit-inner-spin-button {
 
 .swap-progress-container{
   border: 0!important;
+}
+
+
+.route-selection-group{
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 2px;
+}
+.route-selection-group>label{
+  display: flex;
+  flex-direction: row;
+  margin-bottom: 3px;
+}
+
+.swap-in-progress .route-selection-group{
+  flex-direction: row;
+}
+
+.swap-in-progress .route-selection-group>label{
+  margin-bottom: 0;
+  display: block;
 }
