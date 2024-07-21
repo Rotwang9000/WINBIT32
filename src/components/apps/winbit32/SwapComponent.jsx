@@ -17,7 +17,7 @@ import { handleApprove } from './helpers/handlers';
 
 
 const SwapComponent = ({ providerKey, windowId }) => {
-	const { skClient, tokens, wallets } = useWindowSKClient(providerKey);
+	const { skClient, tokens, wallets, chainflipBroker } = useWindowSKClient(providerKey);
 	const [swapFrom, setSwapFrom] = useIsolatedState(windowId, 'swapFrom', null);
 	const [swapTo, setSwapTo] = useIsolatedState(windowId, 'swapTo', null);
 	const [amount, setAmount] = useIsolatedState(windowId, 'amount', 0);
@@ -39,7 +39,7 @@ const SwapComponent = ({ providerKey, windowId }) => {
 	const [txnStatus, setTxnStatus] = useIsolatedState(windowId, 'txnStatus', '');
 	const currentTxnStatus = useRef(txnStatus);
 	const [statusText, setStatusText] = useIsolatedState(windowId, 'statusText', '');
-	const [quoteStatus, setQuoteStatus] = useIsolatedState(windowId, 'quoteStatus', 'Aff. fee 0.32%');
+	const [quoteStatus, setQuoteStatus] = useIsolatedState(windowId, 'quoteStatus', 'Aff. fee 0.09%');
 	const [quoteId, setQuoteId] = useIsolatedState(windowId, 'quoteId', '');
 	const [maxAmount, setMaxAmount] = useIsolatedState(windowId, 'maxAmount', '0');
 	const [txnTimer, setTxnTimer] = useIsolatedState(windowId, 'txnTimer', null);
@@ -73,7 +73,8 @@ const SwapComponent = ({ providerKey, windowId }) => {
 			tokens,
 			setDestinationAddress,
 			setSelectedRoute,
-			wallets);
+			wallets,
+			);
 	}, [swapFrom, swapTo, amount, destinationAddress, slippage, setStatusText, setQuoteStatus, setRoutes, setQuoteId, chooseWalletForToken, tokens, setDestinationAddress, setSelectedRoute, wallets]);
 
 
@@ -266,7 +267,9 @@ slippage=${slippage}
 					swapInProgress,
 					quoteId,
 					feeOption,
-					currentTxnStatus)}>
+					currentTxnStatus,
+					chainflipBroker
+					)}>
 					<div className='swap-toolbar-icon'>🔄</div>
 					Execute
 				</button>
@@ -283,7 +286,7 @@ slippage=${slippage}
 						setExplorerUrl,
 						routes,
 						selectedRoute,
-						
+						chainflipBroker
 					);
 				}}>
 						<div className='swap-toolbar-icon'>✅</div>
@@ -324,7 +327,7 @@ slippage=${slippage}
 					{statusText}
 				</div>
 			}
-			<div style={{ width: '100%', boxSizing: 'border-box', display: 'flex', flexDirection: 'column' }} className='swap-component'>
+			<div style={{ width: '100%', boxSizing: 'border-box', display: 'flex', flexDirection: 'column' }} className={'swap-component ' + (swapInProgress ? 'swap-in-progress' : '')}>
 
 				<div style={{ display: (swapInProgress || explorerUrl ? 'flex' : 'none') }} className="swap-progress-container">
 					{swapInProgress ? <div>
@@ -431,10 +434,10 @@ slippage=${slippage}
 
 
 
-					<div className="field-group flex-wrap">
+					<div className="field-group flex-wrap route-selection-group">
 						<label>Route Selection</label>
 						{!swapInProgress ? (
-							<div style={{ width: '100%', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', justifyContent: 'space-evenly' }}>
+							<><div style={{ width: '100%', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', justifyContent: 'space-evenly', marginTop: '1px' }}>
 
 								<select onChange={handleRouteSelection} value={selectedRoute}>
 									<option value="optimal">Optimal Route</option>
@@ -452,27 +455,27 @@ slippage=${slippage}
 											} mins ~{parseFloat(parseFloat(route.expectedOutputMaxSlippage || route.expectedBuyAmount).toPrecision(5))} {swapTo?.ticker}
 										</option>
 									))}
-								</select>
-								{quoteStatus &&
-									<div className='optimal-route'><div className='infobox'>
-										{quoteStatus}
-									</div>
-									</div>
-								}
-							</div>
+								</select></div>
+
+							</>
 
 						) : (
-							selectedRoute
+								<span>{selectedRoute}</span>
 						)}
 					</div>
-
+					{quoteStatus && !swapInProgress &&
+						<div className='optimal-route'><div className='infobox'>
+							{quoteStatus}
+						</div>
+						</div>
+					}
 				</div>
 				{showSwapini === false &&
 					<button onClick={() => setShowSwapini(true)} style={{ padding: '8px' }}>Advanced...</button>
 				}
 
 				<div style={{
-					marginLeft: '2px', marginRight: 0, border: '1px solid black', marginBottom: '2px', width: 'calc(100% - 8px)', overflowX: 'hidden',
+					marginLeft: '2px', marginRight: 0, border: '1px solid black', marginBottom: '2px', width: 'calc(100% - 5px)', overflowX: 'hidden',
 					display: showSwapini ? 'flex' : 'none'
 				}} className='inibox'>
 					<TitleBar title="swap.ini" showMinMax={false}
