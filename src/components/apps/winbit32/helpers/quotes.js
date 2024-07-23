@@ -75,7 +75,7 @@ export const getQuotes = async (
 			const combinedRoutes = [...swapKitRoutes, ...thorSwapRoutes];
 
 			if (combinedRoutes.length === 0) {
-				throw new Error("No routes found from either source.");
+				throw new Error("No routes from any source.");
 			}
 			console.log("combinedRoutes", combinedRoutes);
 			setRoutes(combinedRoutes);

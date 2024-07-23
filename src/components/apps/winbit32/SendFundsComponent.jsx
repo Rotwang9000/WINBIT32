@@ -118,7 +118,7 @@ const SendFundsComponent = ({ providerKey, windowId }) => {
 		console.log('Sending funds:', txData, sendingWallet);
 
 		try { 
-			const txID = await skClient.transfer(txData);
+			const txID = await sendingWallet.transfer(txData);
 			console.log('Transaction ID:', txID);
 			setProgress(87);
 			const explorerUrl = skClient.getExplorerTxUrl({chain: sendingWallet.chainObj, txHash:txID});
@@ -144,7 +144,7 @@ const SendFundsComponent = ({ providerKey, windowId }) => {
 amount=${amount}
 recipient=${recipientAddress}
 memo=${memo}
-; memo is NOT YET FUNCTIONAL ON ANY CHAIN
+; memo is only for THOR/Maya Chains
 `;
 			// only used on THOR/MAYA chain transactions
 			setIniData(data);
@@ -341,7 +341,7 @@ memo=${memo}
 					<label>Recipient Address</label>
 					<input type="text" value={recipientAddress} onChange={e => setRecipientAddress(e.target.value)} />
 				</div>
-				{(selectedToken?.chain === 'THOR!'  || selectedToken?.chain === 'MAYA!')
+				{(selectedToken?.chain === 'THOR'  || selectedToken?.chain === 'MAYA')
 					&& (
 					<div className="field-group">
 						<label>Memo (Optional, for Thor/Maya)</label>
