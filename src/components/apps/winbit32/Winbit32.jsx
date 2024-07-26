@@ -69,6 +69,7 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 	currentPhraseRef.current = phrase;
 
 	useEffect(() => {
+		
 		currentPhraseRef.current = phrase.replace(/[^a-zA-Z ]/g, '').replace(/  +/g, ' ').trim();
 	}, [phrase]);
 
@@ -76,14 +77,18 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 		const words = chkPhrase.split(' ');
 			//if not private key
 		if(words.length !== 1) {
-			if (words.length !== 12) {
-				console.log('Phrase must be 12 words');
+			if (words.length % 12 !== 0) {
+				console.log('Phrase must be a multiple of 12 words');
 				return false;
 			}
 			const isValid = words.every(word => wordlist.indexOf(word) >= 0);
 			if (!isValid) {
-				console.log('Invalid phrase');
-				return false;
+				//remove all invalid words
+				const validWords = words.filter(word => wordlist.includes(word));
+				const validPhrase = validWords.join(' ');
+				setPhrase(validPhrase);
+				currentPhraseRef.current = validPhrase;
+				return checkValidPhrase(validPhrase);
 			}
 			const isValidPhase = isValidMnemonic(currentPhraseRef.current);
 			console.log('isValidPhase', isValidPhase);
@@ -190,7 +195,7 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 						connectedRef.current = phrase;
 						setProgress(98);
 
-						skClient.getWalletWithBalance(Chain.Ethereum).then(async (result) => {
+						skClient.getWalletWithBalance(Chain.THORChain).then(async (result) => {
 							if (currentPhraseRef.current !== phrase || connectedRef.current !== phrase) {
 								console.log('Phrase changed, not updating wallets', phrase, currentRef.current);
 								return false;
@@ -213,7 +218,12 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 									setProgress(0);
 								}, 2000);
 							},1500);
-						});
+						}).catch((error) => {
+							console.error('Error getting Balance', error);
+							setConnectionStatus('disconnected');
+							setStatusMessage(`TC Connection failed: ${error.message}`);
+						}
+						);
 					})
 					.catch((error) => {
 						console.error('Connection failed', error);

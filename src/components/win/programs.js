@@ -16,6 +16,7 @@ import Split from "../apps/sectools/Split";
 import Unsplit from "../apps/sectools/Unsplit";
 import ViewQR from "../apps/winbit32/ViewQR";
 import ReadQR from "../apps/winbit32/ReadQR";
+import PhraseHunter from "../apps/sectools/PhraseHunter";
 
 
 export const getPrograms = () => {
@@ -101,6 +102,21 @@ export const getPrograms = () => {
 					icon: "🔄",
 					progName: "unsplit.exe", // Added name for "File Manager"
 					component: Unsplit,
+					defaultOpen: false,
+					initialPosition: {
+						x: "auto",
+						y: 0,
+						width: 375,
+						height: 650,
+						smHeight: 350,
+					},
+				},
+				{
+					progID: 1,
+					title: "Hunter",
+					icon: "🕵",
+					progName: "phunter.exe",
+					component: PhraseHunter,
 					defaultOpen: false,
 					initialPosition: {
 						x: "auto",
