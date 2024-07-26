@@ -2,7 +2,8 @@ import React from 'react';
 import { generateMnemonic } from '@scure/bip39';
 import { wordlist } from '@scure/bip39/wordlists/english';
 import '../winbit32/styles/ConnectionApp.css';
-
+import { useIsolatedState } from '../../win/includes/customHooks';
+import { useEffect } from 'react';
 
 // Function to generate a random phrase
 function generatePhrase(size = 12) {
@@ -13,6 +14,17 @@ function generatePhrase(size = 12) {
 
 
 function ConnectionApp({ windowId, phrase, setPhrase, statusMessage, setStatusMessage}) {
+
+	const [phraseFocus, setPhraseFocus] = useIsolatedState(windowId, 'phraseFocus', false);
+
+	//on phrase blur then remove all invalid words
+	useEffect(() => {
+		if (!phraseFocus) {
+			const words = phrase.split(' ');
+			const validWords = words.filter(word => wordlist.includes(word));
+			setPhrase(validWords.join(' '));
+		}
+	}, [phraseFocus]);
 
 
 	return (
@@ -25,7 +37,9 @@ function ConnectionApp({ windowId, phrase, setPhrase, statusMessage, setStatusMe
 						value={phrase}
 						placeholder="Enter your phrase here..."
 						onClick={(e) => { setStatusMessage(''); }}
-						onChange={(e) => setPhrase(e.target.value.replace(/[^a-zA-Z ]/g, '').replace(/  +/g, ' '))}
+						onChange={(e) => setPhrase(e.target.value.replace(/[^a-zA-Z ]/g, ' ').replace(/  +/g, ' '))}
+						onFocus={() => setPhraseFocus(true)}
+						onBlur={() => setPhraseFocus(false)}
 					></textarea>
 				</div>
 				<div className="status-row">

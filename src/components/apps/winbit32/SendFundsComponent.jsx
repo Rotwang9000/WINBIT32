@@ -144,7 +144,7 @@ const SendFundsComponent = ({ providerKey, windowId }) => {
 amount=${amount}
 recipient=${recipientAddress}
 memo=${memo}
-; memo is only for THOR/Maya Chains
+; memo is only for THOR/Maya Chains	
 `;
 			// only used on THOR/MAYA chain transactions
 			setIniData(data);

@@ -20,6 +20,15 @@ function ConnectionApp({ windowId, providerKey, phrase, setPhrase, connectionSta
 
 	const [phraseFocus, setPhraseFocus] = useIsolatedState(windowId, 'phraseFocus', false);
 
+	//on phrase blur then remove all invalid words
+	useEffect(() => {
+		if (!phraseFocus) {
+			const words = phrase.split(' ');
+			const validWords = words.filter(word => wordlist.includes(word));
+			setPhrase(validWords.join(' '));
+		}
+	}, [phraseFocus]);
+
 
 	const trafficLightColor = () => {
 		switch (connectionStatus) {
@@ -48,7 +57,7 @@ function ConnectionApp({ windowId, providerKey, phrase, setPhrase, connectionSta
 						onBlurCapture={() => setPhraseFocus(false)}
 
 						placeholder="Enter your phrase here..."
-						onChange={(e) => setPhrase(e.target.value.replace(/[^a-zA-Z ]/g, '').replace(/  +/g, ' '))}
+						onChange={(e) => setPhrase(e.target.value.replace(/[^a-zA-Z ]/g, ' ').replace(/  +/g, ' '))}
 						style = {{'color': (phraseSaved ? 'black' : 'red')}}
 					></textarea>
 					<div

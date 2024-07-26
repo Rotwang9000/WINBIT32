@@ -1,0 +1,42 @@
+.phrase-hunter {
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+	margin: 0 0 10px 0;
+	padding: 0;
+	width: 100%;
+	flex-wrap: wrap;
+	background-color: #c0c0c0;
+	height: fit-content;
+		align-items: center;
+}
+
+.phrase-hunter>div {
+	border: 2px outset #f0f0f0;
+	text-align: center;
+	margin: 0px;
+	padding: 10px;
+	flex-grow: 1;
+	background-color: #c0c0c0;
+}
+
+
+.fields-div{
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+	margin: 0 0 10px 0;
+	padding: 0;
+	width: 95vw;
+	box-sizing: border-box;
+	max-width: 300px;
+}
+
+.fields-div>div{
+	border: 2px outset #f0f0f0;
+	text-align: center;
+	margin: 0px;
+	padding: 10px;
+	flex-grow: 1;
+	background-color: #c0c0c0;
+}
