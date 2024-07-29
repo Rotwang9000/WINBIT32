@@ -130,7 +130,7 @@ export const getPrograms = () => {
 					progID: 2,
 					title: "Open with...",
 					icon: "💰",
-					progName: "winbit32.exe", // Added name for "Paintbrush"
+					progName: "winbit32.exe", 
 					openLevel: -1,
 					addProgramData: ["phrase"],
 				},

@@ -2,7 +2,7 @@
 
 export const convertToIdentFormat = (symbol, chain, address) => {
 	if (address) {
-		return `${chain.toUpperCase()}.${symbol.toUpperCase()}-${address.toUpperCase()}`;
+		return `${chain.toUpperCase()}.${symbol.toUpperCase()}-${address.toUpperCase().replace("0X", "0x")}`;
 	} else {
 		return `${chain.toUpperCase()}.${symbol.toUpperCase()}`;
 	}

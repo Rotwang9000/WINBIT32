@@ -1,11 +1,10 @@
 import React from 'react';
 
-const Toolbar = ({ subPrograms, onSubProgramClick }) => {
+const Toolbar = ({ subPrograms, onSubProgramClick, programData }) => {
 
 	if (!subPrograms) {
 		return null;
 	}
-
 
 	return (
 		<div className="toolbar">
@@ -14,7 +13,13 @@ const Toolbar = ({ subPrograms, onSubProgramClick }) => {
 				.map((program, index) => (
 				<button
 					key={index}
-					onClick={() => onSubProgramClick(program)}
+					 onClick={
+						() => {
+							console.log('Toolbar click', program, programData);
+							program.programData = programData;
+							onSubProgramClick(program, programData);
+						}
+					}
 				>
 					{ program.icon + ' ' +  program.title }
 				</button>

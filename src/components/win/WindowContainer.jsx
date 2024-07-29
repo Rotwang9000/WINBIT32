@@ -20,7 +20,7 @@ const WindowContainer = ({
 	...rest
 }) => {
 	const [currentSubWindows, setCurrentSubWindows] = useIsolatedState(windowId, 'subWindows', initialSubWindows);
-	const [handleSubProgramClick, setHandleSubProgramClick] = useState(() => { });
+	const [handleSubProgramClick, setHandleSubProgramClick] = useIsolatedState(windowId, 'handleSubProgramClick', () => { });
 
 	const handleSetSubProgramClick = useCallback((handle) => {
 		//do a deep check and see if has really changed
@@ -29,18 +29,20 @@ const WindowContainer = ({
 		if(((typeof handleSubProgramClick === 'function') && (typeof handle === 'function')) && (handleSubProgramClick.toString() === handle.toString())) return;
 		
 
-		setHandleSubProgramClick(() => handle);
+		setHandleSubProgramClick(handle, true);
+	
 		onSubProgramClick(handle);
-	}, [handleSubProgramClick, onSubProgramClick]);
+	}, [handleSubProgramClick, onSubProgramClick, setHandleSubProgramClick]);
 
 	useEffect(() => {
 		setCurrentSubWindows(initialSubWindows);
 	}, [initialSubWindows, setCurrentSubWindows]);
 
+
 	return (
 		<div className="window-container">
 			<div className="control-area">
-				<Toolbar subPrograms={subPrograms} onSubProgramClick={handleSubProgramClick} />
+				<Toolbar subPrograms={subPrograms} onSubProgramClick={handleSubProgramClick} programData={programData} />
 				{children}
 			</div>
 			<div className={`desk-style sub-window-area-${windowId}`}>

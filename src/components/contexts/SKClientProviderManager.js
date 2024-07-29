@@ -9,7 +9,6 @@ import React, {
 import { ChainflipBroker } from "@swapkit/plugin-chainflip";
 import { ChainflipToolbox } from "@swapkit/toolbox-substrate";
 import { createSwapKit, Chain, WalletOption, AssetValue } from "@swapkit/sdk";
-import { getAssetValue } from "../apps/winbit32/helpers/quote";
 
 const SKClientContext = createContext(null);
 
@@ -35,7 +34,6 @@ const initialState = {
 		Chain.Maya,
 		Chain.Kujira,
 		Chain.Arbitrum,
-		Chain.Maya,
 		// Chain.Chainflip
 	],
 	providers: [],
@@ -259,6 +257,7 @@ export const SKClientProviderManager = ({ children }) => {
 		try {
 			const providerResponse = await fetch("https://api.swapkit.dev/providers");
 			const providersUnsorted = await providerResponse.json();
+			//sort and remove chainflip
 			const providers = providersUnsorted.sort((a, b) => {
 				if (a.provider === "THORSWAP" || b.provider === "MAYA") {
 					return -1;
@@ -267,11 +266,12 @@ export const SKClientProviderManager = ({ children }) => {
 					return 1;
 				}
 				return a.provider < b.provider ? -1 : 1;
-			});
+			}).filter((provider) => provider.provider !== "CHAINFLIP");
 
 			dispatch({ type: "SET_PROVIDERS", providers });
 
 			const tokensResponse = await Promise.all(
+
 				providers.map(async (provider) => {
 					const tokenResponse = await fetch(
 						`https://api.swapkit.dev/tokens?provider=${provider.provider}`
