@@ -44,8 +44,8 @@ function ConnectionApp({ windowId, phrase, setPhrase, statusMessage, setStatusMe
 
 
 	const getSuggestions = (phrase) => {
-		const words = phrase.split(' ');
-		if (words.length === 12 || words.length === 13) {
+		const words = phrase.replace(/[^a-zA-Z ]/g, ' ').replace(/  +/g, ' ').split(' ');
+		if (words.length === 12) {
 			console.log('getting checksums for words', words);
 			const currentWord = words[words.length - 1].trim();
 
@@ -56,17 +56,18 @@ function ConnectionApp({ windowId, phrase, setPhrase, statusMessage, setStatusMe
 
 			setSuggestions(newSuggestions);
 		}
-		else {
+		else if (words.length < 12) {
 			const currentWord = words[words.length - 1].trim();
 			const newSuggestions = wordlist.filter(word => word.startsWith(currentWord)).map(word => ({
 				word,
 				isChecksum: false
 			}));
 			setSuggestions(newSuggestions);
-			setCurrentWordIndex(words.length - 1);
-			// } else {
-			// 	setSuggestions([]);
+		} else {
+			setSuggestions([]);
 		}
+		setCurrentWordIndex(words.length - 1);
+
 	};
 
 	const handleKeyDown = (e) => {
@@ -92,6 +93,8 @@ function ConnectionApp({ windowId, phrase, setPhrase, statusMessage, setStatusMe
 				if (highlightedSuggestionIndex >= 0) {
 					selectSuggestion(suggestions[highlightedSuggestionIndex].word);
 				}
+			} else if (e.key === 'Escape') {
+				setSuggestions([]);
 			}
 		}
 	};
