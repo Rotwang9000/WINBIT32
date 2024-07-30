@@ -5,9 +5,9 @@
 
 .suggestions-box {
 	position: absolute;
-	top: 105px;
+	top: 75px;
 	/* Adjust according to the height of your textarea */
-	width: 100%;
+	width: 95%;
 	max-height: 150px;
 	/* Adjust max-height as needed */
 	overflow-y: auto;

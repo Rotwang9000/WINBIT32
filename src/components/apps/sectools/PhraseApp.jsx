@@ -3,16 +3,7 @@ import { entropyToMnemonic, mnemonicToEntropy } from '@scure/bip39';
 import { wordlist } from '@scure/bip39/wordlists/english';
 import './styles/ConnectionApp.css';
 import { useIsolatedState } from '../../win/includes/customHooks';
-
-function calculateChecksum(words) {
-
-	const entropy = words.slice(0, 11).map(word => wordlist.indexOf(word).toString(2).padStart(11, '0')).join('');
-	const entropyBytes = Buffer.from(entropy.match(/.{1,8}/g).map(byte => parseInt(byte, 2)));
-	const phrase = entropyToMnemonic(entropyBytes, wordlist);
-
-
-	return phrase.split(' ')[11];
-}
+import { calculateChecksum } from './includes/phrase';
 
 
 function ConnectionApp({ windowId, phrase, setPhrase, statusMessage, setStatusMessage }) {
@@ -27,7 +18,7 @@ function ConnectionApp({ windowId, phrase, setPhrase, statusMessage, setStatusMe
 	useEffect(() => {
 		//if textarea is focused, do not remove invalid words
 		if(textareaRef.current === document.activeElement) {
-			console.log('textareaRef', textareaRef.current);
+			// console.log('textareaRef', textareaRef.current);
 			return;
 		}
 
@@ -42,10 +33,10 @@ function ConnectionApp({ windowId, phrase, setPhrase, statusMessage, setStatusMe
 
 	const handleInputChange = (e) => {
 
-		console.log('handleInputChange', e.target.value);
+		// console.log('handleInputChange', e.target.value);
 
 		const value = e.target.value.replace(/[^a-zA-Z ]/g, ' ').replace(/  +/g, ' ');
-		console.log('value', value);
+		// console.log('value', value);
 	    setPhrase(value);
 		const words = value.split(' ');
 
