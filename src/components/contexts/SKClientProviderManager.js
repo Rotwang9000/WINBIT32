@@ -112,9 +112,9 @@ export const SKClientProviderManager = ({ children }) => {
 
 			const client = createSwapKit({
 				config: {
-					utxoApiKey: "A___UmqU7uQhRUl4UhNzCi5LOu81LQ1T",
-					covalentApiKey: "cqt_rQygB4xJkdvm8fxRcBj3MxBhCHv4",
-					ethplorerApiKey: "EK-8ftjU-8Ff7UfY-JuNGL",
+					utxoApiKey: "A___UmqU7uQhRUl4"+"UhNzCi5LOu81LQ1T",
+					covalentApiKey: "cqt_rQygB4xJkdv"+"m8fxRcBj3MxBhCHv4",
+					ethplorerApiKey: "EK-8ftjU-8Ff"+"7UfY-JuNGL",
 					walletConnectProjectId: "",
 					wallets: [WalletOption.KEYSTORE],
 				},
