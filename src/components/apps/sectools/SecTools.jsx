@@ -27,14 +27,14 @@ const SecTools = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 	}, [phrase, setPhrase, setProgramData, setStatusMessage, statusMessage]);
 	
 
-	useEffect(() => {
-		if (programData && programData.phrase && programData.phrase !== phrase) {
-			setPhrase(programData.phrase);
-		}
-		if (programData && programData.statusMessage && programData.statusMessage !== statusMessage) {
-			setStatusMessage(programData.statusMessage);
-		}
-	}, [programData]);
+	// useEffect(() => {
+	// 	if (programData && programData.phrase && programData.phrase !== phrase) {
+	// 		setPhrase(programData.phrase);
+	// 	}
+	// 	if (programData && programData.statusMessage && programData.statusMessage !== statusMessage) {
+	// 		setStatusMessage(programData.statusMessage);
+	// 	}
+	// }, [programData]);
 
 	const fileInputRef = useRef(null);
 

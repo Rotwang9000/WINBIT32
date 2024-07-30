@@ -1,6 +1,6 @@
 {
   "name": "winbit32",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "private": true,
   "homepage": "https://winbit32.com",
   "dependencies": {
@@ -15,6 +15,7 @@
     "@testing-library/jest-dom": "^5.17.0",
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^13.5.0",
+    "@webscopeio/react-textarea-autocomplete": "^4.9.2",
     "@yudiel/react-qr-scanner": "^2.0.3",
     "ajv": "^8.14.0",
     "big-integer": "^1.6.52",
