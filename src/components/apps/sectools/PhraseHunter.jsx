@@ -6,26 +6,66 @@ import DataTable, { defaultThemes } from 'react-data-table-component';
 import { FaCopy, FaArrowUp } from 'react-icons/fa';
 import { toast } from 'react-hot-toast';
 import './styles/PhraseHunter.css';
+import { getAccount } from './includes/account';
+import { useWindowSKClient } from '../../contexts/SKClientProviderManager';
+import { set } from 'lodash';
+
 const PhraseHunter = ({ programData, windowId }) => {
 	const { phrase, setPhrase, setStatusMessage } = programData;
 	const initialWords = phrase.split(' ');
-
+	const { skClient, connectChains } = useWindowSKClient(windowId);
 	const [progress, setProgress] = useIsolatedState(windowId, 'progress', 0);
 	const [validPhrases, setValidPhrases] = useIsolatedState(windowId, 'validPhrases', []);
+	const [tableData, setTableData] = useIsolatedState(windowId, 'tableData', []);
 	const [searchMode, setSearchMode] = useIsolatedState(windowId, 'searchMode', 'walk');
 	const [numWords, setNumWords] = useIsolatedState(windowId, 'numWords', 12);
 	const [isSearching, setIsSearching] = useIsolatedState(windowId, 'isSearching', false);
 	const [currentSearchPhrase, setCurrentSearchPhrase] = useIsolatedState(windowId, 'currentSearchPhrase', '');
 	const [words, setWords] = useIsolatedState(windowId, 'words', initialWords);
+	const [accountInterval, setAccountInterval] = useIsolatedState(windowId, 'accountInterval', null);
+	const [getAccountChain, setGetAccountChain] = useIsolatedState(windowId, 'getAccountChain', 'THOR');
+	const [columns, setColumns] = useIsolatedState(windowId, 'columns',[
+		{
+			name: 'Valid Phrases',
+			selector: row => row.phrase,
+			cell: row => (<div>{row.phrase}</div>)
+		},
+		{
+			name: 'Apply',
+			cell: row => (
+				<div>
+					<FaArrowUp onClick={() => onUsePhrase(row.phrase)} style={{ cursor: 'pointer' }} />
+				</div>
+			),
+			width: '50px',
+
+		},
+		{
+			name: 'Copy',
+			cell: row => (
+				<div>
+					<FaCopy onClick={() => copyToClipboard(row.phrase)} style={{ cursor: 'pointer' }} />
+				</div>
+			),
+			width: '50px',
+
+		}
+	]);
+
 
 	const wordsRef = useIsolatedRef(windowId, 'words', initialWords);
 	const progressRef = useIsolatedRef(windowId, 'progress', progress);
 	const validPhrasesRef = useIsolatedRef(windowId, 'validPhrases', validPhrases);
 	const isSearchingRef = useIsolatedRef(windowId, 'isSearching', isSearching);
+	const tableDataRef = useIsolatedRef(windowId, 'tableData', tableData);
 
 	useEffect(() => {
 		isSearchingRef.current = isSearching;
 	}, [isSearching]);
+
+	useEffect(() => {
+		tableDataRef.current = tableData;
+	}, [tableData]);
 
 	useEffect(() => {
 		if (!isSearching) {
@@ -49,7 +89,12 @@ const PhraseHunter = ({ programData, windowId }) => {
 				}
 				return prev;
 			});
-
+			setTableData((prev) => {
+				if (!prev.find((row) => row.phrase === phrase)) {
+					return [...prev, { phrase }];
+				}
+				return prev;
+			});
 			console.log("Valid: ", phrase);
 		}
 	}, [setValidPhrases]);
@@ -211,32 +256,68 @@ const PhraseHunter = ({ programData, windowId }) => {
 		});
 	};
 
-	const columns = [
-		{
-			name: 'Valid Phrases',
-			selector: row => row,
-			cell: row => (<div>{row}</div>)
-		},
-		{
-			name: 'Apply',
-			cell: row => (
-				<div>
-					<FaArrowUp onClick={() => onUsePhrase(row)} style={{ cursor: 'pointer' }} />
-				</div>
-			),
-			width: '50px',
+	const getAccounts = async (chain) => {
+		//add a column for the chain, if not already there
+		setColumns((prev) => {
+			if (!prev.find((col) => col.name === chain)) {
+				return [...prev, { name: chain, cell: (row) => (<div>{(row[chain]?.error)? row[chain].error:(row[chain]?.checking)? '***': row[chain]?.balances?.length }</div>) }];
+			}
+			return prev;
+		});
 
-		},
-		{	name: 'Copy',
-			cell: row => (
-				<div>
-					<FaCopy onClick={() => copyToClipboard(row)} style={{ cursor: 'pointer' }} />
-				</div>
-			),
-			width: '50px',
+		clearInterval(accountInterval);
+		//set a continual timer to fill in any that do not have data for this chain, until all are filled, or the user stops the search, include any new ones that are added
+		setAccountInterval(window.setInterval(async () => {
+			const checkingRow =  tableDataRef.current.find((row) => row[chain] && row[chain].checking);
+			if(checkingRow){
+				//already checking
+				checkingRow[chain] = { checking: checkingRow[chain].checking + 1};
 
-		}
-	];
+
+				setTableData([...tableDataRef.current]);
+
+				if (checkingRow[chain].checking > 10){
+					//give up after 10 seconds
+					checkingRow[chain] = { balances: [], error: 'Timeout' };
+					setTableData([...tableDataRef.current]);
+				}
+
+				console.log("Already checking");
+				return;
+			}
+
+			//get the next phrase to search
+			const row = tableDataRef.current.find((row) => !row[chain]);	
+			//if there are no more phrases, stop the interval
+			
+			if (!row) {
+				//no more phrases to search
+				clearInterval(accountInterval);
+				setAccountInterval(null);
+				setTableData([...tableDataRef.current]);
+
+				return;
+			}
+
+			row[chain] = {checking: 1 };
+
+			//get the account for the chain
+			const acc = await getAccount(skClient, row.phrase, chain);
+			console.log("Got account", acc);
+			//add the account to the row
+
+
+			if(acc){
+				acc.balances = acc.balance.filter((bal) => bal.bigIntValue > 0);
+				row[chain] = acc;
+			}
+			else
+				row[chain] = { balances: [] };
+
+			//update the table data;
+			setTableData([...tableDataRef.current]);
+	}, 1000));
+	}
 
 	const customStyles = {
 		header: {
@@ -295,11 +376,25 @@ const PhraseHunter = ({ programData, windowId }) => {
 				<button onClick={() => setIsSearching(false)} disabled={!isSearching}>Stop</button>
 				<button onClick={handleClear}>Clear</button>
 			</div>
+			<div>
+					<div>
+						<select value={getAccountChain} onChange={(e) => setGetAccountChain(e.target.value)}>
+							{connectChains.map((chain) => (
+								<option key={chain} value={chain}>{chain}</option>
+							))}
+						</select>
+					</div>
+					<div><button
+						onClick={() => getAccounts(getAccountChain)}
+					>Check Balances</button></div>
+					{accountInterval && <div><button onClick={() => clearInterval(accountInterval)}>Stop</button></div>}	
+
+			</div>
 			</div>
 			{validPhrases.length > 0 && <div>
 			
 				<DataTable
-					data={validPhrases}
+					data={tableData}
 					columns={columns}
 					dense
 					customStyles={customStyles}

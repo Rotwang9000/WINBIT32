@@ -4,6 +4,7 @@ import { AssetValue, RequestClient, SwapKitNumber } from "@swapkit/helpers";
 import { FeeOption, SwapKitApi } from "@swapkit/sdk";
 import { ChainIdToChain } from "@swapkit/sdk";
 import { getTxnDetails, getTxnDetailsV2 } from "./transaction";
+import { getTokenForProvider } from './token';
 
 export const chooseWalletForToken = (token, wallets) => {
 	if (!token) return null;
@@ -51,6 +52,7 @@ export const handleApprove = async (
 	if("CHAINFLIP" === route.providers[0]){
 		setStatusText("Chainflip not yet supported");
 		return;
+		
 
 		const {broker, toolbox} = await chainflipBroker(dotWallet);
 		console.log("broker", broker);
@@ -168,6 +170,10 @@ export const handleSwap = async (
 	setShowProgress(true);
 	setProgress(0);
 
+	console.log("SelectedRoute", selectedRoute);
+
+
+
 	const wallet = chooseWalletForToken(swapFrom, wallets);
 	if (!wallet) {
 		setStatusText("No wallet found for selected token");
@@ -192,12 +198,23 @@ export const handleSwap = async (
 			setStatusText("Chainflip not yet supported");
 			return;
 		}
+
+		//ensure the right version of the token is used
+		swapFrom = getTokenForProvider(
+			tokens,
+			swapFrom,
+			route.providers[0]
+		);
+
 		console.log("route", route);
 		setTxnHash("");
 		setExplorerUrl("");
 		setTxnStatus(null);
 		setProgress(8);
 		const { assetValue, otherBits } = await getAssetValue(swapFrom, amount);
+
+		console.log("assetValue", assetValue, swapFrom, amount, otherBits);
+
 
 		if (
 			wallet.chain === "ETH" ||
@@ -231,11 +248,11 @@ export const handleSwap = async (
 				return;
 			}
 		}
-		console.log("route.sellAmount Before", route.sellAmount);
+		 console.log("route.sellAmount Before", route.sellAmount);
 
 		setProgress(12);
 		if(otherBits.decimalDifference > 0){
-				
+			route.sellAmount = parseFloat(route.sellAmount / 10 ** otherBits.decimalDifference) 
 		}
 		console.log("route.sellAmount", route.sellAmount);
 
@@ -245,6 +262,8 @@ export const handleSwap = async (
 			feeOption: FeeOption[feeOption] || FeeOption.Average,
 			recipient: destinationAddress,
 		};
+
+		console.log("swapParams", swapParams);
 
 		if (route.providers[0] === "MAYACHAIN") swapParams.pluginName = "mayachain";
 

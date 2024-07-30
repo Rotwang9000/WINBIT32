@@ -53,8 +53,8 @@ function ConnectionApp({ windowId, providerKey, phrase, setPhrase, connectionSta
 						id="phrase"
 						name="phrase"
 						value={phraseFocus ? phrase : blurredPhrase}
-						onFocusCapture={() => setPhraseFocus(true)}
-						onBlurCapture={() => setPhraseFocus(false)}
+							onFocusCapture={() => setPhraseFocus(true)}
+							onBlurCapture={() => setPhraseFocus(false)}
 
 						placeholder="Enter your phrase here..."
 						onChange={(e) => setPhrase(e.target.value.replace(/[^a-zA-Z ]/g, ' ').replace(/  +/g, ' '))}

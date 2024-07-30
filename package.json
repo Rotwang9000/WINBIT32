@@ -1,6 +1,6 @@
 {
   "name": "winbit32",
-  "version": "0.1.3",
+  "version": "0.1.5",
   "private": true,
   "homepage": "https://winbit32.com",
   "dependencies": {
@@ -8,13 +8,14 @@
     "@bitcoinerlab/secp256k1": "^1.1.1",
     "@scure/bip39": "^1.2.1",
     "@swapkit/plugin-chainflip": "^1.0.0-rc.72",
-    "@swapkit/sdk": "^1.1.4",
+    "@swapkit/sdk": "^1.1.8",
     "@swapkit/tokens": "nightly",
     "@swapkit/toolbox-radix": "^1.0.0-rc.5",
     "@swapkit/toolbox-substrate": "^1.0.0-rc.42",
     "@testing-library/jest-dom": "^5.17.0",
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^13.5.0",
+    "@webscopeio/react-textarea-autocomplete": "^4.9.2",
     "@yudiel/react-qr-scanner": "^2.0.3",
     "ajv": "^8.14.0",
     "big-integer": "^1.6.52",

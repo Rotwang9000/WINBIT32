@@ -54,7 +54,14 @@ export function createNewWindow(
 				? handleOpenArray.length + program.openLevel
 				: program.openLevel;
 		if (level >= 0 && level < handleOpenArray.length) {
-			handleOpenArray[level](program.progName, programData);
+			console.log(
+				"Opening window in level",
+				level,
+				program.progName,
+				programData
+			);
+
+			handleOpenArray[level](program.progName, metadata);
 			return;
 		}
 	}

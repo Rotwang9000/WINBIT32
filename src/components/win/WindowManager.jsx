@@ -41,13 +41,13 @@ const WindowManager = ({ programs, windowName, handleOpenFunction, setStateAndSa
 	}, [windows, windowName, setWindowContent, dispatch]);
 
 	const handleOpenWindow = useCallback((program, metadata, saveState = true) => {
-		console.log("handleOpenWindow called with program:", program);
+		console.log("handleOpenWindow called with program:", program, metadata);
 		if (!program) {
 			console.error("handleOpenWindow: program is undefined or null");
 			return;
 		}
 		createNewWindow(programs, windowName, handleOpenArray, programData, highestZIndexRef, (newIndex) => dispatch({ type: 'SET_HIGHEST_Z_INDEX', payload: newIndex }), dispatch, closeWindow, program, metadata, saveState);
-	}, [programs, handleOpenArray, programData, closeWindow, dispatch]);
+	}, [programs, windowName, handleOpenArray, programData, dispatch, closeWindow]);
 
 	useEffect(() => {
 		window.document.body.style.cursor = 'default';
@@ -157,7 +157,7 @@ const WindowManager = ({ programs, windowName, handleOpenFunction, setStateAndSa
 		}
 
 		programs.forEach(program => convertObjectFunctions(program, functionMap));
-	}, [handleOpenFunction, handleOpenWindow, programs, functionMap]);
+	}, [handleOpenFunction, handleOpenWindow, programs, functionMap, handleOpenArray]);
 
 	useEffect(() => {
 		const initialize = async () => {

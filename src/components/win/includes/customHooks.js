@@ -25,9 +25,9 @@ export function useIsolatedState(windowId, key, defaultValue) {
 	// Get or create the setter function
 	let setStoredValue = getSetter(windowId, key);
 	if (!setStoredValue) {
-		setStoredValue = (newValue) => {
+		setStoredValue = (newValue, setAsFunction = false) => {
 			const resolvedNewValue =
-				typeof newValue === "function" ? newValue(valueRef.current) : newValue;
+				typeof newValue === "function" && !setAsFunction ? newValue(valueRef.current) : newValue;
 			if (resolvedNewValue !== valueRef.current) {
 				valueRef.current = resolvedNewValue;
 				setWindowContent(windowId, (prevState) => ({

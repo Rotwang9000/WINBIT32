@@ -83,10 +83,14 @@ export function amountInBigNumber(amount, decimals) {
 export function amountInBigInt(amount, decimals) {
 	//amount is float
 	//convert to bigint
+
+	const bigFloatWithNoDecimals = (amount * 10 ** decimals).toFixed(0);
 	
 	//convert amount to bigint with decimals
-	const { bigIntValue, decimalMultiplier} = BigIntArithmetics.fromBigInt(
-		bigInt(amount * 10 ** decimals), decimals);
+	const { bigIntValue, decimalMultiplier } = BigIntArithmetics.fromBigInt(
+		bigInt(bigFloatWithNoDecimals),
+		decimals
+	);
 	
 	return bigIntValue;
 }

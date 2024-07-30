@@ -1,5 +1,5 @@
 import { AssetValue } from "@swapkit/sdk";
-import { getQuoteFromThorSwap } from "./quote";
+import { getQuoteFromThorSwap, getQuoteFromSwapKit } from "./quote";
 import { amountInBigNumber } from "./quote";
 import { SwapKitApi } from "@swapkit/api";
 import bigInt from "big-integer";
@@ -32,19 +32,20 @@ export const getQuotes = async (
 				? 9
 				: 9;
 
+		
 		const swapKitQuoteParams = {
 			sellAsset: swapFrom.identifier,
-			sellAmount: parseFloat(amount),
 			buyAsset: swapTo.identifier,
+			sellAmount: parseFloat(amount),
 			sourceAddress: chooseWalletForToken(swapFrom, wallets)?.address,
 			destinationAddress: thisDestinationAddress,
-			slippage: slippage,
-			affiliateFee: basisPoints,
+			affiliateFee: 9,
 			affiliate: "be",
+			slippage: slippage,
+			providers: ["MAYACHAIN"],
 		};
 
-		console.log('AssetValue',swapFrom.identifier, swapTo.identifier);
-
+		console.log("AssetValue", swapFrom.identifier, swapTo.identifier);
 
 		const thorSwapQuoteParams = {
 			sellAsset: swapFrom.identifier,
@@ -59,7 +60,8 @@ export const getQuotes = async (
 
 		try {
 			const [swapKitResponse, thorSwapResponse] = await Promise.allSettled([
-				SwapKitApi.getSwapQuoteV2(swapKitQuoteParams),
+				//SwapKitApi.getSwapQuoteV2(swapKitQuoteParams),
+				getQuoteFromSwapKit(swapKitQuoteParams),
 				getQuoteFromThorSwap(thorSwapQuoteParams),
 			]);
 

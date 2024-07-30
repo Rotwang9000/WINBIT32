@@ -13,31 +13,28 @@ function generatePhrase(size = 12) {
 	return generateMnemonic(wordlist, entropy);
 }
 
-const SecTools = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave, handleStateChange, handleOpenArray }) => {
+const SecTools = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave, handleStateChange, handleOpenArray, metadata }) => {
 	const warnMsg = 'Use these tools with care. Only use them if you know what you are doing.';
-	const [phrase, setPhrase] = useIsolatedState(windowId, 'phrase', generatePhrase());
+	const [phrase, setPhrase] = useIsolatedState(windowId, 'phrase', metadata?.phrase || generatePhrase());
 	const [statusMessage, setStatusMessage] = useIsolatedState(windowId, 'statusMessage', warnMsg);
 	const [programData, setProgramData] = useIsolatedState(windowId, 'programData', { phrase, statusMessage, setPhrase, setStatusMessage });
 	const [windowMenu, setWindowMenu] = useIsolatedState(windowId, 'windowMenu', []);
 	const currentRef = useRef(phrase);
 
 	useEffect(() => {
-		currentRef.current = phrase; // Update `useRef` when `input` changes
+		if (currentRef.current !== phrase) currentRef.current = phrase;
+		setProgramData({ phrase, statusMessage, setPhrase, setStatusMessage });
+	}, [phrase, setPhrase, setProgramData, setStatusMessage, statusMessage]);
+	
 
-		setProgramData((prevData) => ({
-			...prevData,
-			phrase: currentRef.current,
-		}));
-	}, [phrase, setProgramData]);
-
-	useEffect(() => {
-		if (programData && programData.phrase && programData.phrase !== phrase) {
-			setPhrase(programData.phrase);
-		}
-		if (programData && programData.statusMessage && programData.statusMessage !== statusMessage) {
-			setStatusMessage(programData.statusMessage);
-		}
-	}, [programData]);
+	// useEffect(() => {
+	// 	if (programData && programData.phrase && programData.phrase !== phrase) {
+	// 		setPhrase(programData.phrase);
+	// 	}
+	// 	if (programData && programData.statusMessage && programData.statusMessage !== statusMessage) {
+	// 		setStatusMessage(programData.statusMessage);
+	// 	}
+	// }, [programData]);
 
 	const fileInputRef = useRef(null);
 
