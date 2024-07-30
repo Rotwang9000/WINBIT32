@@ -3,7 +3,7 @@ import { entropyToMnemonic, mnemonicToEntropy } from '@scure/bip39';
 import { wordlist } from '@scure/bip39/wordlists/english';
 import './styles/ConnectionApp.css';
 import { useIsolatedState } from '../../win/includes/customHooks';
-import { calculateChecksum } from './includes/phrase';
+import { calculateChecksum, getValidChecksumWords } from './includes/phrase';
 
 
 function ConnectionApp({ windowId, phrase, setPhrase, statusMessage, setStatusMessage }) {
@@ -38,18 +38,34 @@ function ConnectionApp({ windowId, phrase, setPhrase, statusMessage, setStatusMe
 		const value = e.target.value.replace(/[^a-zA-Z ]/g, ' ').replace(/  +/g, ' ');
 		// console.log('value', value);
 	    setPhrase(value);
-		const words = value.split(' ');
+		getSuggestions(value);
+	
+	};
 
-		if (words.length <= 11) {
-			const currentWord = words[words.length - 1];
+
+	const getSuggestions = (phrase) => {
+		const words = phrase.split(' ');
+		if (words.length === 12 || words.length === 13) {
+			console.log('getting checksums for words', words);
+			const currentWord = words[words.length - 1].trim();
+
+			const newSuggestions = getValidChecksumWords(words.slice(0, 11)).filter(word => word.startsWith(currentWord)).map(word => ({
+				word,
+				isChecksum: true
+			}));
+
+			setSuggestions(newSuggestions);
+		}
+		else {
+			const currentWord = words[words.length - 1].trim();
 			const newSuggestions = wordlist.filter(word => word.startsWith(currentWord)).map(word => ({
 				word,
 				isChecksum: false
 			}));
 			setSuggestions(newSuggestions);
 			setCurrentWordIndex(words.length - 1);
-		} else {
-			setSuggestions([]);
+			// } else {
+			// 	setSuggestions([]);
 		}
 	};
 
@@ -94,15 +110,15 @@ function ConnectionApp({ windowId, phrase, setPhrase, statusMessage, setStatusMe
 		words[currentWordIndex] = suggestion;
 		console.log('selecting suggestion', suggestion, words);
 
-		if (currentWordIndex === 10) {
+		if (currentWordIndex === 10000000000) {
 			const checksumWord = calculateChecksum(words);
 			words[11] = checksumWord;
 			setPhrase(words.join(' '));
 			setStatusMessage('12th word checksum added automatically.');
 		} else {
-			setPhrase(words.join(' '));
+			setPhrase(words.join(' ') + ' ');
 		}
-		setSuggestions([]);
+		getSuggestions(words.join(' ') + ' ');
 		setHighlightedSuggestionIndex(-1);
 	};
 
@@ -117,13 +133,13 @@ function ConnectionApp({ windowId, phrase, setPhrase, statusMessage, setStatusMe
 						placeholder="Enter your phrase here..."
 						onClick={() => setStatusMessage('')}
 						onChange={handleInputChange}
-						// onFocus={() => setPhraseFocus(true)}
-						// onBlur={() => setPhraseFocus(false)}
+						onFocus={() => setPhraseFocus(true)}
+						onBlur={() => setPhraseFocus(false)}
 						onKeyDown={handleKeyDown}
 						ref={textareaRef}
 						style={{ width: '100%', height: '50px' }}
 					/>
-					{suggestions.length > 0 && (
+					{phraseFocus && suggestions.length > 0 && (
 						<div className="suggestions-box" ref={suggestionsRef}>
 							{suggestions.map((suggestion, index) => (
 								<div
