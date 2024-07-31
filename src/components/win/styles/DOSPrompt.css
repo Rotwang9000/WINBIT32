@@ -33,6 +33,25 @@
 	/* Padding to prevent text from touching screen edges */
 }
 
+.dos-prompt input {
+	/* Input styling */
+	background-color: black;
+	/* Classic DOS black */
+	color: #dcdcdc;
+	/* Off-white text, not pure white */
+	border: none;
+	/* No border */
+	outline: none;
+	/* No outline */
+	width: 100%;
+	/* Full width */
+	font-family: 'Courier New', Courier, monospace;
+	/* Classic monospace font */
+	font-size: 16px;
+	caret-color: transparent;
+
+}
+
 .dos-blink {
 	/* Blinking cursor effect */
 	border-bottom: 2px solid #dcdcdc;

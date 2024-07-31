@@ -17,7 +17,7 @@ const IRCWindow = ({windowA, windowId, subPrograms}) => {
 
 	//add above data to subPrograms
 	for (let i = 0; i < subPrograms.length; i++) {
-		subPrograms[i].data = {parentWindowId: windowId, corsProxy: 'http://nft.drawtt.com:8000/'};
+		subPrograms[i].data = { parentWindowId: windowId, corsProxy: 'http://poxy.winbit32.com:8000/'};
 	}
 
 

@@ -41,7 +41,7 @@ const WindowManager = ({ programs, windowName, handleOpenFunction, setStateAndSa
 	}, [windows, windowName, setWindowContent, dispatch]);
 
 	const handleOpenWindow = useCallback((program, metadata, saveState = true) => {
-		console.log("handleOpenWindow called with program:", program, metadata);
+		console.log("handleOpenWindow called with program:", program, metadata, programs);
 		if (!program) {
 			console.error("handleOpenWindow: program is undefined or null");
 			return;

@@ -42,7 +42,7 @@ export const getQuotes = async (
 			affiliateFee: 9,
 			affiliate: "be",
 			slippage: slippage,
-			providers: ["MAYACHAIN"],
+			// providers: ["MAYACHAIN"],
 		};
 
 		console.log("AssetValue", swapFrom.identifier, swapTo.identifier);
