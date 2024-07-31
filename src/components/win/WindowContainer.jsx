@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import WindowManager from './WindowManager';
 import Toolbar from './Toolbar';
 import { useIsolatedState } from './includes/customHooks';
@@ -22,7 +22,16 @@ const WindowContainer = ({
 	const [currentSubWindows, setCurrentSubWindows] = useIsolatedState(windowId, 'subWindows', initialSubWindows);
 	const [handleSubProgramClick, setHandleSubProgramClick] = useIsolatedState(windowId, 'handleSubProgramClick', () => { });
 
+	const handleSubProgramClickRef = useRef(handleSubProgramClick);
+
+	useEffect(() => {
+		handleSubProgramClickRef.current = handleSubProgramClick;
+	}, [handleSubProgramClick]);
+
 	const handleSetSubProgramClick = useCallback((handle) => {
+
+		handleSubProgramClickRef.current = handle;
+
 		//do a deep check and see if has really changed
 		if (handle === handleSubProgramClick) return;
 
@@ -42,7 +51,7 @@ const WindowContainer = ({
 	return (
 		<div className="window-container">
 			<div className="control-area">
-				<Toolbar subPrograms={subPrograms} onSubProgramClick={handleSubProgramClick} programData={programData} />
+				<Toolbar subPrograms={subPrograms} onSubProgramClick={handleSubProgramClickRef.current} programData={programData} />
 				{children}
 			</div>
 			<div className={`desk-style sub-window-area-${windowId}`}>
@@ -57,7 +66,6 @@ const WindowContainer = ({
 					programData={programData}
 					setProgramData={setProgramData}
 					handleOpenArray={handleOpenArray}
-					{...rest}
 				/>
 			</div>
 		</div>

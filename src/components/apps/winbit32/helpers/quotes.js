@@ -171,7 +171,7 @@ const processSwapKitRoutes = (response, swapToDecimals) => {
 	const routes = response.routes;
 
 	routes.forEach((route) => {
-		if (route.memo && route.providers.includes("MAYACHAIN")) {
+		if (route.memo && (route.providers.includes("MAYACHAIN") || route.providers.includes("MAYACHAIN_STREAMING"))){
 			route.originalMemo = route.memo;
 			const parts = route.memo.split(":");
 			if (parts.length > 3) {
@@ -183,6 +183,7 @@ const processSwapKitRoutes = (response, swapToDecimals) => {
 						swapToDecimals > 8 ? 8 : swapToDecimals
 					)
 				).toString();
+				console.log("parts[3]", parts[3], splitP3, route.expectedOutputMaxSlippage, route.expectedBuyAmountMaxSlippage, swapToDecimals);
 				if (splitP3.length > 1) {
 					parts[3] += "/" + splitP3.slice(1).join("/");
 				}

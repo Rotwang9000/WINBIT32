@@ -34,6 +34,7 @@ export function createNewWindow(
 		}
 	} else {
 		if (window.document.body.classList.contains("wait")) {
+			console.log("Already waiting for a program to load");
 			return;
 		}
 		window.document.body.classList.add("wait");
@@ -72,7 +73,7 @@ export function createNewWindow(
 	}
 
 	console.log(
-		"Opening window in " + program.progName,
+		"Opening window in " + windowName + " with program",
 		program,
 		highestZIndexRef.current
 	);
@@ -99,8 +100,9 @@ export function createNewWindow(
 
 	setHighestZIndex(newZIndex);
 	highestZIndexRef.current = newZIndex;
-
+	console.log("dispatching add window action", newWindow);
 	dispatch(addWindowAction(newWindow));
+	console.log("Added window", newWindow);
 
 	//only do at top level... count handleOpenArray
 	if (windowName === "desktop") {

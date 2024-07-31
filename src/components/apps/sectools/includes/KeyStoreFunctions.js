@@ -44,7 +44,7 @@ const saveFile = (data, filename) => {
 export const processKeyPhrase = async (phrase) => {
 	try {
 		const details = await promptUserForDetails();
-		console.log("Details:", details);
+		// console.log("Details:", details);
 		const { password, filename } = details;
 		if (!password) throw new Error("Password is required");
 
@@ -99,6 +99,8 @@ export const setupFileInput = (setPhrase, setMessage) => {
 				}
 			};
 			reader.readAsText(file);
+			//unload the file input
+			input.value = "";
 		}
 	});
 

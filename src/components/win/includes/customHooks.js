@@ -160,6 +160,7 @@ export function useIsolatedReducer(windowId, key, reducer, initialState) {
 	}, [windowId, key, state, setWindowContent]);
 
 	const isolatedDispatch = (action) => {
+		// console.log("isolatedDispatch", action);
 		if (typeof action === "function") {
 			action(isolatedDispatch, getState);
 		} else {
