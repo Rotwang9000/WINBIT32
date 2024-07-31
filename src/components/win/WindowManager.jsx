@@ -47,7 +47,7 @@ const WindowManager = ({ programs, windowName, handleOpenFunction, setStateAndSa
 			return;
 		}
 		createNewWindow(programs, windowName, handleOpenArray, programData, highestZIndexRef, (newIndex) => dispatch({ type: 'SET_HIGHEST_Z_INDEX', payload: newIndex }), dispatch, closeWindow, program, metadata, saveState);
-	}, [programs, windowName, handleOpenArray, programData, dispatch, closeWindow]);
+	}, [programs, windowName, handleOpenArray, programData, dispatch, closeWindow, highestZIndexRef]);
 
 	useEffect(() => {
 		window.document.body.style.cursor = 'default';
@@ -157,7 +157,7 @@ const WindowManager = ({ programs, windowName, handleOpenFunction, setStateAndSa
 		}
 
 		programs.forEach(program => convertObjectFunctions(program, functionMap));
-	}, [handleOpenFunction, handleOpenWindow, programs, functionMap, handleOpenArray]);
+	}, [handleOpenFunction, handleOpenWindow, programs, functionMap, handleOpenArray, windowName, dispatch, state]);
 
 	useEffect(() => {
 		const initialize = async () => {

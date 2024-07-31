@@ -251,7 +251,7 @@ export const handleSwap = async (
 		 console.log("route.sellAmount Before", route.sellAmount);
 
 		setProgress(12);
-		if(otherBits.decimalDifference > 0){
+		if(otherBits.decimalDifference !== 0){
 			route.sellAmount = parseFloat(route.sellAmount / 10 ** otherBits.decimalDifference) 
 		}
 		console.log("route.sellAmount", route.sellAmount);

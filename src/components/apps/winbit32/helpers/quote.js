@@ -131,7 +131,7 @@ export async function getAssetValue(asset, value){
 	
 	//fix decimal, decimalMultiplier and bigIntValue to be correct decimals for asset.decimals
 	const { bigIntValue, decimalMultiplier} = BigIntArithmetics.fromBigInt(
-		bigInt(value * 10 ** asset.decimals), asset.decimals);
+		bigInt( (value * 10 ** asset.decimals).toFixed(0) ), asset.decimals);
 
 	let otherBits = {
 		decimalMultiplier,
