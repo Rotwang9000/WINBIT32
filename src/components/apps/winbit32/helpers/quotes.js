@@ -88,8 +88,29 @@ export const getQuotes = async (
 			);
 
 			setSelectedRoute("optimal");
-			const optimalRoute =
-				combinedRoutes.find(({ optimal }) => optimal) || combinedRoutes[0];
+
+			
+			//const optimalRoute =
+		//		combinedRoutes.find(({ optimal }) => optimal) || combinedRoutes[0];
+
+			//optimal is one with biggest 	optimalRoute.expectedOutputMaxSlippage ||	optimalRoute.expectedBuyAmountMaxSlippage
+			const optimalRoute = combinedRoutes.reduce((a, b) => {
+				const aVal = amountInBigNumber(
+					a.expectedOutputMaxSlippage || a.expectedBuyAmountMaxSlippage,
+					swapTo.decimals
+				);
+				const bVal = amountInBigNumber(
+					b.expectedOutputMaxSlippage || b.expectedBuyAmountMaxSlippage,
+					swapTo.decimals
+				);
+				return aVal.isGreaterThanOrEqualTo(bVal) ? a : b;
+			});
+
+			//add "optimal" flag to correct entry in combinedRoutes and remove any others
+			combinedRoutes.forEach((route) => {
+				route.optimal = route === optimalRoute;
+			});
+			
 
 			const optimalRouteTime =
 				optimalRoute.estimatedTime === null ||
