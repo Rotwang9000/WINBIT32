@@ -194,6 +194,8 @@ export const handleSwap = async (
 			setShowProgress(false);
 			return;
 		}
+
+		console.log("route", route);	
 		if("CHAINFLIP" in route.providers){
 			setStatusText("Chainflip not yet supported");
 			return;
