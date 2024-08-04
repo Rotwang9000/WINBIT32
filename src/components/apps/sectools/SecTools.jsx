@@ -125,8 +125,8 @@ const SecTools = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 
 	const checkValidPhrase = async () => {
 		const words = currentPhraseRef.current.split(' ');
-		if (words.length !== 12) {
-			console.log('Phrase must be 12 words');
+		if (words.length < 12 || words.length % 3 !== 0) {
+			console.log('Phrase must be 12, 15, 18....');
 			return false;
 		}
 		const isValid = words.every(word => wordlist.indexOf(word) >= 0);

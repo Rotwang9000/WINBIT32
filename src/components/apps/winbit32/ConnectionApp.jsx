@@ -24,8 +24,13 @@ function ConnectionApp({ windowId, providerKey, phrase, setPhrase, connectionSta
 	useEffect(() => {
 		if (!phraseFocus) {
 			const words = phrase.split(' ');
+			let index;
+			if(!isNaN(words[words.length - 1])){
+				index = words.pop();
+			}
+
 			const validWords = words.filter(word => wordlist.includes(word));
-			setPhrase(validWords.join(' '));
+			setPhrase(validWords.join(' ') + (index ? ' ' + index : ''));
 		}
 	}, [phraseFocus]);
 
@@ -41,8 +46,13 @@ function ConnectionApp({ windowId, providerKey, phrase, setPhrase, connectionSta
 				return 'red';
 		}
 	};
-	//replace all letters with * except first word
-	const blurredPhrase = phrase? phrase?.split(' ').map((word, index) => index === 0 ? word : '*'.repeat(word.length)).join(' ') : '';
+	//replace all letters with * except first word, and last if it is a number
+	const blurredPhrase = phrase? phrase?.split(' ').map((word, index) => {
+		if (index === 0 || (index === phrase.split(' ').length - 1 && !isNaN(word))) {
+			return word;
+		}
+		return word.replace(/[a-zA-Z0-9]/g, '*');
+	}).join(' '): '';
 
 
 	return (
@@ -57,7 +67,26 @@ function ConnectionApp({ windowId, providerKey, phrase, setPhrase, connectionSta
 							onBlurCapture={() => setPhraseFocus(false)}
 
 						placeholder="Enter your phrase here..."
-						onChange={(e) => setPhrase(e.target.value.replace(/[^a-zA-Z ]/g, ' ').replace(/  +/g, ' '))}
+						onChange={(e) => {
+							const t = e.target.value;
+							if(t.trim().split(' ').length === 1){
+
+								setPhrase(e.target.value.replace(/[^a-zA-Z0-9 ]/g, ' ').replace(/  +/g, ' '));
+
+							}else{
+								//replace everything except letters and spaces, except allow a number, only on the end
+								setPhrase(e.target.value
+									.split(' ').map((word, index) => {
+										if (index === t.split(' ').length - 1 && !isNaN(word)) {
+											return word;
+										}else{
+											return word.replace(/[^a-zA-Z ]/g, ' ');
+										}
+									})
+									.join(' ').replace(/  +/g, ' '));
+							}
+						
+						}}
 						style = {{'color': (phraseSaved ? 'black' : 'red')}}
 					></textarea>
 					<div
