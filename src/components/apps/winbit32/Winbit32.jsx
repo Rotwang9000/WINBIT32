@@ -69,28 +69,49 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 	currentPhraseRef.current = phrase;
 
 	useEffect(() => {
-		
-		currentPhraseRef.current = phrase.replace(/[^a-zA-Z ]/g, '').replace(/  +/g, ' ').trim();
+		if(phrase.trim().split(' ').length === 1) {
+			currentPhraseRef.current = phrase.replace(/[^a-zA-Z0-9 ]/g, '').replace(/  +/g, ' ').trim();
+		}else{
+			const t = phrase.trim().split(' ');
+			currentPhraseRef.current = t
+				.map((word, index) => {
+					if (index === t.length - 1 && !isNaN(word)) {
+						console.log('Last word is a number', word);
+						return word;
+					} else {
+						return word.replace(/[^a-zA-Z ]/g, ' ');
+					}
+				})
+				.join(' ').replace(/  +/g, ' ');
+		}
 	}, [phrase]);
 
 	const checkValidPhrase = useCallback(async (chkPhrase) => {
-		const words = chkPhrase.split(' ');
+		let words = chkPhrase.split(' ');
 			//if not private key
 		if(words.length !== 1) {
-			if (words.length % 12 !== 0) {
-				console.log('Phrase must be a multiple of 12 words');
+			//if last one is a number, remove it
+			let index = 0;
+			if (!isNaN(words[words.length - 1])) {
+				console.log('Last word is a number... ', words[words.length - 1]);
+				index = words.pop();
+			}
+
+			if (words.length < 12 || words.length % 3 !== 0) {
+				console.log('Phrase must be a multiple of 3 words Larger than 12');
 				return false;
 			}
 			const isValid = words.every(word => wordlist.indexOf(word) >= 0);
 			if (!isValid) {
 				//remove all invalid words
 				const validWords = words.filter(word => wordlist.includes(word));
-				const validPhrase = validWords.join(' ');
+				const validPhrase = validWords.join(' ') + ((index > 0)? ' ' + index : '');
+				console.log('Invalid words removed, with index', validPhrase);
 				setPhrase(validPhrase);
 				currentPhraseRef.current = validPhrase;
 				return checkValidPhrase(validPhrase);
 			}
-			const isValidPhase = isValidMnemonic(currentPhraseRef.current);
+			const isValidPhase = isValidMnemonic(currentPhraseRef.current.replace(/[0-9]+$/, '').trim());
 			console.log('isValidPhase', isValidPhase);
 			if (!isValidPhase) {
 				console.log('Invalid checksum ', currentPhraseRef.current);
@@ -129,7 +150,7 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 		return true;
 	}, [addWallet, phrase, wallets]);
 
-	const getWallets = useCallback(async (phrase) => {
+	const getWallets = useCallback(async (phrase, p) => {
 		let walletPromises = [];
 		setWallets([]);
 		resetWallets();
@@ -151,8 +172,8 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 				}
 				console.log('Connect Result', result);
 
-				if (await addSingleWallet(result, phrase) === false) {
-					console.log('Phrase changed, not updating wallets!!', phrase, currentRef.current);
+				if (await addSingleWallet(result, p) === false) {
+					console.log('Phrase changed, not updating wallets!!', p, currentRef.current);
 					return false;
 				}
 			}).catch((error) => {
@@ -177,32 +198,46 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 
 			
 			setProgress(13);
+			//if currentPhraseRef doesn't have a number on the end then add a zero
+			let p = currentPhraseRef.current.trim();
+			const ps = p.split(' ');
+			const lastIsWord = ps.length > 0 && isNaN(ps[ps.length - 1]);
 
-			const phrase = currentPhraseRef.current.toString().trim();
-			console.log('Connecting with phrase:', phrase.trim());
+			//index is now on the end of the phrase
+			const {phrase, index} = p.split(' ').reduce((acc, word, i) => {
+				if (i === p.split(' ').length - 1 && !lastIsWord) {
+					acc.index = parseInt(word);
+				} else {
+					acc.phrase += word + (i === p.split(' ').length - (lastIsWord? 1:2) ? '' : ' ');
+				}
+				return acc;
+			}, {phrase: '', index: 0});
+
+			//remove the zero from the end of the phrase
+
+			console.log('Connecting with phrase:', phrase.trim(), '#', index);
 			console.log('connecting with skClient:', skClient);
 
-
 			try {
-				skClient.connectKeystore(connectChains, phrase)
+				skClient.connectKeystore(connectChains, phrase.trim(), index)
 					.then(async (wallet) => {
-						if (currentPhraseRef.current !== phrase) {
+						if (currentPhraseRef.current !== p) {
 							console.log('Phrase changed, not updating wallets', phrase, currentRef.current);
 							return false;
 						}
 						console.log('Connected successfully', wallet);
 						setConnectedPhrase(phrase);
-						connectedRef.current = phrase;
+						connectedRef.current = p;
 						setProgress(98);
 
-						skClient.getWalletWithBalance(Chain.THORChain).then(async (result) => {
-							if (currentPhraseRef.current !== phrase || connectedRef.current !== phrase) {
-								console.log('Phrase changed, not updating wallets', phrase, currentRef.current);
+						skClient.getWalletWithBalance(Chain.Maya).then(async (result) => {
+							if (currentPhraseRef.current !== p || connectedRef.current !== p) {
+								console.log('Phrase changed, not updating wallets', p, currentRef.current);
 								return false;
 							}
 							setProgress(99);
-							await getWallets(phrase);
-							if (currentPhraseRef.current !== phrase || connectedRef.current !== phrase) {
+							await getWallets(phrase, p);
+							if (currentPhraseRef.current !== p || connectedRef.current !== p) {
 								console.log('Phrase changed, not updating wallets', phrase, currentRef.current);
 								return false;
 							}
@@ -271,14 +306,16 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 		// 	setShowProgress(false);
 		// 	return;
 		// }
-		if (connectionStatus !== 'connecting' || phrase !== connectedRef.current) {
+		if ((connectionStatus.toLowerCase() !== 'connecting')
+				 || phrase !== connectedRef.current) {
+
 			const to = setTimeout(() => {
 				checkHandleConnect(currentPhraseRef.current + '');
 			}, 1000);
 			return () => clearTimeout(to);
 		}
 		setPhraseSaved(false);
-	}, [phrase, connectedPhrase, connectionStatus, checkHandleConnect, currentPhraseRef, setPhraseSaved]);
+	}, [phrase, connectedPhrase, currentPhraseRef, setPhraseSaved]);
 
 
 
@@ -354,7 +391,7 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 				break;
 			case 'paste':
 				navigator.clipboard.readText().then((clipboardText) => {
-					setPhrase(clipboardText.replace(/[^a-zA-Z ]/g, '').replace(/  +/g, ' '));
+					setPhrase(clipboardText.replace(/[^a-zA-Z0-9 ]/g, '').replace(/  +/g, ' '));
 					setTimeout(() => {
 						handleConnect();
 					}, 1500);
