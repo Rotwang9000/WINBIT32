@@ -117,6 +117,7 @@ export const SKClientProviderManager = ({ children }) => {
 					ethplorerApiKey: "EK-8ftjU-8Ff"+"7UfY-JuNGL",
 					walletConnectProjectId: "",
 					wallets: [WalletOption.KEYSTORE],
+					chainflipBrokerUrl: "https://chainflip.winbit32.com"
 				},
 				rpcUrls: {
 					FLIP:
@@ -194,7 +195,13 @@ export const SKClientProviderManager = ({ children }) => {
 					signer: keyRing,
 					generic: false,
 				});
-				console.log("Created chainflip toolbox", chainflipToolbox);
+
+				//Get PublicKey by decoding unit8array keyRing.publicKey
+				const publicKey = chainflipToolbox.api.createType("AccountId", keyRing.publicKey).toString();
+				console.log("Chainflip public key", publicKey);
+
+
+				console.log("Created chainflip toolbox", chainflipToolbox, keyRing);
 				await chainflipToolbox.api.isReady;
 				setChainflipToolbox(chainflipToolbox);
 				return chainflipToolbox;
@@ -208,6 +215,18 @@ export const SKClientProviderManager = ({ children }) => {
 
 	}, [setChainflipToolbox, state.chainflipToolbox]);
 
+	const registerAsBroker = useCallback(async (toolbox) => {
+		const extrinsic = toolbox.api.tx.swapping?.registerAsBroker();
+
+		console.log("Registering as broker", extrinsic);
+
+		if (!extrinsic) {
+			return false;
+		}
+
+		return await toolbox.signAndBroadcast(extrinsic);
+	}, []);
+
 
 	const chainflipBroker = useCallback(
 		async (key, chain) => {
@@ -216,28 +235,36 @@ export const SKClientProviderManager = ({ children }) => {
 
 				const chainflipBroker = await ChainflipBroker(chainflipToolbox);
 
+				const cfAddress = chainflipToolbox.getAddress();
+
+				// await registerAsBroker(chainflipToolbox);
+
+				console.log("Chainflip address", cfAddress);
+				const cfBalance = await chainflipToolbox.getBalance(cfAddress);
+				console.log("Chainflip balance", cfBalance);
+
 				console.log("Created chainflip broker", chainflipBroker);
 
-				const amt = await AssetValue.from({
-					symbol: "FLIP",
-					value: 1000000000000000000n,
-					fromBaseDecimal: 18,
-					asyncTokenLookup: false,
-					asset: "ETH.FLIP",
-				});
-				//FLIP ADDRESS: 0x826180541412D574cf1336d22c0C0a287822678A
-				console.log("Funding state chain account with", amt.toString());
-				console.log(amt);
+				// const amt = await AssetValue.from({
+				// 	symbol: "FLIP",
+				// 	value: 1000000000000000000n,
+				// 	fromBaseDecimal: 18,
+				// 	asyncTokenLookup: false,
+				// 	asset: "ETH.FLIP",
+				// });
+				// //FLIP ADDRESS: 0x826180541412D574cf1336d22c0C0a287822678A
+				// console.log("Funding state chainflip account with", amt.toString());
+				// console.log(amt);
 
-				chainflipBroker.fundStateChainAccount({
-					evmToolbox: state.wallets[key].find(
-						(w) => w.chain === Chain.Ethereum
-					),
-					stateChainAccount:
-						"cFNPkRESkBV1h6ScrMHV88KvqhN252gUdF5bQaQ6JV4YfBLFM",
-					//1 FLIP
-					amount: amt,
-				});
+				// chainflipBroker.fundStateChainAccount({
+				// 	evmToolbox: state.wallets[key].find(
+				// 		(w) => w.chain === Chain.Ethereum
+				// 	),
+				// 	stateChainAccount:
+				// 		"cFNPkRESkBV1h6ScrMHV88KvqhN252gUdF5bQaQ6JV4YfBLFM",
+				// 	//1 FLIP
+				// 	amount: amt,
+				// });
 
 				setChainflipBroker(key, chainflipBroker);
 				return { broker: chainflipBroker, toolbox: chainflipToolbox };
@@ -266,7 +293,7 @@ export const SKClientProviderManager = ({ children }) => {
 					return 1;
 				}
 				return a.provider < b.provider ? -1 : 1;
-			}).filter((provider) => provider.provider !== "CHAINFLIP");
+			});
 
 			dispatch({ type: "SET_PROVIDERS", providers });
 

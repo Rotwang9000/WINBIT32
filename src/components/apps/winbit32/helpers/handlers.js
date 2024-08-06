@@ -49,37 +49,45 @@ export const handleApprove = async (
 
 	const dotWallet = wallets.find((wallet) => wallet.chain === "DOT");
 
-	if("CHAINFLIP" === route.providers[0]){
-		setStatusText("Chainflip not yet supported");
-		return;
+// 	if("CHAINFLIP" === route.providers[0]){
 		
 
-		const {broker, toolbox} = await chainflipBroker(dotWallet);
-		console.log("broker", broker);
-		console.log("toolbox", toolbox);
+// 		const {broker, toolbox} = await chainflipBroker(dotWallet);
+// 		console.log("broker", broker);
+// 		console.log("toolbox", toolbox);
 
-// 		const requestSwapDepositAddress =
-//   (toolbox: Awaited<ReturnType<typeof ChainflipToolbox>>) =>
-//   async ({
-//     route,
-//     sellAsset,
-//     buyAsset,
-//     recipient: _recipient,
-//     brokerCommissionBPS = 0,
-//     ccmMetadata,
-//     maxBoostFeeBps,
-//   }: RequestSwapDepositAddressParams) => {
+// // 		const requestSwapDepositAddress =
+// //   (toolbox: Awaited<ReturnType<typeof ChainflipToolbox>>) =>
+// //   async ({
+// //     route,
+// //     sellAsset,
+// //     buyAsset,
+// //     recipient: _recipient,
+// //     brokerCommissionBPS = 0,
+// //     ccmMetadata,
+// //     maxBoostFeeBps,
+// //   }: RequestSwapDepositAddressParams) => {
 
 
-		const targetAddress = await broker.requestSwapDepositAddress({
-			route: route,
-		});
+// 		const targetAddress = await broker.requestSwapDepositAddress({
+// 			route: route,
+// 			sellAsset: swapFrom,
+// 			buyAsset: swapFrom,
+// 			recipient: wallet.address,
+// 			brokerCommissionBPS: 9
+// 		}).catch((error) => {
+// 			console.log("error", error);
+// 			setStatusText("Error getting target address " + error.message);
+// 			setSwapInProgress(false);
+// 			setShowProgress(false);
+// 			return null;
+// 		});
 
-		console.log("targetAddress", targetAddress);
-		setStatusText("Approving...");
-		setProgress(13);
-		return;
-	}
+// 		console.log("targetAddress", targetAddress);
+// 		setStatusText("Approving...");
+// 		setProgress(13);
+// 		return;
+// 	}
 
 
 
@@ -196,10 +204,7 @@ export const handleSwap = async (
 		}
 
 		console.log("route", route);	
-		if("CHAINFLIP" in route.providers){
-			setStatusText("Chainflip not yet supported");
-			return;
-		}
+	
 
 		//ensure the right version of the token is used
 		swapFrom = getTokenForProvider(
@@ -217,8 +222,56 @@ export const handleSwap = async (
 
 		console.log("assetValue", assetValue, swapFrom, amount, otherBits);
 
+		let cfAddress = null;
+	if (route.providers[0] === "CHAINFLIP") {
+		const dotWallet = wallets.find((wallet) => wallet.chain === "DOT");
 
-		if (
+		const { broker, toolbox } = await chainflipBroker(dotWallet);
+		console.log("broker", broker);
+		console.log("toolbox", toolbox);
+
+		// 		const requestSwapDepositAddress =
+		//   (toolbox: Awaited<ReturnType<typeof ChainflipToolbox>>) =>
+		//   async ({
+		//     route,
+		//     sellAsset,
+		//     buyAsset,
+		//     recipient: _recipient,
+		//     brokerCommissionBPS = 0,
+		//     ccmMetadata,
+		//     maxBoostFeeBps,
+		//   }: RequestSwapDepositAddressParams) => {
+		//get min amount out of swapto token
+		const minOutToken = route.expectedBuyAmountMaxSlippage;
+
+		const { assetValue: swapToAssetValue } = await getAssetValue(
+			swapTo,
+			minOutToken
+		);
+		console.log(
+			"swapToAssetValue",
+			swapToAssetValue.toString().toUpperCase(),
+			assetValue.toString().toUpperCase()
+		);
+		try{
+			cfAddress = await broker.requestSwapDepositAddress({
+				route: route,
+				sellAsset: assetValue,
+				buyAsset: swapToAssetValue,
+				recipient: destinationAddress,
+				brokerCommissionBPS: 9,
+			});
+		}catch(error){
+				console.log("error", error);
+				setStatusText("Error getting target address " + error.message);
+				setSwapInProgress(false);
+				setShowProgress(false);
+				return null;
+		}
+
+		console.log("targetAddress", cfAddress);
+		setProgress(9);
+	} else if (
 			wallet.chain === "ETH" ||
 			wallet.chain === "BSC" ||
 			wallet.chain === "POLYGON" ||
@@ -258,6 +311,7 @@ export const handleSwap = async (
 		}
 		console.log("route.sellAmount", route.sellAmount);
 
+
 		const swapParams = {
 			route: route,
 			streamSwap: route.streamingSwap ? true : false,
@@ -265,9 +319,43 @@ export const handleSwap = async (
 			recipient: destinationAddress,
 		};
 
-		console.log("swapParams", swapParams);
 
 		if (route.providers[0] === "MAYACHAIN") swapParams.pluginName = "mayachain";
+		else if (route.providers[0] === "CHAINFLIP"){
+			swapParams.pluginName = "chainflip";
+			// swapParams.recipientAddress = cfAddress.depositAddress;
+			// swapParams.chainflipBrokerUrl = "http://chainflip.winbit32.com:10997"; 
+
+			//send to the recipient address
+			const txData = {
+				assetValue: assetValue,
+				from: wallet.address,
+				recipient: cfAddress.depositAddress,
+			};
+			setProgress(13);
+			console.log("Sending funds:", txData, wallet);
+
+			try { 
+				const txID = await wallet.transfer(txData);
+							setProgress(87);
+							const explorerUrl = "https://scan.chainflip.io/channels/" + cfAddress.depositChannelId;
+							console.log("Explorer URL:", explorerUrl);
+							setProgress(93);
+							setExplorerUrl(explorerUrl);
+							setProgress(100);
+							return;
+			} catch (error) {
+				console.error('Error sending funds:', error);
+				setStatusText('Error sending funds: ' + error.message);
+				setSwapInProgress(false);
+				setShowProgress(false);
+				return;
+			}	
+
+		} 
+
+				console.log("swapParams", swapParams);
+
 
 		const swapResponse = await skClient.swap(swapParams).catch((error) => {
 			setStatusText("Error swapping:: " + error.message);
