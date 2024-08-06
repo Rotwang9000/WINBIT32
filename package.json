@@ -1,11 +1,12 @@
 {
   "name": "winbit32",
-  "version": "0.1.9",
+  "version": "0.1.10",
   "private": true,
   "homepage": "https://winbit32.com",
   "dependencies": {
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
     "@bitcoinerlab/secp256k1": "^1.1.1",
+    "@chainflip/sdk": "^1.5.0-alpha.1",
     "@scure/bip39": "^1.2.1",
     "@swapkit/plugin-chainflip": "^1.0.0-rc.72",
     "@swapkit/sdk": "^1.1.8",
@@ -26,6 +27,7 @@
     "codegen": "^0.1.0",
     "crypto-browserify": "^3.12.0",
     "dotenv": "^16.4.5",
+    "fflate": "^0.8.2",
     "file-saver": "^2.0.5",
     "fragment": "^0.3.0",
     "gh-pages": "^6.0.0",

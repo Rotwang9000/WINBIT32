@@ -1,7 +1,10 @@
 import React from 'react';
-import { useMemo, useCallback, useEffect, useRef } from 'react';
+import { useMemo, useCallback, useEffect, useState } from 'react';
+import DialogBox from '../win/DialogBox';
 
 const ProgramManager = ({ params, programs, onOpenWindow, onMenuAction, windowA, handleExit}) => {
+
+	const [showAboutDialog, setShowAboutDialog] = useState(false);
 
 	//const onOpenWindow = params.onOpenWindow;
 
@@ -17,6 +20,12 @@ const ProgramManager = ({ params, programs, onOpenWindow, onMenuAction, windowA,
 				})),
 			],
 		},
+		{
+			label: 'Help',
+			submenu: [
+				{ label: 'About', action: 'about', menuOrder: 1000 },
+			],
+		}
 	], []);
 
 	// Handle menu actions (Copy/Paste)
@@ -28,8 +37,13 @@ const ProgramManager = ({ params, programs, onOpenWindow, onMenuAction, windowA,
 			case 'exit':
 				handleExit();
 				break;
+			case 'about':
 
-			
+				setShowAboutDialog(true)
+				
+				break;
+
+
 			default:
 				console.log(`Unknown action: ${action}`);
 				break;
@@ -45,6 +59,7 @@ const ProgramManager = ({ params, programs, onOpenWindow, onMenuAction, windowA,
 
 
 	return (
+		<>
 		<div className="program-manager" style={{ display: 'flex', flexWrap: 'wrap' }}>
 			{/* Map through programs and display an icon for each, filtering out progID == 0 */}
 			{programs.filter(program => program.progID !== 0 && program.menuOnly !== true ).map((program, index) => (
@@ -59,6 +74,18 @@ const ProgramManager = ({ params, programs, onOpenWindow, onMenuAction, windowA,
 				</div>
 			))}
 		</div>
+		{showAboutDialog &&
+				<DialogBox title="About Winbit32" icon="info" buttons={[{ label: 'OK', onClick: ()=>setShowAboutDialog(false) }]} onConfirm={() => {
+			setShowAboutDialog(false);
+		}} onCancel={() => {}} onClose={() => {}} showMinMax={false}>
+			<div style={{ textAlign: 'center', marginBottom: '10px', display: 'flex', flexDirection: 'column' }}>
+					<div>Winbit32.com version {require('../../../package.json').version || "0.0.0"}</div>
+				<div>
+						<a href="https://x.com/WinBit32" target="_blank" rel="noreferrer">X</a></div>
+						</div>
+		</DialogBox>
+		}
+		</>
 	);
 };
 
