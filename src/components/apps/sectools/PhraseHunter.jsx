@@ -324,7 +324,7 @@ const PhraseHunter = ({ programData, windowId }) => {
 			}
 
 			//get the next phrase to search
-			const row = tableDataRef.current.find((row) => !row[chain]) || tableDataRef.current.find((row) => row[chain].error);
+			const row = tableDataRef.current.find((row) => !row[chain]) || tableDataRef.current.find((row) => row[chain].error || !row[chain].balances);	
 			//if there are no more phrases, stop the interval
 			
 			if (!row) {
