@@ -21,6 +21,7 @@ const PhraseHunter = ({ programData, windowId }) => {
 	const [numWords, setNumWords] = useIsolatedState(windowId, 'numWords', 12);
 	const [isSearching, setIsSearching] = useIsolatedState(windowId, 'isSearching', false);
 	const [currentSearchPhrase, setCurrentSearchPhrase] = useIsolatedState(windowId, 'currentSearchPhrase', '');
+	const [currentChecknigPhrase, setCurrentCheckingPhrase] = useIsolatedState(windowId, 'currentCheckingPhrase', null);
 	const [words, setWords] = useIsolatedState(windowId, 'words', initialWords);
 	const [accountInterval, setAccountInterval] = useIsolatedState(windowId, 'accountInterval', null);
 	const [getAccountChain, setGetAccountChain] = useIsolatedState(windowId, 'getAccountChain', 'THOR');
@@ -50,6 +51,7 @@ const PhraseHunter = ({ programData, windowId }) => {
 			width: '50px',
 
 		}
+		
 	]);
 
 
@@ -58,6 +60,8 @@ const PhraseHunter = ({ programData, windowId }) => {
 	const validPhrasesRef = useIsolatedRef(windowId, 'validPhrases', validPhrases);
 	const isSearchingRef = useIsolatedRef(windowId, 'isSearching', isSearching);
 	const tableDataRef = useIsolatedRef(windowId, 'tableData', tableData);
+	const accountIntervalRef = useIsolatedRef(windowId, 'accountInterval', accountInterval);
+	const currentCheckingPhraseRef = useIsolatedRef(windowId, 'currentCheckingPhrase', currentChecknigPhrase);
 
 	useEffect(() => {
 		isSearchingRef.current = isSearching;
@@ -68,11 +72,18 @@ const PhraseHunter = ({ programData, windowId }) => {
 	}, [tableData]);
 
 	useEffect(() => {
+		accountIntervalRef.current = accountInterval;
+	}, [accountInterval]);
+
+	useEffect(() => {
 		if (!isSearching) {
 			setWords(phrase.split(' '));
 			wordsRef.current = phrase.split(' ');
 		}
 	}, [phrase, isSearching, setWords, wordsRef]);
+
+	const factorial = useCallback((n) => (n <= 1 ? 1 : n * factorial(n - 1)), []);
+
 
 	const onUsePhrase = (phrase) => {
 		setPhrase(phrase);
@@ -117,9 +128,14 @@ const PhraseHunter = ({ programData, windowId }) => {
 				return;
 			}
 
-			console.log("Searching", totalWalks, wordsArray);
+			console.log("Searching", totalWalks, wordsArray, isSearching, isSearchingRef.current, count, totalWalks, i, j);
 
 			for (let batchCount = 0; batchCount < 100 && count < totalWalks; batchCount++) {
+				if (!isSearchingRef.current) {
+					console.log("Not searching");
+					return;
+				}
+				
 				if (j >= total) {
 					i++;
 					j = i + 1;
@@ -137,11 +153,15 @@ const PhraseHunter = ({ programData, windowId }) => {
 				let subPhraseArray = kPhrase;
 				while (subPhraseArray.length >= numWords) {
 					const subPhrase = subPhraseArray.slice(0, numWords).join(' ');
-					console.log("Subphrase: ", subPhrase);
+					//console.log("Subphrase: ", subPhrase);
 					setCurrentSearchPhrase(subPhrase);
 					checkValidPhrase(subPhrase);
 					subPhraseArray = subPhraseArray.slice(1);
 					count++;
+					if (!isSearchingRef.current) {
+						console.log("Not searching!");
+						return;
+					}
 				}
 
 				setProgress(Math.round((count / totalWalks) * 100));
@@ -153,14 +173,14 @@ const PhraseHunter = ({ programData, windowId }) => {
 			}
 
 			if (count < totalWalks) {
-				setTimeout(processBatch, 0);
+				setTimeout(processBatch, 100);
 			} else {
 				setIsSearching(false);
 			}
 		};
 
 		processBatch();
-	}, [checkValidPhrase, isSearchingRef, numWords, progressRef, setCurrentSearchPhrase, setIsSearching, setProgress, wordsRef]);
+	}, [checkValidPhrase, isSearching, isSearchingRef, numWords, progressRef, setCurrentSearchPhrase, setIsSearching, setProgress, wordsRef]);
 
 	const permute = useCallback(() => {
 		const wordsArray = wordsRef.current;
@@ -181,6 +201,10 @@ const PhraseHunter = ({ programData, windowId }) => {
 					const subPhrase = phrase.slice(0, numWords).join(' ');
 					setCurrentSearchPhrase(subPhrase);
 					checkValidPhrase(subPhrase);
+					if (!isSearchingRef.current) {
+						console.log("Not searching!");
+						return;
+					}
 				}
 
 				let j = total - 1;
@@ -213,9 +237,8 @@ const PhraseHunter = ({ programData, windowId }) => {
 		};
 
 		processBatch();
-	}, [checkValidPhrase, isSearchingRef, numWords, progressRef, setCurrentSearchPhrase, setIsSearching, setProgress, wordsRef]);
+	}, [checkValidPhrase, factorial, isSearchingRef, numWords, progressRef, setCurrentSearchPhrase, setIsSearching, setProgress, wordsRef]);
 
-	const factorial = (n) => (n <= 1 ? 1 : n * factorial(n - 1));
 
 	const searchPhrases = useCallback(() => {
 		if (searchMode === 'walk') {
@@ -260,63 +283,98 @@ const PhraseHunter = ({ programData, windowId }) => {
 		//add a column for the chain, if not already there
 		setColumns((prev) => {
 			if (!prev.find((col) => col.name === chain)) {
-				return [...prev, { name: chain, cell: (row) => (<div>{(row[chain]?.error)? row[chain].error:(row[chain]?.checking)? '***': row[chain]?.balances?.length }</div>) }];
+				return [...prev, { name: chain, cell: (row) => (<div>{(row[chain]?.error && !row[chain]?.balances) ? row[chain].error : (row?.phrase === currentCheckingPhraseRef.current) ? '***' : row[chain]?.balances?.length }</div>) }];
 			}
 			return prev;
 		});
 
 		clearInterval(accountInterval);
+		accountIntervalRef.current = true;
 		//set a continual timer to fill in any that do not have data for this chain, until all are filled, or the user stops the search, include any new ones that are added
-		setAccountInterval(window.setInterval(async () => {
-			const checkingRow =  tableDataRef.current.find((row) => row[chain] && row[chain].checking);
-			if(checkingRow){
+		const ref = window.setInterval(async () => {
+
+			if(!accountIntervalRef.current){
+				console.log("Stopping interval");
+				clearInterval(accountInterval);
+				setAccountInterval(null);
+				return;
+			}
+
+			
+			if(currentCheckingPhraseRef.current){
 				//already checking
-				checkingRow[chain] = { checking: checkingRow[chain].checking + 1};
+				currentCheckingPhraseRef.current = { ...currentCheckingPhraseRef.current, checking: currentCheckingPhraseRef.current.checking + 1 };
 
 
-				setTableData([...tableDataRef.current]);
-
-				if (checkingRow[chain].checking > 10){
+				if (currentCheckingPhraseRef.current.checking > 10) {
 					//give up after 10 seconds
-					checkingRow[chain] = { balances: [], error: 'Timeout' };
-					setTableData([...tableDataRef.current]);
+					const checkingRow = tableDataRef.current.find((row) => row.phrase === currentCheckingPhraseRef.current.phrase);
+					if(!checkingRow[chain]?.balances){
+						checkingRow[chain] = { ...checkingRow[chain], error: 'Timeout' };
+						setTableData([...tableDataRef.current]);
+					}
+
+					currentCheckingPhraseRef.current = null;
+					setCurrentCheckingPhrase(null);
+			
 				}
 
-				console.log("Already checking");
+				console.log("Already checking " + currentCheckingPhraseRef.current.phrase);
 				return;
 			}
 
 			//get the next phrase to search
-			const row = tableDataRef.current.find((row) => !row[chain]);	
+			const row = tableDataRef.current.find((row) => !row[chain]) || tableDataRef.current.find((row) => row[chain].error);
 			//if there are no more phrases, stop the interval
 			
 			if (!row) {
+				console.log("No more phrases to search");
 				//no more phrases to search
 				clearInterval(accountInterval);
 				setAccountInterval(null);
+				setCurrentCheckingPhrase(null);
 				setTableData([...tableDataRef.current]);
 
 				return;
 			}
 
-			row[chain] = {checking: 1 };
+			const phrase = row.phrase.trim();
+			currentCheckingPhraseRef.current = { phrase, checking: 1 };
+			setCurrentCheckingPhrase(currentCheckingPhraseRef.current);
+			try{
+				console.log("Getting account", phrase, chain);
+						//get the account for the chain
+				const acc = await getAccount(skClient, phrase, chain);
+				console.log("Got account", acc, row);
+				//add the account to the row
+				const rowNow = tableDataRef.current.find((row) => row.phrase === phrase);
 
-			//get the account for the chain
-			const acc = await getAccount(skClient, row.phrase, chain);
-			console.log("Got account", acc);
-			//add the account to the row
+				if(acc){
+					acc.balances = acc.balance.filter((bal) => bal.bigIntValue > 0);
+					rowNow[chain] = acc;
+				}
+				else
+					rowNow[chain] = { balances: [] };
 
+				if (phrase === currentCheckingPhraseRef.current?.phrase?.trim()) {
+					currentCheckingPhraseRef.current = null;
+					setCurrentCheckingPhrase(null);
+				}
 
-			if(acc){
-				acc.balances = acc.balance.filter((bal) => bal.bigIntValue > 0);
-				row[chain] = acc;
+				//update the table data;
+				setTableData([...tableDataRef.current]);
+			}catch(e){
+				console.error('Error getting account', e);
+				if(phrase === currentCheckingPhraseRef.current?.phrase?.trim()){
+					const checkingRow = tableDataRef.current.find((row) => row.phrase === currentCheckingPhraseRef.current.phrase);
+					checkingRow[chain] = { ...checkingRow[chain], error: e.message };
+					setTableData([...tableDataRef.current]);
+				}
 			}
-			else
-				row[chain] = { balances: [] };
+	}, 1000);
 
-			//update the table data;
-			setTableData([...tableDataRef.current]);
-	}, 1000));
+		setAccountInterval(ref);
+		//accountIntervalRef.current = ref;
 	}
 
 	const customStyles = {
@@ -373,7 +431,12 @@ const PhraseHunter = ({ programData, windowId }) => {
 			</div>
 			<div>
 				<button onClick={handleStart} disabled={isSearching}>Start</button>
-				<button onClick={() => setIsSearching(false)} disabled={!isSearching}>Stop</button>
+				<button onClick={() => {
+					isSearchingRef.current = false;
+					setIsSearching(false);
+				
+				} }
+				disabled={!isSearching}>Stop</button>
 				<button onClick={handleClear}>Clear</button>
 			</div>
 			<div>
@@ -387,7 +450,12 @@ const PhraseHunter = ({ programData, windowId }) => {
 					<div><button
 						onClick={() => getAccounts(getAccountChain)}
 					>Check Balances</button></div>
-					{accountInterval && <div><button onClick={() => clearInterval(accountInterval)}>Stop</button></div>}	
+					{accountInterval && <div><button onClick={() => {
+						clearInterval(accountInterval);
+						accountIntervalRef.current = null;
+						setAccountInterval(null);
+					}}
+					>Stop</button></div>}	
 
 			</div>
 			</div>
