@@ -259,6 +259,16 @@ const PhraseHunter = ({ programData, windowId }) => {
 	const handleClear = () => {
 		setValidPhrases([]);
 		validPhrasesRef.current = [];
+		clearInterval(accountInterval);
+		setAccountInterval(null);
+		setTableData([]);
+		setIsSearching(false);
+		setProgress(0);
+		setCurrentSearchPhrase('');
+		setCurrentCheckingPhrase(null);
+		tableDataRef.current = [];
+		accountIntervalRef.current = null;
+		
 	};
 
 	const copyToClipboard = (text) => {
@@ -414,8 +424,8 @@ const PhraseHunter = ({ programData, windowId }) => {
 					Number of words:
 					<select value={numWords} onChange={(e) => setNumWords(parseInt(e.target.value))}>
 						<option value={12}>12</option>
-						<option value={12}>15</option>
-						<option value={12}>18</option>
+						<option value={15}>15</option>
+						<option value={18}>18</option>
 						<option value={24}>24</option>
 					</select>
 				</label>
