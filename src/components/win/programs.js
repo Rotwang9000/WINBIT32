@@ -6,9 +6,9 @@ import Paintbrush from "../apps/Paintbrush";
 import Desk from "../apps/Desk";
 import Winbit32 from "../apps/winbit32/Winbit32";
 import Portfolio from "../apps/winbit32/Portfolio";
-import IRCWindow from "../apps/mirc/IRCWindow";
-import ChannelList from "../apps/mirc/ChannelList";
-import MessagePanel from "../apps/mirc/MessagePanel";
+import IRCWindow from "../apps//winbit32/mirc/IRCWindow";
+import ChannelList from "../apps/winbit32/mirc/ChannelList";
+import MessagePanel from "../apps/winbit32/mirc/MessagePanel";
 import SwapComponent from "../apps/winbit32/SwapComponent";
 import SendFundsComponent from "../apps/winbit32/SendFundsComponent";
 import SecTools from "../apps/sectools/SecTools";
@@ -17,6 +17,7 @@ import Unsplit from "../apps/sectools/Unsplit";
 import ViewQR from "../apps/winbit32/ViewQR";
 import ReadQR from "../apps/winbit32/ReadQR";
 import PhraseHunter from "../apps/sectools/PhraseHunter";
+import NFTPurchasingComponent from "../apps/winbit32/mnft/NFTPurchasingComponent";
 
 
 export const getPrograms = () => {
@@ -130,7 +131,7 @@ export const getPrograms = () => {
 					progID: 2,
 					title: "Open with...",
 					icon: "💰",
-					progName: "winbit32.exe", 
+					progName: "winbit32.exe",
 					openLevel: -1,
 					addProgramData: ["phrase"],
 				},
@@ -212,6 +213,14 @@ export const getPrograms = () => {
 							defaultOpen: false,
 						},
 					],
+				},
+				{
+					progID: 4,
+					title: "mayaNFT",
+					icon: "📇",
+					progName: "mnft.exe", // Added name for "Paintbrush"
+					component: NFTPurchasingComponent,
+					maximized: true,
 				},
 				{
 					progID: 4,

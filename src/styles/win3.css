@@ -37,7 +37,12 @@ button {
 		}
 	
 }
-
+.dialog-label{
+	font-weight: 600;
+	font-size: 12px;
+	margin-top: 4px;
+	margin-bottom: 2px;
+}	
 
 .toast {
 	/* clippy.png in public folder */
@@ -255,6 +260,12 @@ input{
 	display: flex;
 	margin: 0px;
 
+}
+
+.dialog-box input{
+	border: 1px solid #000;
+	font-family: 'Courier New', Courier, monospace;
+	font-size: 14px;
 }
 
 

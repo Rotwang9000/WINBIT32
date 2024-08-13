@@ -18,7 +18,8 @@ export function createNewWindow(
 	closeWindow,
 	program,
 	metadata = {},
-	save = true
+	save = true,
+	sendUpHash = () => {}
 ) {
 	if (typeof program === "string") {
 		const progString = program.toLowerCase();
@@ -109,10 +110,7 @@ export function createNewWindow(
 
 		// Update the hash without causing a hashchange event
 		const newHash = newWindow.progID === 0 ? "" : `#${newWindow.progName}`;
-		console.log(`Setting hash to ${newHash}`);
-		if (window.location.hash !== newHash) {
-			window.history.replaceState(null, null, newHash);
-		}
+		sendUpHash(newHash);
 	// }else{
 		// console.log('Not setting hash', handleOpenArray);
 	}

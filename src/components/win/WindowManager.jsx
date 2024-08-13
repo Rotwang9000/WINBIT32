@@ -12,7 +12,7 @@ import { useWindowData } from './includes/WindowContext';
 import './styles/scrollbar.css';
 import { createNewWindow, convertObjectFunctions } from './includes/WindowManagerFunctions';
 
-const WindowManager = ({ programs, windowName, handleOpenFunction, setStateAndSave, providerKey, setWindowMenu, programData, setProgramData, handleOpenArray, handleExit }) => {
+const WindowManager = ({ programs, windowName, handleOpenFunction, setStateAndSave, providerKey, setWindowMenu, programData, setProgramData, handleOpenArray, handleExit, hashPath = [], sendUpHash = () => {} }) => {
 
 	const updatedState = {
 		windowName,
@@ -27,6 +27,11 @@ const WindowManager = ({ programs, windowName, handleOpenFunction, setStateAndSa
 
 	const highestZIndexRef = useRef(highestZIndex);
 	const { setWindowContent } = useWindowData();
+
+	const hashPathRef = useRef(hashPath);
+	const downstreamHashes = useRef([]);
+	
+
 
 	useEffect(() => {
 		if (highestZIndex !== highestZIndexRef.current) highestZIndexRef.current = highestZIndex;
@@ -191,21 +196,63 @@ const WindowManager = ({ programs, windowName, handleOpenFunction, setStateAndSa
 					const hash = window.location.hash.replace("#", "");
 					if (hash) {
 						console.log('Hash:', hash);
-						openWindowByProgName(hash);
+						hashPathRef.current = hash.split('/');
 					}
+				}
+				if(hashPathRef.current.length){
+					//Pop the first element from the array and open the window
+					const progName = hashPathRef.current.shift();
+					openWindowByProgName(progName);
 				}
 			}
 		};
 
 		initialize();
-		if (windowName === 'desktop') {
-			window.addEventListener("hashchange", handleHashChange);
+		// if (windowName === 'desktop') {
+		// 	window.addEventListener("hashchange", handleHashChange);
 
-			return () => {
-				window.removeEventListener("hashchange", handleHashChange);
-			};
-		}
+		// 	return () => {
+		// 		window.removeEventListener("hashchange", handleHashChange);
+		// 	};
+		// }
 	}, [windowName, programs, handleOpenWindow, handleHashChange, handleStateChange, functionMap, openWindowByProgName]);
+
+	// console.log(`Setting hash to ${newHash}`);
+	// if (window.location.hash !== newHash) {
+	// 	window.history.replaceState(null, null, newHash);
+	// }
+
+
+		//receive hash from child window, add to hashParts and send up
+	const _sendUpHash = (hash) => {
+		downstreamHashes.current = hash.slice();
+
+		//get our current front window and add to hash
+		const frontWindow = getCurrentFrontWindow;
+		if (frontWindow){
+			//console.log('frontWindow...', frontWindow);
+			hash.push(frontWindow.progName); 
+		}else{
+			console.log('No front window');
+			hash.push('');
+		}
+		sendUpHash(hash);
+	}
+			
+	
+	useEffect(() => {
+		const frontWindow = getCurrentFrontWindow;
+		if (frontWindow){
+			//console.log('frontWindow:', frontWindow);
+			const hashes = downstreamHashes.current.slice();
+			//send with the front window but don't add to downstreamHashes
+			hashes.push(frontWindow.progName);
+			sendUpHash(hashes);
+		}
+	}
+	, [windows, sendUpHash, getCurrentFrontWindow]);
+
+
 
 	return (
 		<>
@@ -277,6 +324,8 @@ const WindowManager = ({ programs, windowName, handleOpenFunction, setStateAndSa
 											setProgramData={setProgramData}
 											onOpenWindow={handleOpenWindow}
 											handleExit={handleExit}
+											hashPath={hashPathRef.current}
+											sendUpHash={_sendUpHash}
 										/>
 									</div>
 								</>

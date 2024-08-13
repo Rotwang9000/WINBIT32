@@ -1,0 +1,105 @@
+.custom-select-container {
+	position: relative;
+	width: 100%;
+}
+
+.custom-select-selected {
+	cursor: pointer;
+	padding: 10px;
+	background-color: #f0f0f0;
+	border: 3px outset #ccc;
+	/* border-radius: 4px; */
+	padding-right: 50px;
+	position: relative;
+	margin:2px;
+}
+/* button with down arrow in the centre */
+.custom-select-selected::after {
+	content: '⯆';
+	position: absolute;
+	top: 50%;
+	right: 0px;
+	transform: translateY(-50%);
+	width: 20px;
+	height: 70px;
+	font-size: 22px;
+	line-height: 28px;
+	border: none;
+	background-color: #ccc;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	border-left: 4px outset #ccc;
+
+}
+
+.custom-select-selected::after:active {
+	background-color: #aaa;
+	border: 3px inset #ccc;
+}
+
+.custom-select-selected-content {
+	display: flex;
+	align-items: center;
+	background-size: contain;
+	background-repeat: no-repeat;
+	background-position: right;
+	padding: 5px;
+}
+
+.custom-select-logo {
+	width: 40px;
+	height: 40px;
+	margin-right: 10px;
+}
+
+.custom-select-dropdown {
+	position: absolute;
+	width: 100%;
+	box-sizing: border-box;
+	background-color: #fff;
+	border: 1px solid #ccc;
+	border-radius: 4px;
+	box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+	z-index: 1000;
+	max-height: 70dvh;
+	height: auto;
+	overflow-y: auto;
+	overflow-x: hidden;
+	padding: 5px 0;
+	margin: 2px;
+}
+
+.custom-select-option {
+	display: flex;
+	align-items: center;
+	padding: 10px;
+	cursor: pointer;
+	background-size: contain;
+	background-repeat: no-repeat;
+	background-position: right;
+	height: 100px;
+		border: #d1d1d0 outset 2px;
+			background-color: #c0c0c0;
+			cursor: pointer;
+}
+
+@media screen and (max-width: 768px) {
+	.custom-select-option {
+		background-image: none!important;
+	}
+	
+}
+
+.custom-select-option:hover {
+	background-color: rgba(0, 0, 0, 0.05);
+	/* aspect-ratio: 1280 / 512;
+	width: 100%;
+	height: auto; */
+}
+
+.custom-select-option span {
+	z-index: 1;
+	/* background-color: rgba(255, 255, 255, 0.8); */
+	min-width: 300px;
+}

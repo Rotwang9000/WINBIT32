@@ -2,6 +2,8 @@ import React, { useEffect, useCallback, useRef } from 'react';
 import ReactDOM from 'react-dom';
 import TitleBar from './TitleBar';
 import Draggable from 'react-draggable'; // For draggable dialogs
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faCircleQuestion } from '@fortawesome/free-solid-svg-icons';
 
 const DialogBox = React.memo(({
 	title = 'Dialog',
@@ -19,7 +21,8 @@ const DialogBox = React.memo(({
 }) => {
 	const icons = {
 		info: 'ℹ️',
-		question: '❓',
+		question: <FontAwesomeIcon icon={faCircleQuestion} style={{ color: 'blue' }} />,
+		questionok: <FontAwesomeIcon icon={faCircleQuestion} style={{ color: 'blue' }} />,
 		exclamation: '❗',
 		stop: <img src='stop.png' alt='stop' />,
 		key: <img src='/images/safe.png' alt='key' style={{ width: '64px', height: '64px' }} />
