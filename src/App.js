@@ -66,6 +66,20 @@ const App = () => {
 	}, []);
 
 
+	const sendUpHash = (hashParts) => {
+			//reverse hashParts so that the first part is the top level
+			const rHashParts = hashParts.slice().reverse();
+			//console.log("Got Hash Parts:", hashParts);
+			const newHash = hashParts.length ? `#${rHashParts.join("/")}` : "";
+			//console.log("Setting hash to...", newHash);
+			if (window.location.hash !== newHash) {
+				window.history.replaceState(null, null, newHash);
+			}
+		};
+
+		
+
+
 	return (
 		<SKClientProviderManager>
 			<StateSetterProvider>
@@ -96,6 +110,7 @@ const App = () => {
 									providerKey={"desktop"}
 									handleOpenArray={[]}
 									handleExit={handleExit}
+									sendUpHash={sendUpHash}
 								/>
 							</WindowDataProvider>
 						</div>

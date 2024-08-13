@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useIsolatedState } from '../../win/includes/customHooks';
+import { useIsolatedState } from '../../../win/includes/customHooks';
 
 const MessagePanel = ({ data, windowId, parentWindowId }) => {
 	const [messages, setMessages] = useIsolatedState(windowId, 'messages', []);

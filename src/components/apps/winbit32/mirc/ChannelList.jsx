@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { useIsolatedState } from '../../win/includes/customHooks';
+import { useIsolatedState } from '../../../win/includes/customHooks';
 import MessagePanel from './MessagePanel';
 
 const ChannelList = ({windowID, data, params, onOpenWindow}) => {

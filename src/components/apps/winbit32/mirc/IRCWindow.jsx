@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react';
 import ChannelList from './ChannelList';
 import MessagePanel from './MessagePanel';
 import UserList from './UserList';
-import '../styles/mirc.css'; 
-import WindowContainer from '../../win/WindowContainer';
-import { useIsolatedState } from '../../win/includes/customHooks';
+import '../../styles/mirc.css'; 
+import WindowContainer from '../../../win/WindowContainer';
+import { useIsolatedState } from '../../../win/includes/customHooks';
 
 const IRCWindow = ({windowA, windowId, subPrograms}) => {
 	const [channels, setChannels] = useIsolatedState(windowId, 'channels', []);

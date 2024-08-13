@@ -248,12 +248,26 @@ const PhraseHunter = ({ programData, windowId }) => {
 		}
 	}, [walkSearch, permute, searchMode]);
 
+	useEffect(() => {
+		if (isSearching) {
+			searchPhrases();
+		}
+		return () => {
+			setIsSearching(false);
+			clearInterval(accountInterval);
+		}
+
+	}, [isSearching]);
+
+
+
+
 	const handleStart = () => {
 		console.log("Starting search");
 		setIsSearching(true);
 		isSearchingRef.current = true;
 		setProgress(0);
-		searchPhrases();
+
 	};
 
 	const handleClear = () => {

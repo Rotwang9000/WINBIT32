@@ -19,7 +19,9 @@ export const handleHashChange = (dispatch, getState) => () => {
 	const hash = window.location.hash.replace("#", "");
 	if (hash) {
 		console.log(`Hash found: ${hash}`);
-		dispatch(openWindowByProgName(hash)(dispatch, getState));
+		//split by / and get the first part
+		const hashParts = hash.split("/");
+		dispatch(openWindowByProgName(hashParts[0])(dispatch, getState));
 	}
 };
 
