@@ -290,8 +290,6 @@ export const SKClientProviderManager = ({ children }) => {
 				providerResponse = await fetch("https://dev-api.swapkit.dev/providers");
 			}
 
-
-
 			const providersUnsorted = await providerResponse.json();
 			//sort and remove chainflip
 			const providers = providersUnsorted.sort((a, b) => {
