@@ -181,83 +181,87 @@ const PhraseHunter = ({ programData, windowId }) => {
 
 		processBatch();
 	}, [checkValidPhrase, isSearching, isSearchingRef, numWords, progressRef, setCurrentSearchPhrase, setIsSearching, setProgress, wordsRef]);
-
 	const permute = useCallback(() => {
-		const wordsArray = wordsRef.current;
-		const total = wordsArray.length;
+		const wordsArray = wordsRef.current.filter((word) => word !== '');
+		const total = factorial(wordsArray.length);
 		let count = 0;
-		const totalPermutations = factorial(total);
-		const indices = Array.from({ length: total }, (_, i) => i);
-		const cycles = Array.from({ length: total }, (_, i) => total - i);
+		let batchCount = 0;
 
-		console.log("Starting permutations");
+		console.log("Starting permute search", total, wordsArray);
+
+		// Use an explicit stack to avoid recursion
+		const stack = [{ arr: [...wordsArray], l: 0 }];
 
 		const processBatch = () => {
-			if (!isSearchingRef.current) return;
+			if (!isSearchingRef.current) {
+				console.log("Not searching");
+				return;
+			}
 
-			for (let i = 0; i < 100 && count < totalPermutations; i++) {
-				const phrase = indices.map(i => wordsArray[i]);
-				if (phrase.length >= numWords) {
-					const subPhrase = phrase.slice(0, numWords).join(' ');
-					setCurrentSearchPhrase(subPhrase);
-					checkValidPhrase(subPhrase);
-					if (!isSearchingRef.current) {
-						console.log("Not searching!");
+			while (stack.length > 0) {
+				const { arr, l } = stack.pop();
+
+				if (l === arr.length - 1) {
+					const phrase = arr.join(' ');
+					setCurrentSearchPhrase(phrase);
+					checkValidPhrase(phrase);
+					count++;
+					batchCount++;
+					setProgress(Math.round((count / total) * 100));
+					progressRef.current = Math.round((count / total) * 100);
+
+					if (batchCount >= 100) {
+						setTimeout(processBatch, 100); // Pause and then continue after timeout
 						return;
 					}
-				}
-
-				let j = total - 1;
-				while (j >= 0) {
-					cycles[j]--;
-					if (cycles[j] === 0) {
-						indices.push(indices.splice(j, 1)[0]);
-						cycles[j] = total - j;
-						j--;
-					} else {
-						const k = cycles[j];
-						[indices[j], indices[total - k]] = [indices[total - k], indices[j]];
-						break;
+				} else {
+					for (let i = l; i < arr.length; i++) {
+						const newArr = [...arr];
+						[newArr[l], newArr[i]] = [newArr[i], newArr[l]]; // Swap
+						stack.push({ arr: newArr, l: l + 1 }); // Push the new state to the stack
 					}
-					if (!isSearchingRef.current) return;
-
 				}
-				count++;
-				setProgress(Math.round((count / totalPermutations) * 100));
-				progressRef.current = Math.round((count / totalPermutations) * 100);
-				if (!isSearchingRef.current) return;
 
+				if (!isSearchingRef.current) {
+					console.log("Stopped searching");
+					return;
+				}
 			}
 
-			if (count < totalPermutations) {
-				setTimeout(processBatch, 0);
-			} else {
-				setIsSearching(false);
-			}
+			setIsSearching(false);
+			console.log("Finished all permutations or stopped searching");
 		};
 
+		isSearchingRef.current = true;
 		processBatch();
-	}, [checkValidPhrase, factorial, isSearchingRef, numWords, progressRef, setCurrentSearchPhrase, setIsSearching, setProgress, wordsRef]);
+	}, [checkValidPhrase, isSearchingRef, progressRef, setCurrentSearchPhrase, setIsSearching, setProgress, wordsRef]);
 
 
-	const searchPhrases = useCallback(() => {
-		if (searchMode === 'walk') {
-			walkSearch();
-		} else if (searchMode === 'permutations') {
-			permute();
-		}
-	}, [walkSearch, permute, searchMode]);
 
-	useEffect(() => {
-		if (isSearching) {
-			searchPhrases();
-		}
-		return () => {
-			setIsSearching(false);
-			clearInterval(accountInterval);
-		}
 
-	}, [isSearching]);
+
+
+
+		const searchPhrases = useCallback(() => {
+			if (searchMode === 'walk') {
+				walkSearch();
+			} else if (searchMode === 'permutations') {
+				permute();
+			}
+		}, [walkSearch, permute, searchMode, isSearching]);
+
+		useEffect(() => {
+			if (isSearching) {
+				searchPhrases();
+				return () => {
+					setIsSearching(false);
+					console.log("Stopping search");
+					clearInterval(accountInterval);
+				}
+			}
+
+
+		}, [isSearching]);
 
 
 

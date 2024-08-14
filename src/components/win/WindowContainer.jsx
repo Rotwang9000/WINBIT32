@@ -70,6 +70,7 @@ const WindowContainer = ({
 					handleOpenArray={handleOpenArray}
 					hashPath={hashPath}
 					sendUpHash={sendUpHash}
+					windowId={windowId}
 				/>
 			</div>
 		</div>

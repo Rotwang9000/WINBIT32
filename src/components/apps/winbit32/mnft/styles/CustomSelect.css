@@ -13,6 +13,17 @@
 	position: relative;
 	margin:2px;
 }
+
+@media screen and (max-width: 768px) {
+	.custom-select-selected, .custom-select-selected-content{
+		background-image: none!important;
+	}
+
+	
+	
+}
+
+
 /* button with down arrow in the centre */
 .custom-select-selected::after {
 	content: '⯆';

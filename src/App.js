@@ -66,7 +66,7 @@ const App = () => {
 	}, []);
 
 
-	const sendUpHash = (hashParts) => {
+	const sendUpHash = (hashParts, windowId) => {
 			//reverse hashParts so that the first part is the top level
 			const rHashParts = hashParts.slice().reverse();
 			//console.log("Got Hash Parts:", hashParts);
@@ -111,6 +111,7 @@ const App = () => {
 									handleOpenArray={[]}
 									handleExit={handleExit}
 									sendUpHash={sendUpHash}
+									windowId={"desktop"}
 								/>
 							</WindowDataProvider>
 						</div>
