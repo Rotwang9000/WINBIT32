@@ -12,7 +12,7 @@ import { useWindowData } from './includes/WindowContext';
 import './styles/scrollbar.css';
 import { createNewWindow, convertObjectFunctions } from './includes/WindowManagerFunctions';
 
-const WindowManager = ({ programs, windowName, handleOpenFunction, setStateAndSave, providerKey, setWindowMenu, programData, setProgramData, handleOpenArray, handleExit, hashPath = [], sendUpHash = () => {} }) => {
+const WindowManager = ({ programs, windowName, windowId, handleOpenFunction, setStateAndSave, providerKey, setWindowMenu, programData, setProgramData, handleOpenArray, handleExit, hashPath = [], sendUpHash = () => {} }) => {
 
 	const updatedState = {
 		windowName,
@@ -29,7 +29,7 @@ const WindowManager = ({ programs, windowName, handleOpenFunction, setStateAndSa
 	const { setWindowContent } = useWindowData();
 
 	const hashPathRef = useRef(hashPath);
-	const downstreamHashes = useRef([]);
+	const downstreamHashes = useRef({});
 	
 
 
@@ -95,7 +95,8 @@ const WindowManager = ({ programs, windowName, handleOpenFunction, setStateAndSa
 	}, [dispatch]);
 
 	const bringToFront = useCallback((windowId) => {
-		console.log('bringToFront called with windowId:', windowId);
+		console.log('bringToFront called with windowID:', windowId);
+		downstreamHashes.current[windowId] = [];
 		dispatch(HandleFunctions.bringToFront(windowId));
 	}, [dispatch]);
 
@@ -224,33 +225,39 @@ const WindowManager = ({ programs, windowName, handleOpenFunction, setStateAndSa
 
 
 		//receive hash from child window, add to hashParts and send up
-	const _sendUpHash = (hash) => {
-		downstreamHashes.current = hash.slice();
-
+	const _sendUpHash = (hash, _windowId) => {
 		//get our current front window and add to hash
 		const frontWindow = getCurrentFrontWindow;
-		if (frontWindow){
+
+		if (frontWindow ){
+			console.log('frontWindow:', frontWindow.id, _windowId, windowId);
+			downstreamHashes.current[_windowId] = hash.slice();
+			const _hash = hash.slice();
 			//console.log('frontWindow...', frontWindow);
-			hash.push(frontWindow.progName); 
+			_hash.push(frontWindow.progName); 
+			sendUpHash(_hash, windowId);
+			
 		}else{
-			console.log('No front window');
-			hash.push('');
+			console.log('No front window', frontWindow, windowId, _windowId);
+			//downstreamHashes.current[_windowId].push('');
 		}
-		sendUpHash(hash);
 	}
 			
 	
 	useEffect(() => {
 		const frontWindow = getCurrentFrontWindow;
 		if (frontWindow){
-			//console.log('frontWindow:', frontWindow);
-			const hashes = downstreamHashes.current.slice();
+			//check if we are the front window
+
+			console.log('frontWindow:', frontWindow);
+			const hashes = downstreamHashes.current[frontWindow.id]?.slice() || [];
+			console.log('hashes:', hashes, frontWindow.windowId, windowId);
 			//send with the front window but don't add to downstreamHashes
 			hashes.push(frontWindow.progName);
-			sendUpHash(hashes);
+			sendUpHash(hashes, windowId);	
 		}
 	}
-	, [windows, sendUpHash, getCurrentFrontWindow]);
+	, [getCurrentFrontWindow]);
 
 
 
@@ -261,12 +268,12 @@ const WindowManager = ({ programs, windowName, handleOpenFunction, setStateAndSa
 					if (closedWindows.includes(window.windowId)) {
 						return null; // Skip rendering closed windows
 					}
-					const windowId = windowName + '_' + window.windowId;
+					const _windowId = windowName + '_' + window.windowId;
 
 					return (
 						<WindowBorder
-							key={windowId}
-							windowId={windowId}
+							key={_windowId}
+							windowId={_windowId}
 							title={window.title}
 							onMinimize={() => minimizeWindow(window)}
 							onMaximize={(isMaximized) => {
@@ -303,9 +310,9 @@ const WindowManager = ({ programs, windowName, handleOpenFunction, setStateAndSa
 									)}
 									<div className="window-content">
 										<window.component
-											key={windowName + '_component_' + windowId}
-											windowId={windowId}
-											windowName={window.progName.replace('.exe', '') + '-' + windowId}
+											key={windowName + '_component_' + _windowId}
+											windowId={window.windowId}
+											windowName={window.progName.replace('.exe', '') + '-' + _windowId}
 											onStateChange={newData => handleStateChange(window.windowId, newData)}
 											initialSubWindows={window.subWindows}
 											data={window.data}

@@ -217,7 +217,7 @@ const NFTPurchasingComponent = ({ providerKey, windowId, hashPath, sendUpHash })
 			fetchOwner();
 		}
 		if(selectedId !== '' && collectionInfo && collectionInfo.symbol) {
-			sendUpHash([selectedId, collectionInfo.symbol]);
+			sendUpHash([selectedId, collectionInfo.symbol], windowId);
 		}
 	}, [selectedId, collectionInfo]);
 
@@ -354,7 +354,7 @@ const NFTPurchasingComponent = ({ providerKey, windowId, hashPath, sendUpHash })
 					<button className='arrow-button' onClick={() => setSelectedId(selectedId + 1)} disabled={selectedId >= collectionInfo?.supply}>►</button>
 				</div>
 				<div className='card-bar-right'>
-					<div className='nft-number'>{selectedId}</div>
+					<div className='nft-number'>#{selectedId}</div>
 					{moreInfo.mintable && <div className='mintable-badge'>Mint: {collectionInfo.mint_price / (10 ** 10)} $CACAO</div>}
 					{moreInfo.purchaseable && <div className='purchaseable-badge'>Buy: {moreInfo.purchasePrice / (10 ** 10)} $CACAO</div>}
 				</div>
@@ -364,7 +364,7 @@ const NFTPurchasingComponent = ({ providerKey, windowId, hashPath, sendUpHash })
 					{error}
 				</div>
 			)}
-			<div style={{ width: '100%', boxSizing: 'border-box', display: 'flex', flexDirection: 'column' }} className='swap-component'>
+			<>
 				{sendInProgress && (
 					<div className='progress-bar-container'>
 						<ProgressBar percent={progress} progressID={windowId} />
@@ -373,7 +373,7 @@ const NFTPurchasingComponent = ({ providerKey, windowId, hashPath, sendUpHash })
 				<div className='nft-details' style={{ border: 'none ' }}>
 					<NFTDetail tokenId={selectedId} collectionInfo={collectionInfo} moreInfo={moreInfo} />
 				</div>
-			</div>
+			</>
 			{isBrowsing && (
 				<NFTBrowsingDialog
 					isOpen={isBrowsing}
