@@ -241,7 +241,7 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 						connectedRef.current = p;
 						setProgress(98);
 
-						skClient.getWalletWithBalance(Chain.Maya).then(async (result) => {
+						skClient.getWalletWithBalance(Chain.Arbitrum).then(async (result) => {
 							if (currentPhraseRef.current !== p || connectedRef.current !== p) {
 								console.log('Phrase changed, not updating wallets', p, currentRef.current);
 								return false;
@@ -360,7 +360,7 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 			label: 'Wallets',
 			submenu: [
 				{ label: 'XDEFI', action: 'xdefi' },
-				// { label: 'WalletConnect', action: 'walletconnect' },
+			 	{ label: 'WalletConnect (EVM Only)', action: 'walletconnect' },
 				{ label: 'Random Phrase', action: 'phrase' },
 
 			]

@@ -367,13 +367,21 @@ export const handleSwap = async (
 		if (!swapResponse) return;
 
 		const walletChain = ChainIdToChain[wallet.chainId];
-		const exURL = skClient.getExplorerTxUrl({
-			chain: walletChain,
-			txHash: swapResponse,
-		});
-		setExplorerUrl(exURL);
+		try{
+			const exURL = skClient.getExplorerTxUrl({
+				chain: walletChain,
+				txHash: swapResponse,
+			});
+			setExplorerUrl(exURL);
 
-		console.log("exURL", exURL);
+			console.log("exURL", exURL);
+		}catch(error){
+			setStatusText("Transaction sent but error getting result " + error.message);
+			setSwapInProgress(false);
+			setShowProgress(false);
+			return;
+		}
+		
 		// Function to log properties for debugging
 		// Function to log properties for debugging
 		function logObjectProperties(obj, name) {
