@@ -7,6 +7,25 @@ const MessagePanel = ({ data, windowId, parentWindowId }) => {
 	const { selectedChannel, corsProxy } = data;
 	 
 
+	//to Post.. get nonce
+	//https://www.mayans.app/api/message
+// 	{
+//   "mayaAddress": "maya1jtnsl8hp6paankqckwy3c3nhr728d0hw8h24rs",
+//   "getNonce": true
+// }
+	// returns {"nonce":"125609826365967923820"}
+	//sign it & post https://www.mayans.app/api/message
+
+	// {
+	// 	"message": "oh I made this then forgot about it. Anyways if anyone wants one of the NFT just ask, but I guess if you are in here you have one already!",
+	// 		"signature": "3b91c89116df279992ca025a4c289a868c9709c657310a6a369160106fcf86e119d6ba45a018d8953717d225459fd83c8a1b17138241b2cfcb07a39c98c59a96",
+	// 			"hexPubKey": "024ee6646f9899d557baa9ce3688a5b245bf7ae701f22a530439bd8dd073bbf511",
+	// 				"signedNonce": "maya1jtnsl8hp6paankqckwy3c3nhr728d0hw8h24rs125609826365967923820",
+	// 					"channel": "mnft-ONNGP"
+	// }
+
+
+
 	useEffect(() => {
 		if (selectedChannel) {
 			fetch(corsProxy + `https://www.mayans.app/api/message?chain=maya&channel=${selectedChannel}&page=0`)

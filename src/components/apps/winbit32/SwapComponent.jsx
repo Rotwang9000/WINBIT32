@@ -16,8 +16,9 @@ import { handleApprove } from './helpers/handlers';
 
 
 
-const SwapComponent = ({ providerKey, windowId }) => {
+const SwapComponent = ({ providerKey, windowId, programData }) => {
 	const { skClient, tokens, wallets, chainflipBroker } = useWindowSKClient(providerKey);
+	const { setPhrase } = programData;
 	const [swapFrom, setSwapFrom] = useIsolatedState(windowId, 'swapFrom', null);
 	const [swapTo, setSwapTo] = useIsolatedState(windowId, 'swapTo', null);
 	const [amount, setAmount] = useIsolatedState(windowId, 'amount', 0);
@@ -39,7 +40,7 @@ const SwapComponent = ({ providerKey, windowId }) => {
 	const [txnStatus, setTxnStatus] = useIsolatedState(windowId, 'txnStatus', '');
 	const currentTxnStatus = useRef(txnStatus);
 	const [statusText, setStatusText] = useIsolatedState(windowId, 'statusText', '');
-	const [quoteStatus, setQuoteStatus] = useIsolatedState(windowId, 'quoteStatus', 'Aff. fee 0.09%');
+	const [quoteStatus, setQuoteStatus] = useIsolatedState(windowId, 'quoteStatus', 'Aff. fee 0.32% (0.16% for synths)');
 	const [quoteId, setQuoteId] = useIsolatedState(windowId, 'quoteId', '');
 	const [maxAmount, setMaxAmount] = useIsolatedState(windowId, 'maxAmount', '0');
 	const [txnTimer, setTxnTimer] = useIsolatedState(windowId, 'txnTimer', null);
@@ -198,6 +199,7 @@ slippage=${slippage}
 					delayedParseIniData(clipboardText, setIniData, setSwapFrom, setSwapTo, setAmount, setDestinationAddress, setFeeOption, setSlippage, setSelectedRoute, routes, tokens);
 				});
 				break;
+
 			default:
 				console.log(`Unknown action: ${action}`);
 				break;
@@ -219,7 +221,7 @@ slippage=${slippage}
 				{ label: 'Copy All', action: 'copy' },
 				{ label: 'Paste', action: 'paste' },
 			],
-		},
+		}
 	], []);
 
 	const optimalRoute = useMemo(() => {

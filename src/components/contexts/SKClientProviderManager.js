@@ -9,6 +9,8 @@ import React, {
 import { ChainflipBroker } from "@swapkit/plugin-chainflip";
 import { ChainflipToolbox } from "@swapkit/toolbox-substrate";
 import { createSwapKit, Chain, WalletOption, AssetValue } from "@swapkit/sdk";
+import { walletconnectWallet } from "@swapkit/wallet-wc";
+
 
 const SKClientContext = createContext(null);
 
@@ -112,18 +114,17 @@ export const SKClientProviderManager = ({ children }) => {
 
 			const client = createSwapKit({
 				config: {
-					utxoApiKey: "A___UmqU7uQhRUl4"+"UhNzCi5LOu81LQ1T",
-					covalentApiKey: "cqt_rQygB4xJkdv"+"m8fxRcBj3MxBhCHv4",
-					ethplorerApiKey: "EK-8ftjU-8Ff"+"7UfY-JuNGL",
-					walletConnectProjectId: "",
-					wallets: [WalletOption.KEYSTORE],
-					chainflipBrokerUrl: "https://chainflip.winbit32.com"
+					utxoApiKey: "A___UmqU7uQhRUl4" + "UhNzCi5LOu81LQ1T",
+					covalentApiKey: "cqt_rQygB4xJkdv" + "m8fxRcBj3MxBhCHv4",
+					ethplorerApiKey: "EK-8ftjU-8Ff" + "7UfY-JuNGL",
+					walletConnectProjectId: "dac706e68e589ffa15fed9bbccd825f7",
+					wallets: [WalletOption.KEYSTORE, WalletOption.XDEFI, WalletOption.WALLETCONNECT],
+					chainflipBrokerUrl: "https://chainflip.winbit32.com",
+					thorswapApiKey: "",
 				},
 				rpcUrls: {
-					FLIP:
-						"https://api-chainflip.dwellir.com/204dd906-d81d-45b4-8bfa-6f5cc7163dbc",
+					FLIP: "https://api-chainflip.dwellir.com/204dd906-d81d-45b4-8bfa-6f5cc7163dbc",
 				},
-
 			});
 			console.log("Created client", client);
 
@@ -421,6 +422,68 @@ export const useWindowSKClient = (key) => {
 		[providers]
 	);
 
+	const connect = useCallback(
+		async (phrase, index) =>{
+			if(phrase === "WALLETCONNECT"){
+
+				console.log(
+					"Connecting with walletconnect"				);
+
+				//hide #root
+				document.getElementById("root").style.display = "none";
+				let w;
+				try{
+					w = await skClient.connectWalletconnect([
+						// Chain.BinanceSmartChain,
+						Chain.Ethereum,
+						Chain.THORChain,
+						// Chain.Avalanche,
+						// Chain.Arbitrum,
+						// Chain.Optimism,
+						// Chain.Polygon,
+						// Chain.Maya,
+						// Chain.Cosmos,
+						// Chain.Kujira,
+					]);
+				}catch(e){
+					console.log("Error", e);
+				}
+				console.log("Connected with walletconnect", w);
+				document.getElementById("root").style.display = "block";
+				return w;
+			}else if(phrase === "XDEFI"){
+				console.log("Connecting with xdefi");
+				//add xdefiwallet to skclient
+				const chains = [
+					Chain.Arbitrum,
+					Chain.Avalanche,
+					Chain.BinanceSmartChain,
+					Chain.Bitcoin,
+					Chain.BitcoinCash,
+					Chain.Cosmos,
+					Chain.Dogecoin,
+					Chain.Ethereum,
+					Chain.Kujira,
+					Chain.Litecoin,
+					Chain.Maya,
+					Chain.Optimism,
+					Chain.Polygon,
+					Chain.Solana,
+					Chain.THORChain,
+				];
+				setChains(chains);
+
+
+				return skClient.connectXDEFI(chains);
+
+			}
+			return skClient.connectKeystore(connectChains, phrase.trim(), index);
+			
+		},
+		[connectChains, skClient]
+	);
+
+
 	return {
 		skClient,
 		setWallets: (wallets) => setWallets(key, wallets),
@@ -434,6 +497,7 @@ export const useWindowSKClient = (key) => {
 		providers,
 		providerNames,
 		tokens,
+		connect,
 		disconnect: () => disconnect(key),
 	};
 };
