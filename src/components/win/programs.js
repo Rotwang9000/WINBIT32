@@ -184,6 +184,7 @@ export const getPrograms = () => {
 						smHeight: 350,
 					},
 				},
+
 				// {
 				// 	progID: 3,
 				// 	title: "mayaIRC",
@@ -214,6 +215,7 @@ export const getPrograms = () => {
 				// 		},
 				// 	],
 				// },
+
 				{
 					progID: 4,
 					title: "mayaNFT",
