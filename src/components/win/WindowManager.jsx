@@ -249,9 +249,9 @@ const WindowManager = ({ programs, windowName, windowId, handleOpenFunction, set
 		if (frontWindow){
 			//check if we are the front window
 
-			console.log('frontWindow:', frontWindow);
+			// console.log('frontWindow:', frontWindow);
 			const hashes = downstreamHashes.current[frontWindow.id]?.slice() || [];
-			console.log('hashes:', hashes, frontWindow.windowId, windowId);
+			// console.log('hashes:', hashes, frontWindow.windowId, windowId);
 			//send with the front window but don't add to downstreamHashes
 			hashes.push(frontWindow.progName);
 			sendUpHash(hashes, windowId);	

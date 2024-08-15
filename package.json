@@ -1,6 +1,6 @@
 {
   "name": "winbit32",
-  "version": "0.1.12",
+  "version": "0.1.13",
   "private": true,
   "homepage": "https://winbit32.com",
   "dependencies": {
@@ -21,6 +21,10 @@
     "@testing-library/jest-dom": "^5.17.0",
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^13.5.0",
+    "@walletconnect/modal-auth-react": "^2.6.2",
+    "@walletconnect/modal-core": "^2.6.2",
+    "@walletconnect/modal-sign-html": "^2.6.2",
+    "@walletconnect/modal-sign-react": "^2.6.2",
     "@webscopeio/react-textarea-autocomplete": "^4.9.2",
     "@yudiel/react-qr-scanner": "^2.0.3",
     "ajv": "^8.14.0",

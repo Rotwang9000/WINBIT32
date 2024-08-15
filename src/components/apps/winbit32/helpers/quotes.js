@@ -29,17 +29,17 @@ export const getQuotes = async (
 
 		const basisPoints =
 			swapFrom.identifier.includes("/") || swapTo.identifier.includes("/")
-				? 9
-				: 9;
+				? 32
+				: 16;
 
 		
 		const swapKitQuoteParams = {
 			sellAsset: swapFrom.identifier,
 			buyAsset: swapTo.identifier,
-			sellAmount: parseFloat(amount),
+			sellAmount: parseFloat(amount).toString(),
 			sourceAddress: chooseWalletForToken(swapFrom, wallets)?.address,
 			destinationAddress: thisDestinationAddress,
-			affiliateFee: 9,
+			affiliateFee: basisPoints,
 			affiliate: "be",
 			slippage: slippage,
 			// providers: ["MAYACHAIN"],
@@ -125,6 +125,7 @@ export const getQuotes = async (
 					? optimalRoute.estimatedTime.total / 60
 					: optimalRoute.estimatedTime / 60;
 
+
 			if (!destinationAddress)
 				setDestinationAddress(chooseWalletForToken(swapTo, wallets)?.address);
 			const expectedUSD =
@@ -132,7 +133,7 @@ export const getQuotes = async (
 				optimalRoute.expectedBuyAmount *
 					optimalRoute.meta?.assets.find(
 						(asset) =>
-							asset.name.toUpperCase() === optimalRoute.buyAsset.toUpperCase()
+							asset.asset.toUpperCase() === optimalRoute.buyAsset.toUpperCase()
 					)?.price;
 			const minRecd = amountInBigNumber(
 				optimalRoute.expectedOutputMaxSlippage ||

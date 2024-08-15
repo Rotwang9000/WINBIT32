@@ -184,36 +184,36 @@ export const getPrograms = () => {
 						smHeight: 350,
 					},
 				},
-				{
-					progID: 3,
-					title: "mayaIRC",
-					icon: "📡",
-					progName: "mirc.exe", // Added name for "Paintbrush"
-					component: IRCWindow,
-					initialPosition: { x: 1, y: 1, width: 425, height: 485 },
-					programs: [
-						{
-							progID: 0,
-							title: "Channel List",
-							//unicode icon:
-							icon: "📃",
-							component: ChannelList,
-							progName: "clist.exe", // Added name for "Channel List
-							defaultOpen: true,
-							maximized: true,
-							params: { _onOpenWindow: "!!handleOpenWindow" },
-						},
-						{
-							progID: 1,
-							title: "Message Panel",
-							icon: "💬",
-							progName: "msgpanel.exe", // Added name for "Message Panel"
-							component: MessagePanel,
-							maximized: true,
-							defaultOpen: false,
-						},
-					],
-				},
+				// {
+				// 	progID: 3,
+				// 	title: "mayaIRC",
+				// 	icon: "📡",
+				// 	progName: "mirc.exe", // Added name for "Paintbrush"
+				// 	component: IRCWindow,
+				// 	initialPosition: { x: 1, y: 1, width: 425, height: 485 },
+				// 	programs: [
+				// 		{
+				// 			progID: 0,
+				// 			title: "Channel List",
+				// 			//unicode icon:
+				// 			icon: "📃",
+				// 			component: ChannelList,
+				// 			progName: "clist.exe", // Added name for "Channel List
+				// 			defaultOpen: true,
+				// 			maximized: true,
+				// 			params: { _onOpenWindow: "!!handleOpenWindow" },
+				// 		},
+				// 		{
+				// 			progID: 1,
+				// 			title: "Message Panel",
+				// 			icon: "💬",
+				// 			progName: "msgpanel.exe", // Added name for "Message Panel"
+				// 			component: MessagePanel,
+				// 			maximized: true,
+				// 			defaultOpen: false,
+				// 		},
+				// 	],
+				// },
 				{
 					progID: 4,
 					title: "mayaNFT",

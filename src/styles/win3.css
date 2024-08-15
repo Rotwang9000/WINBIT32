@@ -185,6 +185,8 @@ input{
 	/* Ensure it's above other elements */
 }
 
+--wcm-z-index: 1000;
+
 .dialog-backdrop {
 	position: absolute;
 	top: 0;

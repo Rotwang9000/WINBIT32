@@ -43,7 +43,7 @@ export async function getQuoteFromThorSwap(quoteParams) {
 export async function getQuoteFromSwapKit(quoteParams) {
 	const apiUrl = "https://api.swapkit.dev"; // Adjust this URL as needed
 	//convert number strings to numbers
-	quoteParams.sellAmount = Number(quoteParams.sellAmount);
+	//quoteParams.sellAmount = Number(quoteParams.sellAmount);
 	quoteParams.slippage = Number(quoteParams.slippage);
 
 	const response = await fetch(`${apiUrl}/quote`, {

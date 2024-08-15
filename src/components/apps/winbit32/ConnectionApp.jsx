@@ -23,6 +23,9 @@ function ConnectionApp({ windowId, providerKey, phrase, setPhrase, connectionSta
 	//on phrase blur then remove all invalid words
 	useEffect(() => {
 		if (!phraseFocus) {
+			if(/^WALLETCONNECT/.test(phrase) || /^XDEFI/.test(phrase)){
+				return;
+			}
 			const words = phrase.split(' ');
 			let index;
 			if(!isNaN(words[words.length - 1])){

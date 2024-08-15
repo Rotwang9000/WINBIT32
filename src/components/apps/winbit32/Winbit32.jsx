@@ -32,7 +32,7 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 	const [programData, setProgramData] = useIsolatedState(windowId, 'programData', { phrase, statusMessage, setPhrase, setStatusMessage });
 
 
-	const { skClient, setWallets, wallets, connectChains, disconnect, addWallet, resetWallets } = useWindowSKClient(windowName);
+	const { skClient, setWallets, wallets, connectChains, disconnect, addWallet, resetWallets, connect } = useWindowSKClient(windowName);
 
 	const currentRef = useRef(phrase);
 	const connectedRef = useRef(connectedPhrase);
@@ -69,6 +69,14 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 	currentPhraseRef.current = phrase;
 
 	useEffect(() => {
+
+		if (/^WALLETCONNECT/.test(phrase)) {
+			currentPhraseRef.current = "WALLETCONNECT";
+		}
+		if (/^XDEFI/.test(phrase)) {
+			currentPhraseRef.current = "XDEFI";
+		}
+
 		if(phrase.trim().split(' ').length === 1) {
 			currentPhraseRef.current = phrase.replace(/[^a-zA-Z0-9 ]/g, '').replace(/  +/g, ' ').trim();
 		}else{
@@ -88,6 +96,8 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 
 	const checkValidPhrase = useCallback(async (chkPhrase) => {
 		let words = chkPhrase.split(' ');
+		if(words.length > 0 && (words[0] === 'WALLETCONNECT' || words[0] === 'XDEFI'))
+				 return true;
 			//if not private key
 		if(words.length !== 1) {
 			//if last one is a number, remove it
@@ -200,6 +210,7 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 			setProgress(13);
 			//if currentPhraseRef doesn't have a number on the end then add a zero
 			let p = currentPhraseRef.current.trim();
+
 			const ps = p.split(' ');
 			const lastIsWord = ps.length > 0 && isNaN(ps[ps.length - 1]);
 
@@ -219,7 +230,7 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 			console.log('connecting with skClient:', skClient);
 
 			try {
-				skClient.connectKeystore(connectChains, phrase.trim(), index)
+				connect(phrase.trim(), index)
 					.then(async (wallet) => {
 						if (currentPhraseRef.current !== p) {
 							console.log('Phrase changed, not updating wallets', phrase, currentRef.current);
@@ -344,6 +355,16 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 				{ label: 'View Private Key...', action: 'viewQR' }
 			],
 		},
+		
+		{
+			label: 'Wallets',
+			submenu: [
+				{ label: 'XDEFI', action: 'xdefi' },
+				// { label: 'WalletConnect', action: 'walletconnect' },
+				{ label: 'Random Phrase', action: 'phrase' },
+
+			]
+		},
 		{
 			label: 'Window',
 			submenu: windowMenu
@@ -396,6 +417,15 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 						handleConnect();
 					}, 1500);
 				});
+				break;
+			case 'xdefi':
+				setPhrase('XDEFI');
+				break;
+			case 'walletconnect':
+				setPhrase('WALLETCONNECT');
+				break;
+			case 'phrase':
+				setPhrase(generatePhrase());
 				break;
 			default:
 				console.log(`Unknown action: ${action}`);
