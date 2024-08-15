@@ -433,18 +433,30 @@ export const useWindowSKClient = (key) => {
 				document.getElementById("root").style.display = "none";
 				let w;
 				try{
-					w = await skClient.connectWalletconnect([
-						// Chain.BinanceSmartChain,
+					const metadata = {
+						name: "WINBIT32",
+						description:
+							"WINBIT32 does stuff.",
+						url: "https://winbit32.com/",
+						icons: [
+							"https://winbit32.com/favicon/android-icon-192x192.png",
+						],
+					};
+					const chains = [
+						Chain.BinanceSmartChain,
 						Chain.Ethereum,
-						Chain.THORChain,
-						// Chain.Avalanche,
-						// Chain.Arbitrum,
+						// Chain.THORChain,
+						 Chain.Avalanche,
+							Chain.Arbitrum,
 						// Chain.Optimism,
 						// Chain.Polygon,
 						// Chain.Maya,
 						// Chain.Cosmos,
 						// Chain.Kujira,
-					]);
+					];
+					setChains(chains);
+
+					w = await skClient.connectWalletconnect(chains, {metadata});
 				}catch(e){
 					console.log("Error", e);
 				}
