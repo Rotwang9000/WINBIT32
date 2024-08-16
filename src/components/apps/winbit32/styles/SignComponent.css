@@ -1,0 +1,28 @@
+.sign-component>.swap-component>.transaction-section {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  color: #000;
+	box-sizing: border-box;
+	padding: 5px;
+}
+
+.sign-component .transaction-section>*{
+	margin: 5px;
+}
+
+.sign-component textarea {
+  font-family: 'Courier New', Courier, monospace;
+  font-weight: 600;
+  /* border: none!important; */
+  height: 66px;
+  padding-top: 5px;
+  margin: 0!important;
+  box-sizing: border-box;
+  width: 90%;	
+}
+
+.sign-component h4{
+	margin: 5px;
+}

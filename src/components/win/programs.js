@@ -18,6 +18,8 @@ import ViewQR from "../apps/winbit32/ViewQR";
 import ReadQR from "../apps/winbit32/ReadQR";
 import PhraseHunter from "../apps/sectools/PhraseHunter";
 import NFTPurchasingComponent from "../apps/winbit32/mnft/NFTPurchasingComponent";
+import { sign } from "@bitcoinerlab/secp256k1";
+import SignTransactionComponent from "../apps/winbit32/SignTransactionComponent";
 
 
 export const getPrograms = () => {
@@ -184,7 +186,20 @@ export const getPrograms = () => {
 						smHeight: 350,
 					},
 				},
-
+				{
+					progID: 3,
+					title: "Sign",
+					icon: "📝",
+					progName: "sign.exe", // Added name for "Paintbrush"
+					component: SignTransactionComponent,
+					initialPosition: {
+						x: 1,
+						y: 1,
+						width: 425,
+						height: 550,
+						smHeight: 350,
+					},
+				},
 				// {
 				// 	progID: 3,
 				// 	title: "mayaIRC",

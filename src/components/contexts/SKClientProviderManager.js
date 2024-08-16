@@ -36,6 +36,8 @@ const initialState = {
 		Chain.Maya,
 		Chain.Kujira,
 		Chain.Arbitrum,
+		// Chain.Base,
+
 		// Chain.Chainflip
 	],
 	providers: [],
@@ -448,6 +450,7 @@ export const useWindowSKClient = (key) => {
 						// Chain.THORChain,
 						 Chain.Avalanche,
 							Chain.Arbitrum,
+						// Chain.Base,
 						// Chain.Optimism,
 						// Chain.Polygon,
 						// Chain.Maya,
@@ -482,6 +485,7 @@ export const useWindowSKClient = (key) => {
 					Chain.Polygon,
 					Chain.Solana,
 					Chain.THORChain,
+					// Chain.Base,
 				];
 				setChains(chains);
 
