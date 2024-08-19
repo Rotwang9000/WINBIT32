@@ -70,7 +70,10 @@ const App = () => {
 			//reverse hashParts so that the first part is the top level
 			const rHashParts = hashParts.slice().reverse();
 			//console.log("Got Hash Parts:", hashParts);
-			const newHash = hashParts.length ? `#${rHashParts.join("/")}` : "";
+			let newHash = hashParts.length ? `#${rHashParts.join("/")}` : "";
+			if( newHash === "#progman.exe"){
+				newHash = "";
+			}
 			//console.log("Setting hash to...", newHash);
 			if (window.location.hash !== newHash) {
 				window.history.replaceState(null, null, newHash);

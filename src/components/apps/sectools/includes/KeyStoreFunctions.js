@@ -81,7 +81,7 @@ export const processFileOpen = async (fileText) => {
 
 
 
-export const setupFileInput = (setPhrase, setMessage) => {
+export const setupFileInput = (setPhrase, setMessage, setLockMode) => {
 	const input = document.createElement("input");
 	input.type = "file";
 	input.style.display = "none";
@@ -94,6 +94,7 @@ export const setupFileInput = (setPhrase, setMessage) => {
 				const phrase = await processFileOpen(ev.target.result);
 				if (phrase) {
 					setPhrase(phrase);
+					setLockMode(false);
 				}else{
 					setMessage("Failed to process file");
 				}

@@ -120,12 +120,17 @@ export const SKClientProviderManager = ({ children }) => {
 					covalentApiKey: "cqt_rQygB4xJkdv" + "m8fxRcBj3MxBhCHv4",
 					ethplorerApiKey: "EK-8ftjU-8Ff" + "7UfY-JuNGL",
 					walletConnectProjectId: "dac706e68e589ffa15fed9bbccd825f7",
-					wallets: [WalletOption.KEYSTORE, WalletOption.XDEFI, WalletOption.WALLETCONNECT],
+					wallets: [
+						WalletOption.KEYSTORE,
+						WalletOption.XDEFI,
+						WalletOption.WALLETCONNECT,
+					],
 					chainflipBrokerUrl: "https://chainflip.winbit32.com",
 					thorswapApiKey: "",
 				},
 				rpcUrls: {
 					FLIP: "https://api-chainflip.dwellir.com/204dd906-d81d-45b4-8bfa-6f5cc7163dbc",
+					ETH: "https://mainnet.infura.io/v3/c3b4e673639742a89bbddcb49895d568",
 				},
 			});
 			console.log("Created client", client);

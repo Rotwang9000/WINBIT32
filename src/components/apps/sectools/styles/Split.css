@@ -39,6 +39,7 @@
 	flex-wrap: wrap;
 	background-color: #c0c0c0;
 	height: fit-content;
+	flex: 1 1 100%;
 }
 
 .key-split>div{

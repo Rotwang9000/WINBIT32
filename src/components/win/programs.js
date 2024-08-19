@@ -20,6 +20,7 @@ import PhraseHunter from "../apps/sectools/PhraseHunter";
 import NFTPurchasingComponent from "../apps/winbit32/mnft/NFTPurchasingComponent";
 import { sign } from "@bitcoinerlab/secp256k1";
 import SignTransactionComponent from "../apps/winbit32/SignTransactionComponent";
+import Tss from "../apps/winbit32/Tss";
 
 
 export const getPrograms = () => {
@@ -238,6 +239,21 @@ export const getPrograms = () => {
 					progName: "mnft.exe", // Added name for "Paintbrush"
 					component: NFTPurchasingComponent,
 					maximized: true,
+				},
+				{
+					progID: 8,
+					title: "Winbit TSS",
+					icon: "🔐",
+					hideInToolbar: true,
+					progName: "tss.exe", // Added name for "Paintbrush"
+					component: Tss,
+					addProgramData: ["phrase"],
+					initialPosition: {
+						x: 1,
+						y: 1,
+						width: 355,
+						height: 355,
+					},
 				},
 				{
 					progID: 4,

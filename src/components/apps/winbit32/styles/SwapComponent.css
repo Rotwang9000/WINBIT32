@@ -12,6 +12,16 @@
   margin: 2px;
 }
 
+.tss{
+  display: flex;
+  flex-direction: column;
+ flex-grow: 1;
+
+    width: 100%;
+      box-sizing: border-box;
+     
+}
+
 .field-group {
   display: flex;
   align-items: center;
