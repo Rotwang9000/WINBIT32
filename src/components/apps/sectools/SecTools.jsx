@@ -13,7 +13,7 @@ function generatePhrase(size = 12) {
 	return generateMnemonic(wordlist, entropy);
 }
 
-const SecTools = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave, handleStateChange, handleOpenArray, metadata }) => {
+const SecTools = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave, handleStateChange, handleOpenArray, metadata, hashPath, sendUpHash }) => {
 	const warnMsg = 'Use these tools with care. Only use them if you know what you are doing.';
 	const [phrase, setPhrase] = useIsolatedState(windowId, 'phrase', metadata?.phrase || generatePhrase());
 	const [statusMessage, setStatusMessage] = useIsolatedState(windowId, 'statusMessage', warnMsg);
@@ -187,6 +187,8 @@ const SecTools = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 			programData={programData}
 			setProgramData={setProgramData}
 			handleOpenArray={handleOpenArray}
+			hashPath={hashPath}
+			sendUpHash={sendUpHash}
 		>
 			<PhraseApp windowId={windowId} phrase={phrase} setPhrase={setPhrase}
 				statusMessage={statusMessage}

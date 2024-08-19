@@ -161,7 +161,7 @@ const Split = ({ programData, windowId }) => {
 						</li>
 					))}
 				</ul>
-				<div>Note: This is not multisig, simply a way to split the Private Key {hexKey} into multiple parts for safekeeping.</div>
+				<div>To use these parts you can select Winbit TSS option in Money Manager.</div>
 			</div>
 		);
 	};

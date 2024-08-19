@@ -30,6 +30,7 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 	const [showScanner, setShowScanner] = useIsolatedState(windowId, 'showScanner', false);
 	const [handleSubProgramClick, setHandleSubProgramClick] = useIsolatedState(windowId, 'handleSubProgramClick', null);
 	const [programData, setProgramData] = useIsolatedState(windowId, 'programData', { phrase, statusMessage, setPhrase, setStatusMessage });
+	const [lockMode, setLockMode] = useIsolatedState(windowId, 'lockMode', false);
 
 
 	const { skClient, setWallets, wallets, connectChains, disconnect, addWallet, resetWallets, connect } = useWindowSKClient(windowName);
@@ -38,6 +39,7 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 	const connectedRef = useRef(connectedPhrase);
 	const currentWalletsRef = useRef(wallets);
 	const fileInputRef = useRef(null);
+	const handleSubProgramClickRef = useRef(handleSubProgramClick);
 
 	useEffect(() => {
 		if (connectedRef.current !== connectedPhrase) {
@@ -46,13 +48,13 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 	}, [connectedPhrase]);
 
 	useEffect(() => {
-		fileInputRef.current = setupFileInput(setPhrase, setStatusMessage);
+		fileInputRef.current = setupFileInput(setPhrase, setStatusMessage, setLockMode);	
 		return () => {
 			if (fileInputRef.current) {
 				document.body.removeChild(fileInputRef.current);
 			}
 		};
-	}, [setPhrase, setStatusMessage]);
+	}, [setPhrase, setStatusMessage, setLockMode]);	
 
 	const handleOpenFile = useCallback(() => {
 		triggerFileInput(fileInputRef.current);
@@ -62,8 +64,8 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 
 	useEffect(() => {
 		if(currentRef.current !== phrase) currentRef.current = phrase;
-		setProgramData({ phrase, statusMessage, setPhrase, setStatusMessage });
-	}, [phrase, setPhrase, setProgramData, setStatusMessage, statusMessage]);
+		setProgramData({ phrase, statusMessage, setPhrase, setStatusMessage, lockMode, setLockMode });
+	}, [phrase, setPhrase, setProgramData, setStatusMessage, statusMessage, lockMode, setLockMode]);
 
 	const currentPhraseRef = useIsolatedRef(windowId, 'phrase', '');
 	currentPhraseRef.current = phrase;
@@ -328,9 +330,53 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 		setPhraseSaved(false);
 	}, [phrase, connectedPhrase, currentPhraseRef, setPhraseSaved]);
 
+	const walletMenu = useMemo(() => [
+		{ label: 'XDEFI', action: 'xdefi' },
+		{ label: 'WalletConnect (EVM Only)', action: 'walletconnect' },
+		{ label: 'Phrase', action: 'phrase' },
+		{ label: 'WinBit TSS', action: 'winbittss' },
+	]
+	, []);
 
 
-	const menu = useMemo(() => [
+
+	const menu = useMemo(() =>
+	{ if(lockMode){
+		return [
+			{
+				label: 'File',
+				submenu: [
+					{ label: (connectionStatus === 'connecting' ? 'Connecting...' : connectionStatus === 'connected' ? 'Refresh' : 'Connect'), action: 'connect' },
+					{ label: 'Open...', action: 'open' },
+					{ label: 'Exit', action: 'exit' },
+				],
+			},
+			{
+				label: 'Edit',
+				submenu: [
+					{ label: 'Paste', action: 'paste' },
+				],
+			},
+			{
+				label: '2D Barcode',
+				submenu: [
+					{ label: 'Read Private Key...', action: 'readQR' },
+				],
+			},
+			{
+				label: 'Wallets',
+				submenu: walletMenu
+			},
+
+			{
+				label: 'Window',
+				submenu: windowMenu
+			}
+		];
+
+
+	}else{
+		return	[
 		{
 			label: 'File',
 			submenu: [
@@ -358,18 +404,16 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 		
 		{
 			label: 'Wallets',
-			submenu: [
-				{ label: 'XDEFI', action: 'xdefi' },
-			 	{ label: 'WalletConnect (EVM Only)', action: 'walletconnect' },
-				{ label: 'Random Phrase', action: 'phrase' },
-
-			]
+			submenu: walletMenu
 		},
 		{
 			label: 'Window',
 			submenu: windowMenu
 		}
-	], [connectionStatus, windowMenu]);
+		];
+	}
+	}, [connectionStatus, windowMenu, lockMode, walletMenu]);
+
 
 	const handleMenuClick = useCallback((action) => {
 		const currentInput = currentRef.current;
@@ -385,15 +429,15 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 				handleOpenFile();
 				break;
 			case 'readQR':
-				if (handleSubProgramClick) {
-					handleSubProgramClick('readqr.exe');
+				if (handleSubProgramClickRef.current) {
+					handleSubProgramClickRef.current('readqr.exe');
 				} else {
 					console.log('No readQR function defined');
 				}
-				break;				break;
+				break;				
 			case 'viewQR':
-				if (handleSubProgramClick) {
-					handleSubProgramClick('viewqr.exe');
+				if (handleSubProgramClickRef.current) {
+					handleSubProgramClickRef.current('viewqr.exe');
 				} else {
 					console.log('No viewQR function defined');
 				}
@@ -413,33 +457,49 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 			case 'paste':
 				navigator.clipboard.readText().then((clipboardText) => {
 					setPhrase(clipboardText.replace(/[^a-zA-Z0-9 ]/g, '').replace(/  +/g, ' '));
+					setLockMode(false);
 					setTimeout(() => {
 						handleConnect();
-					}, 1500);
+					}, 1200);
 				});
+				break;
+			case 'winbittss':
+				if (handleSubProgramClickRef.current) {
+					handleSubProgramClickRef.current('tss.exe');
+					setLockMode(true);
+				} else {
+					console.log('No winbittss function defined');
+				}
 				break;
 			case 'xdefi':
 				setPhrase('XDEFI');
+				setLockMode(true);
 				break;
 			case 'walletconnect':
 				setPhrase('WALLETCONNECT');
+				setLockMode(true);
 				break;
 			case 'phrase':
 				setPhrase(generatePhrase());
+				setLockMode(false);
 				break;
 			default:
 				console.log(`Unknown action: ${action}`);
 				break;
 		}
-	}, [handleConnect, handleOpenFile, handleSubProgramClick, setPhrase, setPhraseSaved, setShowScanner, showScanner, windowA]);
+	}, [handleConnect, handleOpenFile, handleSubProgramClick, setPhrase, setPhraseSaved, setShowScanner, showScanner, windowA, setLockMode]);
 
 	useEffect(() => {
 		if (onMenuAction) {
 			onMenuAction(menu, windowA, handleMenuClick);
 		}
-	}, [onMenuAction, menu, windowA, handleMenuClick]);
+	}, [onMenuAction, menu, windowA, handleMenuClick, handleSubProgramClick]);
 
 	const handleSetSubProgramClick = useCallback((handle) => {
+		// console.log('handleSetSubProgramClick', handle, handleSubProgramClick);
+
+		handleSubProgramClickRef.current = handle;
+
 		//check if actually changed
 		if (handleSubProgramClick === handle) {
 			return;
@@ -454,6 +514,11 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 
 		setHandleSubProgramClick(() => handle);
 	}, [handleSubProgramClick, setHandleSubProgramClick]);
+
+
+	// useEffect(() => {	
+	// 	handleSubProgramClickRef.current = handleSubProgramClick;
+	// }, [handleSubProgramClick]);
 
 	return (
 		<WindowContainer
@@ -488,6 +553,7 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 				phraseSaved={phraseSaved}
 				setPhraseSaved={setPhraseSaved}
 				handleConnect={handleConnect}
+				programData={programData}	
 			/>
 
 		</WindowContainer>

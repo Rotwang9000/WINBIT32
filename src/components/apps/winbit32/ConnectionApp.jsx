@@ -16,7 +16,7 @@ function generatePhrase(size = 12) {
 
 function ConnectionApp({ windowId, providerKey, phrase, setPhrase, connectionStatus, setConnectionStatus, statusMessage, 
 						setStatusMessage, showProgress, setShowProgress, progress, setProgress, handleConnect,
-						phraseSaved, setPhraseSaved}) {
+						phraseSaved, setPhraseSaved, programData}) {
 
 	const [phraseFocus, setPhraseFocus] = useIsolatedState(windowId, 'phraseFocus', false);
 
@@ -61,6 +61,7 @@ function ConnectionApp({ windowId, providerKey, phrase, setPhrase, connectionSta
 	return (
 		<div className="connection-app">
 			<div className="content">
+				{ programData && !programData.lockMode && 
 				<div className="row">
 					<textarea
 						id="phrase"
@@ -104,6 +105,7 @@ function ConnectionApp({ windowId, providerKey, phrase, setPhrase, connectionSta
 						}
 					className="traffic-light" style={{ backgroundColor: trafficLightColor() }}></div>
 				</div>
+				}	
 				<div className="status-row">
 					<div className="status-message">
 						<div>{statusMessage}</div>

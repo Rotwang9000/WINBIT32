@@ -33,16 +33,19 @@ const WindowContainer = ({
 	const handleSetSubProgramClick = useCallback((handle) => {
 
 		handleSubProgramClickRef.current = handle;
+		onSubProgramClick(handleSubProgramClickRef.current);
+
+		console.log('handleSubProgramClick', handle);	
+
 
 		//do a deep check and see if has really changed
-		if (handle === handleSubProgramClick) return;
+		// if (handle === handleSubProgramClick) return;
 
 		if(((typeof handleSubProgramClick === 'function') && (typeof handle === 'function')) && (handleSubProgramClick.toString() === handle.toString())) return;
 		
 
 		setHandleSubProgramClick(handle, true);
 	
-		onSubProgramClick(handle);
 	}, [handleSubProgramClick, onSubProgramClick, setHandleSubProgramClick]);
 
 	useEffect(() => {

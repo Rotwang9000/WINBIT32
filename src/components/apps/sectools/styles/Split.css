@@ -39,7 +39,13 @@
 	flex-wrap: wrap;
 	background-color: #c0c0c0;
 	height: fit-content;
+	flex: 1 1 100%;
 }
+
+.key-split>div:first-child{
+	height: 100px;	
+}
+
 
 .key-split>div{
 		border: 2px outset #f0f0f0;
