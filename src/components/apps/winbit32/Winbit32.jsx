@@ -86,7 +86,7 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 			currentPhraseRef.current = t
 				.map((word, index) => {
 					if (index === t.length - 1 && !isNaN(word)) {
-						console.log('Last word is a number', word);
+						// console.log('Last word is a number', word);
 						return word;
 					} else {
 						return word.replace(/[^a-zA-Z ]/g, ' ');
@@ -105,7 +105,7 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 			//if last one is a number, remove it
 			let index = 0;
 			if (!isNaN(words[words.length - 1])) {
-				console.log('Last word is a number... ', words[words.length - 1]);
+				// console.log('Last word is a number... ', words[words.length - 1]);
 				index = words.pop();
 			}
 
@@ -118,7 +118,7 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 				//remove all invalid words
 				const validWords = words.filter(word => wordlist.includes(word));
 				const validPhrase = validWords.join(' ') + ((index > 0)? ' ' + index : '');
-				console.log('Invalid words removed, with index', validPhrase);
+				// console.log('Invalid words removed, with index', validPhrase);
 				setPhrase(validPhrase);
 				currentPhraseRef.current = validPhrase;
 				return checkValidPhrase(validPhrase);
@@ -126,7 +126,7 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 			const isValidPhase = isValidMnemonic(currentPhraseRef.current.replace(/[0-9]+$/, '').trim());
 			console.log('isValidPhase', isValidPhase);
 			if (!isValidPhase) {
-				console.log('Invalid checksum ', currentPhraseRef.current);
+				// console.log('Invalid checksum ', currentPhraseRef.current);
 				return false;
 			}
 		}else{
@@ -140,7 +140,7 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 				//get entropy from seed
 				const entropy = Buffer.from(chkPhrase, 'hex');
 				const phrase = entropyToMnemonic(entropy, wordlist);
-				console.log('phrase', phrase);
+				// console.log('phrase', phrase);
 				setPhrase(phrase);
 				return 2;
 			}catch(e){
@@ -154,7 +154,7 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 
 	const addSingleWallet = useCallback(async (wallet, phrase) => {
 		if (connectedRef.current !== phrase || currentPhraseRef.current !== phrase) {
-			console.log('Phrase changed, not updating wallets', phrase, currentRef.current);
+			// console.log('Phrase changed, not updating wallets', phrase, currentRef.current);
 			return false;
 		}
 		addWallet(wallet);
@@ -185,7 +185,7 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 				console.log('Connect Result', result);
 
 				if (await addSingleWallet(result, p) === false) {
-					console.log('Phrase changed, not updating wallets!!', p, currentRef.current);
+					// console.log('Phrase changed, not updating wallets!!', p, currentRef.current);
 					return false;
 				}
 			}).catch((error) => {
@@ -228,14 +228,14 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 
 			//remove the zero from the end of the phrase
 
-			console.log('Connecting with phrase:', phrase.trim(), '#', index);
+			// console.log('Connecting with phrase:', phrase.trim(), '#', index);
 			console.log('connecting with skClient:', skClient);
 
 			try {
 				connect(phrase.trim(), index)
 					.then(async (wallet) => {
 						if (currentPhraseRef.current !== p) {
-							console.log('Phrase changed, not updating wallets', phrase, currentRef.current);
+							// console.log('Phrase changed, not updating wallets', phrase, currentRef.current);
 							return false;
 						}
 						console.log('Connected successfully', wallet);
@@ -245,13 +245,13 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 
 						skClient.getWalletWithBalance(Chain.Arbitrum).then(async (result) => {
 							if (currentPhraseRef.current !== p || connectedRef.current !== p) {
-								console.log('Phrase changed, not updating wallets', p, currentRef.current);
+								// console.log('Phrase changed, not updating wallets', p, currentRef.current);
 								return false;
 							}
 							setProgress(99);
 							await getWallets(phrase, p);
 							if (currentPhraseRef.current !== p || connectedRef.current !== p) {
-								console.log('Phrase changed, not updating wallets', phrase, currentRef.current);
+								// console.log('Phrase changed, not updating wallets', phrase, currentRef.current);
 								return false;
 							}
 							setTimeout(() => {
@@ -285,15 +285,15 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 				setConnectionStatus('disconnected');
 				setStatusMessage(`Connection failed: ${error.message}`);
 			}
-		} else {
-			console.log('Already connected', currentPhraseRef.current, connectedRef.current, phrase, connectedPhrase, currentRef.current);
+		// } else {
+			// console.log('Already connected', currentPhraseRef.current, connectedRef.current, phrase, connectedPhrase, currentRef.current);
 		
 		}
 	}, [phrase, connectedPhrase, setShowProgress, setProgress, currentPhraseRef, skClient, setConnectionStatus, setStatusMessage, connectChains, setConnectedPhrase, getWallets, wallets, setPhraseSaved]);
 
 	const checkHandleConnect = useCallback(async (chkPhrase) => {
 		const valid = await checkValidPhrase(chkPhrase);
-		console.log('checkHandleConnect', chkPhrase, valid);
+		// console.log('checkHandleConnect', chkPhrase, valid);
 		if (phrase === chkPhrase) {
 			if (valid === true) {
 				console.log('Valid phrase');
