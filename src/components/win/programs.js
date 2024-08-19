@@ -252,7 +252,7 @@ export const getPrograms = () => {
 						x: 1,
 						y: 1,
 						width: 355,
-						height: 355,
+						height: 555,
 					},
 				},
 				{

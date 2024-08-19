@@ -42,6 +42,11 @@
 	flex: 1 1 100%;
 }
 
+.key-split>div:first-child{
+	height: 100px;	
+}
+
+
 .key-split>div{
 		border: 2px outset #f0f0f0;
 		text-align: center;

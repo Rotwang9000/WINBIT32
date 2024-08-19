@@ -39,6 +39,7 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 	const connectedRef = useRef(connectedPhrase);
 	const currentWalletsRef = useRef(wallets);
 	const fileInputRef = useRef(null);
+	const handleSubProgramClickRef = useRef(handleSubProgramClick);
 
 	useEffect(() => {
 		if (connectedRef.current !== connectedPhrase) {
@@ -428,15 +429,15 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 				handleOpenFile();
 				break;
 			case 'readQR':
-				if (handleSubProgramClick) {
-					handleSubProgramClick('readqr.exe');
+				if (handleSubProgramClickRef.current) {
+					handleSubProgramClickRef.current('readqr.exe');
 				} else {
 					console.log('No readQR function defined');
 				}
 				break;				
 			case 'viewQR':
-				if (handleSubProgramClick) {
-					handleSubProgramClick('viewqr.exe');
+				if (handleSubProgramClickRef.current) {
+					handleSubProgramClickRef.current('viewqr.exe');
 				} else {
 					console.log('No viewQR function defined');
 				}
@@ -463,8 +464,8 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 				});
 				break;
 			case 'winbittss':
-				if (handleSubProgramClick) {
-					handleSubProgramClick('tss.exe');
+				if (handleSubProgramClickRef.current) {
+					handleSubProgramClickRef.current('tss.exe');
 					setLockMode(true);
 				} else {
 					console.log('No winbittss function defined');
@@ -486,15 +487,19 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 				console.log(`Unknown action: ${action}`);
 				break;
 		}
-	}, [handleConnect, handleOpenFile, handleSubProgramClick, setPhrase, setPhraseSaved, setShowScanner, showScanner, windowA]);
+	}, [handleConnect, handleOpenFile, handleSubProgramClick, setPhrase, setPhraseSaved, setShowScanner, showScanner, windowA, setLockMode]);
 
 	useEffect(() => {
 		if (onMenuAction) {
 			onMenuAction(menu, windowA, handleMenuClick);
 		}
-	}, [onMenuAction, menu, windowA, handleMenuClick]);
+	}, [onMenuAction, menu, windowA, handleMenuClick, handleSubProgramClick]);
 
 	const handleSetSubProgramClick = useCallback((handle) => {
+		// console.log('handleSetSubProgramClick', handle, handleSubProgramClick);
+
+		handleSubProgramClickRef.current = handle;
+
 		//check if actually changed
 		if (handleSubProgramClick === handle) {
 			return;
@@ -509,6 +514,11 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 
 		setHandleSubProgramClick(() => handle);
 	}, [handleSubProgramClick, setHandleSubProgramClick]);
+
+
+	// useEffect(() => {	
+	// 	handleSubProgramClickRef.current = handleSubProgramClick;
+	// }, [handleSubProgramClick]);
 
 	return (
 		<WindowContainer
