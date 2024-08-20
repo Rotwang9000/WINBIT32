@@ -42,6 +42,8 @@ const NFTDetail = ({ tokenId, collectionInfo, moreInfo }) => {
 
 	if (!nftData) return <div>Loading...</div>;
 
+	console.log('nftData', nftData);
+
 	return (
 		<div className="nft-detail">
 			<h2>{nftData.name}  #{tokenId}</h2>

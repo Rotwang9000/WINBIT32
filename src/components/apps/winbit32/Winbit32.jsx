@@ -12,6 +12,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { isValidMnemonic } from './helpers/phrase';
 import { processKeyPhrase, setupFileInput, triggerFileInput } from '../sectools/includes/KeyStoreFunctions';
 import { createKeyring } from '@swapkit/toolbox-substrate';
+import License from './License';
 
 function generatePhrase(size = 12) {
 	const entropy = size === 12 ? 128 : 256;
@@ -514,6 +515,7 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 
 		setHandleSubProgramClick(() => handle);
 	}, [handleSubProgramClick, setHandleSubProgramClick]);
+
 
 
 	// useEffect(() => {	

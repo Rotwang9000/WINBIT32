@@ -12,7 +12,7 @@ import { useWindowData } from './includes/WindowContext';
 import './styles/scrollbar.css';
 import { createNewWindow, convertObjectFunctions } from './includes/WindowManagerFunctions';
 
-const WindowManager = ({ programs, windowName, windowId, handleOpenFunction, setStateAndSave, providerKey, setWindowMenu, programData, setProgramData, handleOpenArray, handleExit, hashPath = [], sendUpHash = () => {} }) => {
+const WindowManager = ({ programs, windowName, windowId, handleOpenFunction, setStateAndSave, providerKey, setWindowMenu, programData, setProgramData, handleOpenArray, handleExit, appData = {}, hashPath = [], sendUpHash = () => {} }) => {
 
 	const updatedState = {
 		windowName,
@@ -329,6 +329,7 @@ const WindowManager = ({ programs, windowName, windowId, handleOpenFunction, set
 											handleOpenArray={handleOpenArray}
 											programData={programData}
 											setProgramData={setProgramData}
+											appData={appData}
 											onOpenWindow={handleOpenWindow}
 											handleExit={handleExit}
 											hashPath={hashPathRef.current}

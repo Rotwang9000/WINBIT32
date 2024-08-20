@@ -10,7 +10,7 @@ import { useWindowSKClient } from '../../../contexts/SKClientProviderManager';
 import { useIsolatedState } from '../../../win/includes/customHooks';
 import { getAssetValue } from '../helpers/quote';
 
-const NFTPurchasingComponent = ({ providerKey, windowId, hashPath, sendUpHash }) => {
+const NFTPurchasingComponent = ({ providerKey, windowId, hashPath, sendUpHash, page = 'normal' }) => {
 	const { skClient, wallets } = useWindowSKClient(providerKey);
 	const [selectedId, setSelectedId] = useIsolatedState(windowId, 'selectedId', '');
 	const [collectionInfo, setCollectionInfo] = useIsolatedState(windowId, 'collectionInfo', null);
@@ -35,6 +35,9 @@ const NFTPurchasingComponent = ({ providerKey, windowId, hashPath, sendUpHash })
 				const data = await response.json();
 				setCollections(data.collections);
 				let dc = 'PXM';
+				if(page === 'license'){
+					dc = 'WB32';
+				}
 				let s = 1
 				if(hashPath && hashPath.length > 0) {
 					dc = hashPath[0];
