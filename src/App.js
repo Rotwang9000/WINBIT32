@@ -25,6 +25,8 @@ const App = () => {
 	});
 	const [highestZIndex, setHighestZIndex] = useState(1);
 	const [loaded, setLoaded] = useState(false);
+	const [license, setLicense] = useState(false);
+	const [appData, setAppData] = useState({});
 
 	const handleExit = () => {
 		setShowDOSPrompt(true);
@@ -40,6 +42,7 @@ const App = () => {
 		setContextMenuVisible(newState.contextMenuVisible || contextMenuVisible);
 		setContextMenuPosition(newState.contextMenuPosition || contextMenuPosition);
 		setHighestZIndex(newState.highestZIndex || highestZIndex);
+		setLicense(newState.license || license);
 	};
 
 	const toggleQRPop = () => {
@@ -80,7 +83,22 @@ const App = () => {
 			}
 		};
 
-		
+	const setAppDataKey = (key, value) => {
+		setAppData((prev) => {
+			return { ...prev, [key]: value };
+		}
+		);
+	};
+
+	useEffect(() => {
+		setAppDataKey("setAppDataKey", setAppDataKey);
+		setAppDataKey("license", license);
+		setAppDataKey("setLicense", setLicense);
+
+	}
+	, [setAppData, license]);
+
+
 
 
 	return (
@@ -115,6 +133,7 @@ const App = () => {
 									handleExit={handleExit}
 									sendUpHash={sendUpHash}
 									windowId={"desktop"}
+									appData={appData}
 								/>
 							</WindowDataProvider>
 						</div>

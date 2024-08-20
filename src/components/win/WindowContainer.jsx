@@ -35,7 +35,7 @@ const WindowContainer = ({
 		handleSubProgramClickRef.current = handle;
 		onSubProgramClick(handleSubProgramClickRef.current);
 
-		console.log('handleSubProgramClick', handle);	
+		// console.log('handleSubProgramClick', handle);	
 
 
 		//do a deep check and see if has really changed

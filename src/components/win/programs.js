@@ -21,6 +21,7 @@ import NFTPurchasingComponent from "../apps/winbit32/mnft/NFTPurchasingComponent
 import { sign } from "@bitcoinerlab/secp256k1";
 import SignTransactionComponent from "../apps/winbit32/SignTransactionComponent";
 import Tss from "../apps/winbit32/Tss";
+import License from "../apps/winbit32/License";
 
 
 export const getPrograms = () => {
@@ -238,6 +239,14 @@ export const getPrograms = () => {
 					icon: "📇",
 					progName: "mnft.exe", // Added name for "Paintbrush"
 					component: NFTPurchasingComponent,
+					maximized: true,
+				},
+				{
+					progID: 4,
+					title: "License",
+					icon: "📟",
+					progName: "license.exe", // Added name for "Paintbrush"
+					component: License,
 					maximized: true,
 				},
 				{
