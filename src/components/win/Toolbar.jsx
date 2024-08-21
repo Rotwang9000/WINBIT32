@@ -21,7 +21,7 @@ const Toolbar = ({ subPrograms, onSubProgramClick, programData }) => {
 						}
 					}
 				>
-					{ program.icon + ' ' +  program.title }
+						<div>{program.icon}</div><div>{program.title}</div> 
 				</button>
 			))}
 		</div>

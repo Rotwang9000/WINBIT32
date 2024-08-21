@@ -107,5 +107,7 @@ textarea {
 	.status-message {
 		flex-direction: column;
 	}
-	
+	.connection-app #phrase{
+		height: 20px;
+	}
 }
