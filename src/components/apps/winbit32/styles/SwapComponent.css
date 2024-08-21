@@ -117,6 +117,15 @@ display: flex;
   background-color: #c0c0c0;
 
 }
+
+@media screen and (max-width: 768px){
+  .swap-toolbar-button{
+    font-size: 0.6em;
+  }
+  
+}
+
+
 .swap-toolbar-button:hover
 {
   background-color: #d1d1d0;

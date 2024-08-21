@@ -647,3 +647,16 @@ input{
 	font-weight: 500;
 	padding: 6px;
 }
+
+.toolbar{
+	display: flex;
+
+}
+
+.toolbar>button{
+	flex: 1;
+		font-size: x-small;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+}

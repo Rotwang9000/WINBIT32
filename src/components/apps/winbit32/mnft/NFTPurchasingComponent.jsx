@@ -30,7 +30,7 @@ const NFTPurchasingComponent = ({ providerKey, windowId, hashPath, sendUpHash, p
 	const [profileNFTs, setProfileNFTs] = useState([]);
 	const [offset, setOffset] = useState(0);
 	const nftHeight = 350; // Height of each NFT
-	const overflowLimit = (profileNFTs.length - 1) * 200;
+	const overflowLimit = (profileNFTs.length) * 350;
 
 	const handleScrollDown = () => {
 		if (offset < overflowLimit) {
@@ -468,11 +468,11 @@ const NFTPurchasingComponent = ({ providerKey, windowId, hashPath, sendUpHash, p
 							.map((nftData, index) => (
 							<div
 								key={index}
-								className='nft-detail'
+								className='nft-detail nft-profile-detail'
 								style={{
 									zIndex: profileNFTs.length - index,
 									marginLeft: `${(index +1 ) * 25}px`,
-									marginBottom: `${(index +2) * 25 + offset}px`,
+									marginBottom: `${(index +3) * 25 + offset}px`,
 									height: `${nftHeight}px`,
 								}}
 								onClick={() => setSelectedNFT(nftData.symbol, nftData.id)}
@@ -488,7 +488,7 @@ const NFTPurchasingComponent = ({ providerKey, windowId, hashPath, sendUpHash, p
 					<NFTDetail tokenId={selectedId} collectionInfo={collectionInfo} moreInfo={moreInfo} offset={offset} />
 
 					{offset < overflowLimit && (
-						<button className="scroll-button" onClick={handleScrollDown}>
+						<button className="scroll-button" onClick={handleScrollDown} >
 							▼
 						</button>
 					)}

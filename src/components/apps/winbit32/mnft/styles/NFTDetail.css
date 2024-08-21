@@ -46,6 +46,23 @@
 	background-color: #ccc;
 	flex-direction: row;
 }
+
+@media screen and (max-width: 768px){
+	.card-bar>div{
+		min-height: 20px;
+		height: fit-content	;
+	}
+	.card-bar>div:first-of-type, .card-bar>div:last-of-type{
+		flex: 1 1 100%;
+	}
+	.card-bar>div:nth-child(2){
+		top: 30px;
+		position: absolute;
+		right: 5px;	}
+	
+}
+
+
  .card-bar>div:last-of-type {
 	min-width: 150px;
 }
@@ -126,6 +143,12 @@
 	margin: 0!important;
 }
 
+.nft-profile-details{
+	max-width: 100%;
+	box-sizing: border-box;
+	height:350px;
+}
+
 .nft-details {
 	position: relative;
 	width: calc(100% - 5px);
@@ -140,7 +163,7 @@
 	padding: 20px;
 	box-sizing: border-box;
 	overflow-x: visible;
-	overflow-y: auto;
+	overflow-y: hidden;
 }
 
 .nft-detail {
@@ -150,7 +173,8 @@
 	/* Align all profile NFTs to the bottom */
 	left: 20px;
 	/* Initial left position, adjusted dynamically */
-	width: 70%;
+	width: 90%;
+	box-sizing: border-box;
 	min-width: fit-content;
 	border: 1px solid #000;
 	font-family: 'Courier New', Courier, monospace;
@@ -159,6 +183,8 @@
 	background-color: white;
 	transition: transform 0.3s ease;
 	/* Optional for smoother stacking */
+	max-height:  calc(100% - 40px);
+	overflow-y: auto;
 }
 
 .nft-detail h2 {
@@ -167,7 +193,19 @@
 	margin-top: 0;
 	padding-left: 5px;
 	box-sizing: border-box;
+	height: 30px;
+	display: flex;
+	overflow: hidden;
 }
+
+@media screen and (max-width: 768px){
+	.nft-detail h2 {
+		font-size: 1em;
+		white-space: nowrap;
+	}
+	
+}
+
 
 .nft-detail-details {
 	display: flex;
@@ -188,4 +226,18 @@
 
 .nft-detail-description {
 	max-width: 325px;
+}
+
+.scroll-button {
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	width: 30px;
+	height: 30px;
+	font-size: 30px;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	cursor: pointer;
+	z-index: 1000000;
 }
