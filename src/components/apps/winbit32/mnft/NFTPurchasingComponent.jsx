@@ -27,6 +27,16 @@ const NFTPurchasingComponent = ({ providerKey, windowId, hashPath, sendUpHash, p
 	const [priceToSell, setPriceToSell] = useIsolatedState(windowId, 'priceToSell', '');
 	const [showDialog, setShowDialog] = useState(false);
 	const [dialogContent, setDialogContent] = useState(null);
+	const [profileNFTs, setProfileNFTs] = useState([]);
+	const [offset, setOffset] = useState(0);
+	const nftHeight = 350; // Height of each NFT
+	const overflowLimit = (profileNFTs.length - 1) * 200;
+
+	const handleScrollDown = () => {
+		if (offset < overflowLimit) {
+			setOffset(offset - 20);
+		}
+	};
 
 	useEffect(() => {
 		const fetchCollections = async (hashPath) => {
@@ -58,7 +68,75 @@ const NFTPurchasingComponent = ({ providerKey, windowId, hashPath, sendUpHash, p
 	}, []);
 
 	useEffect(() => {
+
+		const fetchProfileNFTs = async () => {
+			//https://www.mayascan.org/api/mnft/balance?address=maya1jtnsl8hp6paankqckwy3c3nhr728d0hw8h24rs&page=1
+			// [
+			// 	{
+			// 		"symbol": "ONNGP",
+			// 		"ids": [
+			// 			1
+			// 		],
+			// 		"name": "Odnetnin Game Pass",
+			// 		"base_url": "https://nft.odnetnin.xyz/json/"
+			// 	}
+			// ]
+
+			const profileNFTs = await fetch(`https://www.mayascan.org/api/mnft/balance?address=${wallet?.address}&page=1`);
+			const profileNFTsData = await profileNFTs.json();
+			console.log('Profile NFTs Json:', profileNFTsData);
+			//get the NFTs for the profile
+			let pNFTs = [];
+			for (let i = 0; i < profileNFTsData.length; i++) {
+				
+				const nft = profileNFTsData[i];
+				if(page === 'license' && nft.symbol !== 'WB32') {
+					console.log('skipping', nft.symbol, page);
+					continue;
+				}
+
+				for(let j = 0; j < nft.ids.length; j++) {
+					const id = nft.ids[j];
+					const nftData = await fetch(`${nft.base_url}${id}.json`);
+					const nftJson = await nftData.json();
+					nftJson.id = id;
+					nftJson.symbol = nft.symbol;
+					nftJson.collectionName = nft.name;
+					//if(nftJson.name.contains(nft.name)) {
+					// if nft name is in title, just use it
+					if (nftJson.name && nftJson.name.toUpperCase().includes(nft.name.toUpperCase())) {
+						nftJson.title = nftJson.name;
+					} else {
+						nftJson.title = nft.name + (nftJson.name ? ' - ' + nftJson.name:'');
+					}
+					//if id # not in title, add it
+					if(!nftJson.title.includes(id)) {
+						nftJson.title += ' #' + id;
+					}
+					console.log('NFT:', nftJson);
+					pNFTs.push(nftJson);
+				}
+
+			}
+			console.log('Profile NFTs:', pNFTs);
+			setProfileNFTs(pNFTs);
+		};
+
+		if (wallet) {
+			fetchProfileNFTs();
+		}
+
+	}, [wallet]);
+
+
+
+
+
+
+
+	useEffect(() => {
 		setWallet(wallets.find(wallet => wallet.chain === "MAYA"));
+		setOffset(0);
 	}, [wallets]);
 
 	const sendMintTransaction = async (tokenId) => {
@@ -113,11 +191,12 @@ const NFTPurchasingComponent = ({ providerKey, windowId, hashPath, sendUpHash, p
 
 			setTxUrl(explorerUrl);
 			setProgress(100);
+			setError('Action sent. You may refresh to see the change but please note it may take a moment for the splines to reticulate.');
+
 		} catch (error) {
 			setError(`Error sending funds: ${error.message}`);
 			console.error('Error during transaction:', error);
 		} finally {
-			setError('Action sent. You may refresh to see the change but please note it may take a moment for the splines to reticulate.');
 			setSendInProgress(false);
 		}
 	};
@@ -134,7 +213,14 @@ const NFTPurchasingComponent = ({ providerKey, windowId, hashPath, sendUpHash, p
 	const handleCollectionChange = (collection) => {
 		setCollectionInfo(collection);
 		setSelectedId(1); // Reset selected NFT ID
+		setOffset(0);
 	};
+
+	const setSelectedNFT = (symbol, id) => {
+		setCollectionInfo(collections.find(c => c.symbol === symbol));
+		setSelectedId(id);
+	};
+
 
 	const handleSale = async () => {
 		const saleDialog = (
@@ -280,6 +366,7 @@ const NFTPurchasingComponent = ({ providerKey, windowId, hashPath, sendUpHash, p
 
 		setTimeout(() => setSelectedId(nftID), 1000);
 		setTimeout(() => setCollectionInfo(newCollection, false, true), 2000);
+		setWallet(wallets.find(wallet => wallet.chain === "MAYA"));
 	};
 
 	const moreInfo = {
@@ -290,6 +377,7 @@ const NFTPurchasingComponent = ({ providerKey, windowId, hashPath, sendUpHash, p
 		purchasePrice: collectionOrderBook?.find(order => order.id === selectedId)?.price,
 		mintList: collectionMintable?.availableIds,
 		orderBook: collectionOrderBook,
+
 	};
 
 	return (
@@ -373,8 +461,37 @@ const NFTPurchasingComponent = ({ providerKey, windowId, hashPath, sendUpHash, p
 						<ProgressBar percent={progress} progressID={windowId} />
 					</div>
 				)}
-				<div className='nft-details' style={{ border: 'none ' }}>
-					<NFTDetail tokenId={selectedId} collectionInfo={collectionInfo} moreInfo={moreInfo} />
+
+				<div className='nft-details'>
+					{profileNFTs.length > 0 &&
+						profileNFTs.filter(nftData => !(nftData.id === selectedId && collectionInfo?.symbol === nftData.symbol))
+							.map((nftData, index) => (
+							<div
+								key={index}
+								className='nft-detail'
+								style={{
+									zIndex: profileNFTs.length - index,
+									marginLeft: `${(index +1 ) * 25}px`,
+									marginBottom: `${(index +2) * 25 + offset}px`,
+									height: `${nftHeight}px`,
+								}}
+								onClick={() => setSelectedNFT(nftData.symbol, nftData.id)}
+							>
+								<h2>{nftData.title}</h2>
+								<div className="nft-detail-details">
+									{/* Additional NFT details go here */}
+								</div>
+							</div>
+						))
+					}
+
+					<NFTDetail tokenId={selectedId} collectionInfo={collectionInfo} moreInfo={moreInfo} offset={offset} />
+
+					{offset < overflowLimit && (
+						<button className="scroll-button" onClick={handleScrollDown}>
+							▼
+						</button>
+					)}
 				</div>
 			</>
 			{isBrowsing && (
