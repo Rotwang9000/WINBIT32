@@ -76,7 +76,7 @@ const Portfolio = ({ providerKey }) => {
 			<h2>{data.chain}</h2>
 			<QRCodeSVG value={data.address} />
 			<div style={{ marginBottom: '10px', marginTop: '10px', maxWidth: '400px' }}><strong>Address:</strong>  <div style={{ fontSize: '80%' }}>{data.address}</div></div>
-			<table style={{margin:'auto', textAlign:'left' }}>
+			<table style={{ margin: 'auto', textAlign: 'left', userSelect: 'text' }}>
 			{data.tokens.map((token, index) => (
 				<tr key={index} style={{ marginBottom: '10px', padding: '10px', borderBottom: '1px solid grey' }}>
 					<td title={token.symbol} style={{maxWidth:'300px', overflow:'hidden', 'whiteSpace': 'nowrap', 'textOverflow': 'ellipsis'}}>	 {token.ticker}</td>

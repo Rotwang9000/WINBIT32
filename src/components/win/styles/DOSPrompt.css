@@ -26,6 +26,8 @@
 	
 	/* Center content */
 	text-align: left;
+
+	user-select: text;
 }
 
 .dos-text {

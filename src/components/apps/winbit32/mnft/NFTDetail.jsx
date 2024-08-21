@@ -2,7 +2,7 @@ import React from 'react';
 import { useEffect, useState } from 'react';
 import './styles/NFTDetail.css';
 
-const NFTDetail = ({ tokenId, collectionInfo, moreInfo }) => {
+const NFTDetail = ({ tokenId, collectionInfo, moreInfo, offset }) => {
 	const [nftData, setNftData] = useState(null);
 	
 
@@ -42,10 +42,11 @@ const NFTDetail = ({ tokenId, collectionInfo, moreInfo }) => {
 
 	if (!nftData) return <div>Loading...</div>;
 
-	console.log('nftData', nftData);
+	// console.log('nftData', nftData);
 
 	return (
-		<div className="nft-detail">
+		<div className="nft-detail" style={{zIndex: 999, marginBottom: offset + 'px'
+		}}>
 			<h2>{nftData.name}  #{tokenId}</h2>
 			<div className="nft-detail-details">
 			<img src={nftData.image} alt={nftData.name} style={{ width: nftData.imageSize || '300px' }} />

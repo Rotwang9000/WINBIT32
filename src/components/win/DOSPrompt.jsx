@@ -71,7 +71,10 @@ README&#9;TXT&#9;69420&#9;&nbsp;&#9;&nbsp;&#9;11-01-1993&#9;01:40p<br />
 				}, i * 100);
 			}
 			setTimeout(() => {
-				setCurrentCommandOutput(null);
+				//base 64 decode the string
+				const str = 'bmV2ZXIgZ2l2ZSB1cG9uIG5ldmVyIGxldHRlciBkYXduIG5ldmVyIHJ1biBhcm91bmQgaHVydCB5b3Ugd2lu';
+				const decoded = atob(str);
+				setCurrentCommandOutput(decoded);
 			}, frames * 100);
 
 				// play();
