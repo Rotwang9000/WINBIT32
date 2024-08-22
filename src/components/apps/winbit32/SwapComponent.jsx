@@ -12,6 +12,8 @@ import { getQuotes } from './helpers/quotes';
 import { chooseWalletForToken, handleSwap, handleTokenSelect, updateDestinationAddress, delayedParseIniData } from './helpers/handlers';
 import { checkTxnStatus, formatBalance } from './helpers/transaction';
 import { handleApprove } from './helpers/handlers';
+import DialogBox from '../../win/DialogBox';
+import { amountInBigNumber } from './helpers/quote';
 
 
 
@@ -46,6 +48,9 @@ const SwapComponent = ({ providerKey, windowId, programData }) => {
 	const [txnTimer, setTxnTimer] = useIsolatedState(windowId, 'txnTimer', null);
 	const [usersDestinationAddress, setUsersDestinationAddress] = useIsolatedState(windowId, 'usersDestinationAddress', '');
 	const [showSwapini, setShowSwapini] = useIsolatedState(windowId, 'showSwapini', false);
+	const [showOutputInputDialog, setShowOutputInputDialog] = useState(false);
+	const [outputAmount, setOutputAmount] = useState('');
+	const [outputType, setOutputType] = useState('expected');
 	const bigInt = require('big-integer');
 
 	const txnTimerRef = useRef(txnTimer);
@@ -60,7 +65,8 @@ const SwapComponent = ({ providerKey, windowId, programData }) => {
 		setCurrentTokenSetter(null);
 	}, []);
 
-	const doGetQuotes = useCallback(() => {
+	const doGetQuotes = useCallback((force = false) => {
+		if(swapInProgress && !force) return;
 		getQuotes(swapFrom,
 			swapTo,
 			amount,
@@ -244,6 +250,208 @@ slippage=${slippage}
 		}
 	};
 
+	const renderOutputInputDialog = () => (
+		<DialogBox
+			title="Input Desired Output"
+			icon="question"
+			content={(
+				<div>
+					<label>
+						<div>Output Amount Target:</div>
+						<input
+							type="number"
+							value={outputAmount}
+							onChange={e => setOutputAmount(e.target.value)}
+							style={{ width: '100%' }}
+						/>
+					</label>
+					<div style={{ marginTop: '10px' }}>
+						<label>
+							<input
+								type="radio"
+								value="expected"
+								checked={outputType === 'expected'}
+								onChange={() => setOutputType('expected')}
+							/>
+							Expected
+						</label>
+						<label style={{ marginLeft: '20px' }}>
+							<input
+								type="radio"
+								value="minimum"
+								checked={outputType === 'minimum'}
+								onChange={() => setOutputType('minimum')}
+							/>
+							Minimum
+						</label>
+					</div>
+				</div>
+			)}
+			onConfirm={handleOutputInputDialogConfirm}
+			onCancel={() => setShowOutputInputDialog(false)}
+			onClose={() => setShowOutputInputDialog(false)}
+		/>
+	);
+
+	const fetchTokenPrices = async (swapFrom, swapTo) => {
+		try {
+			swapFrom.identifier = swapFrom.identifier.toLowerCase();
+			swapTo.identifier = swapTo.identifier.toLowerCase();
+
+			const response = await fetch('https://api.swapkit.dev/price', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({
+					tokens: [
+						{ identifier: swapFrom.identifier },
+						{ identifier: swapTo.identifier },
+					],
+					metadata: true,
+				}),
+			});
+
+			const data = await response.json();
+			const fromPrice = data.find(item => item.identifier === swapFrom.identifier)?.price_usd || 0;
+			const toPrice = data.find(item => item.identifier === swapTo.identifier)?.price_usd || 0;
+			console.log('Token prices:', swapFrom.identifier, fromPrice, swapTo.identifier, toPrice);
+			return { fromPrice, toPrice };
+		} catch (error) {
+			console.error('Error fetching token prices:', error);
+			return { fromPrice: 0, toPrice: 0 };
+		}
+	};
+
+	const handleOutputInputDialogConfirm = async () => {
+		setShowOutputInputDialog(false);
+
+		if (!outputAmount || !swapTo) {
+			setStatusText('Please enter a valid output amount and select a token to swap to.');
+			return;
+		}
+
+		try {
+			setStatusText('Calculating best input amount...');
+			setSwapInProgress(true);
+			setProgress(0);
+			setShowProgress(true);
+			setStatusText('Calculating best input amount...');
+			const { fromPrice, toPrice } = await fetchTokenPrices(swapFrom, swapTo);
+
+			if (fromPrice === 0 || toPrice === 0) {
+
+				throw new Error('Unable to fetch token prices');
+			}
+			setProgress(13);
+			// Calculate initial bounds based on prices
+			const initialInputAmount = (outputAmount * toPrice) / fromPrice;
+			let lowerBound = initialInputAmount * 0.5; // Start with 50% of estimated amount
+			let upperBound = initialInputAmount * 1.5; // Start with 150% of estimated amount
+			let bestInputAmount = null;
+			let bestRoute = null;
+			const outputAmountBigInt = amountInBigNumber(outputAmount, swapTo.decimals);
+			const outputAmountUSD = outputAmountBigInt.times(toPrice).div(fromPrice);
+			console.log('Output amount USD:', outputAmountUSD.toString());
+
+			let outputs = [];
+			for (let i = 0; i < 10; i++) { // Limit to 10 iterations to avoid infinite loops
+				const guessInputAmount = (lowerBound + upperBound) / 2;
+				setAmount(guessInputAmount.toString());
+
+				const r = await getQuotes(
+					swapFrom,
+					swapTo,
+					guessInputAmount,
+					destinationAddress,
+					slippage,
+					setStatusText,
+					setQuoteStatus,
+					setRoutes,
+					setQuoteId,
+					chooseWalletForToken,
+					tokens,
+					setDestinationAddress,
+					setSelectedRoute,
+					wallets
+				);
+				
+				setProgress(13 + (i * 7));
+				if(r.length === 0) {
+					continue;
+				}
+
+				const optimalRoute = r.find(route => route.optimal);
+				if (!optimalRoute) {
+					throw new Error('No optimal route found.');
+				}
+
+				const outputKey = outputType === 'minimum' ? 'expectedBuyAmountMaxSlippage' : 'expectedBuyAmount';
+				const outputValue = amountInBigNumber(optimalRoute[outputKey], swapTo.decimals);
+				const outputValueUSD = outputValue.times(toPrice).div(fromPrice);
+				console.log('Output value:', outputValue.toString(), outputAmountBigInt.toString(), outputValueUSD.toString());
+
+				let diff = outputValue.minus(outputAmountBigInt);
+				let diffUSD = outputValueUSD.minus(outputAmountUSD);
+				console.log('Diff:', diff.toString());
+				if (outputType !== 'minimum') { 
+					diff = diff.abs(); 
+					diffUSD = diffUSD.abs();
+				}
+				const diffPercent = diff.dividedBy(outputAmountBigInt).times(100);
+				console.log('Diff percent:', diffPercent.toString());
+				if(diff.isGreaterThanOrEqualTo(0)) {
+					outputs.push({ guessInputAmount, outputValue, diff, diffPercent, optimalRoute });
+				}
+
+				if ((diffPercent.isLessThanOrEqualTo(0.1) || diffUSD < 4) && diff.isGreaterThanOrEqualTo(0)) {
+					console.log('Best input amount found:', guessInputAmount.toString());
+					bestInputAmount = guessInputAmount;
+					bestRoute = optimalRoute;
+					break;
+				} else if (outputValue.isGreaterThan(outputAmountBigInt)) {
+					upperBound = guessInputAmount;
+				} else {
+					lowerBound = guessInputAmount;
+				}
+			}
+
+
+			if (!bestInputAmount || !bestRoute) {
+					if(outputs.length === 0) {
+						throw new Error('No suitable outputs found.');
+					}
+
+					const optimalRoute = outputs.reduce((a, b) => {
+						const aVal = a.diff.abs();
+						const bVal = b.diff.abs();
+						return aVal.isLessThanOrEqualTo(bVal) ? a : b;
+					});
+					bestInputAmount = optimalRoute.guessInputAmount;
+					bestRoute = optimalRoute.optimalRoute;	
+			}
+
+
+			if (bestRoute) {
+				// setSwapFrom(bestRoute.sellAsset);
+				// setSwapTo(bestRoute.buyAsset);
+				setAmount(bestInputAmount.toString());
+				setSelectedRoute(bestRoute.providers.join(', '));
+				setStatusText('Best input amount calculated and set.');
+			} else {
+				setStatusText('Unable to find a suitable route.');
+			}
+		} catch (error) {
+			setStatusText(`Error calculating best input amount: ${error.message}`);
+		
+		} finally {
+			setSwapInProgress(false);
+			setProgress(100);
+			setShowProgress(false);
+		}
+	};
+
+
 	return (
 		<>
 			<div className="swap-toolbar">
@@ -275,7 +483,7 @@ slippage=${slippage}
 					<div className='swap-toolbar-icon'>🔄</div>
 					Execute
 				</button>
-				{swapFrom && swapFrom.identifier.toLowerCase().includes('-0x') &&
+				{swapFrom && swapFrom.identifier?.toLowerCase().includes('-0x') &&
 					<button className='swap-toolbar-button' onClick={() => {
 					handleApprove(swapFrom,
 						amount,
@@ -301,7 +509,7 @@ slippage=${slippage}
 					setSwapInProgress(false);
 					setTxnHash('');
 					setTxnStatus('');
-					doGetQuotes();
+					doGetQuotes(true);
 				}}>
 					<div className='swap-toolbar-icon'>❝</div>
 					Quote
@@ -314,6 +522,20 @@ slippage=${slippage}
 					<div className='swap-toolbar-icon' >⇋</div>
 					Switch
 				</button>
+
+				{swapTo && swapFrom &&
+					<button
+						className='swap-toolbar-button'
+						onClick={() => setShowOutputInputDialog(true)}
+						disabled={swapInProgress}
+					>
+						<div className='swap-toolbar-icon'>🎯</div>
+						Target
+					</button>
+					
+					}
+
+
 				{explorerUrl ?
 					<button className='swap-toolbar-button' onClick={() => {
 						window.open(explorerUrl, '_blank');
@@ -329,6 +551,8 @@ slippage=${slippage}
 					{statusText}
 				</div>
 			}
+			{showOutputInputDialog && renderOutputInputDialog()}
+
 			<div style={{ width: '100%', boxSizing: 'border-box', display: 'flex', flexDirection: 'column' }} className={'swap-component ' + (swapInProgress ? 'swap-in-progress' : '')}>
 
 				<div style={{ display: (swapInProgress || explorerUrl ? 'flex' : 'none') }} className="swap-progress-container">

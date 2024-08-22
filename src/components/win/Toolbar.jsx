@@ -20,8 +20,9 @@ const Toolbar = ({ subPrograms, onSubProgramClick, programData }) => {
 							onSubProgramClick(program, programData);
 						}
 					}
+					title={program.title}
 				>
-						<div>{program.icon}</div><div>{program.title}</div> 
+						<div>{program.icon}</div><div className='toolbar-icon-title'>{program.title}</div> 
 				</button>
 			))}
 		</div>

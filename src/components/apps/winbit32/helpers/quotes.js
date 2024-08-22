@@ -25,7 +25,7 @@ export const getQuotes = async (
 
 	if (swapFrom && swapTo && amount && thisDestinationAddress) {
 		setStatusText("");
-		setQuoteStatus("Getting Quotes...");
+		setQuoteStatus("Getting Quotes...", swapFrom, swapTo, amount);
 
 		const basisPoints =
 			swapFrom.identifier.includes("/") || swapTo.identifier.includes("/")
@@ -62,19 +62,21 @@ export const getQuotes = async (
 			const [swapKitResponse, thorSwapResponse] = await Promise.allSettled([
 				//SwapKitApi.getSwapQuoteV2(swapKitQuoteParams),
 				getQuoteFromSwapKit(swapKitQuoteParams),
-				getQuoteFromThorSwap(thorSwapQuoteParams),
+				// getQuoteFromThorSwap(thorSwapQuoteParams),
 			]);
 
 			const swapKitRoutes =
 				swapKitResponse.status === "fulfilled"
 					? processSwapKitRoutes(swapKitResponse.value, swapTo.decimals)
 					: [];
-			const thorSwapRoutes =
-				thorSwapResponse.status === "fulfilled"
-					? processThorSwapRoutes(thorSwapResponse.value)
-					: [];
+			// const thorSwapRoutes =
+			// 	thorSwapResponse.status === "fulfilled"
+			// 		? processThorSwapRoutes(thorSwapResponse.value)
+			// 		: [];
 
-			const combinedRoutes = [...swapKitRoutes, ...thorSwapRoutes];
+			// const combinedRoutes = [...swapKitRoutes, ...thorSwapRoutes];
+
+			const combinedRoutes = [...swapKitRoutes];
 
 			if (combinedRoutes.length === 0) {
 				throw new Error("No routes from any source.");
@@ -182,6 +184,10 @@ export const getQuotes = async (
 					)}
 				</>
 			);
+
+
+			return combinedRoutes;
+
 		} catch (error) {
 			console.error("Error getting quotes from both sources:", error);
 			setQuoteStatus("Error getting quotes: " + error.message);

@@ -18,7 +18,6 @@ import ViewQR from "../apps/winbit32/ViewQR";
 import ReadQR from "../apps/winbit32/ReadQR";
 import PhraseHunter from "../apps/sectools/PhraseHunter";
 import NFTPurchasingComponent from "../apps/winbit32/mnft/NFTPurchasingComponent";
-import { sign } from "@bitcoinerlab/secp256k1";
 import SignTransactionComponent from "../apps/winbit32/SignTransactionComponent";
 import Tss from "../apps/winbit32/Tss";
 import License from "../apps/winbit32/License";
