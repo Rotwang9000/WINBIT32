@@ -561,14 +561,20 @@ const parseIniData = (
 					(token) =>
 						token.identifier.toLowerCase() === value.trim().toLowerCase()
 				);
-				if (fromToken) setSwapFrom(fromToken);
+				if (fromToken){
+					fromToken.identifier = fromToken.identifier.replace("0X", "0x");
+					 setSwapFrom(fromToken);
+				}
 				break;
 			case "token_to":
 				const toToken = tokens.find(
 					(token) =>
 						token.identifier.toLowerCase() === value.trim().toLowerCase()
 				);
-				if (toToken) setSwapTo(toToken);
+				if (toToken) {
+					toToken.identifier = toToken.identifier.replace("0X", "0x");
+					setSwapTo(toToken);
+				}
 				break;
 			case "amount":
 				setAmount(value.trim());

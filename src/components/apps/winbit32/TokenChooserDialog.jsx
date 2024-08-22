@@ -264,6 +264,7 @@ const TokenChooserDialog = ({ isOpen, onClose, onConfirm, providerKey, wallets, 
 			return;
 		}
 
+		token.identifier = token.identifier.replace('0X', '0x')
 		//call onConfirm
 		onConfirm(token);
 		//close dialog

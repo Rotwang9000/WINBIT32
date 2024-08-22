@@ -5,6 +5,8 @@ import bigInt from "big-integer";
 
 
 export async function getQuoteFromThorSwap(quoteParams) {
+	const fetch = require("fetch-retry")(global.fetch);
+
 	//const apiUrl = "https://api.swapkit.dev"; // Adjust this URL as needed
 	const apiUrl = "https://api.thorswap.net/aggregator/tokens/quote"; // Adjust this URL as needed
 	//convert number strings to numbers
@@ -21,6 +23,12 @@ export async function getQuoteFromThorSwap(quoteParams) {
 		method: "GET",
 		headers: {
 			"Content-Type": "application/json",
+		},
+		retries: 5	,
+		retryDelay: function (attempt, error, response) {
+			const delay = Math.pow(2, attempt) * 1000; // 1000, 2000, 4000
+			console.log(`Retrying in ${delay}ms`, error, response);
+			return delay;
 		},
 	});
 
@@ -41,6 +49,8 @@ export async function getQuoteFromThorSwap(quoteParams) {
 
 
 export async function getQuoteFromSwapKit(quoteParams) {
+		const fetch = require("fetch-retry")(global.fetch);
+
 	const apiUrl = "https://api.swapkit.dev"; // Adjust this URL as needed
 	//convert number strings to numbers
 	//quoteParams.sellAmount = Number(quoteParams.sellAmount);
@@ -52,6 +62,13 @@ export async function getQuoteFromSwapKit(quoteParams) {
 			"Content-Type": "application/json",
 		},
 		body: JSON.stringify(quoteParams),
+		retries: 5,
+		retryDelay: function(attempt, error, response) {
+			const delay = Math.pow(2, attempt) * 1000; // 1000, 2000, 4000
+			console.log(`Retrying in ${delay}ms`, error, response);
+			return delay;
+		},
+			retryOn: [504],
 	});
 
 	if (!response.ok) {

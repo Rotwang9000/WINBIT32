@@ -650,13 +650,56 @@ input{
 
 .toolbar{
 	display: flex;
-
+	align-items: flex-start;
+	background-color: #bfc7c8;
+	border: 2px outset #989e9e;
+	padding-left: 2px;
 }
 
 .toolbar>button{
-	flex: 1;
-		font-size: x-small;
 		display: flex;
-		flex-direction: column;
+		flex-direction: row;
 		align-items: center;
+		border: 3px outset #989e9e;
+		background-color:#c3cbcb;
+		font-size: 1.4em;
+		flex-direction: column;
+		border-radius: 4px;
+		margin-top: 1px;
+		margin-bottom: 2px;
+		flex: 1 1 80px;
+		font-size: 0.6em;
+	}
+
+
+
+
+
+@media  screen and (min-width: 600px) {
+	.toolbar>button{
+		flex-basis: 100px;
+		flex-grow: 0;
+		font-size: 1em;
+
+	}
+	
 }
+
+		.window-container:has(.window-border) .toolbar-icon-title {
+			display: none;
+			flex: 1 1 50px;
+			font-size: 1.4em;
+
+		}
+	
+
+		.window-container:has(.window-border) .toolbar>button {
+			flex: 0 1 50px;
+			font-size: 1.4em;
+		}
+
+		/* 
+		.toolbar:hover .toolbar-icon-title {
+			display: block;
+			width:auto;
+		} */
