@@ -140,11 +140,11 @@
 
 		const updateIniData = () => {
 			if (!textareaActive) {
-				const data = `token=${selectedToken?.identifier || ''}
-	amount=${amount}
-	recipient=${recipientAddress}
-	memo=${memo}
-	; memo is only for THOR/Maya Chains	
+			const data = `token=${selectedToken?.identifier || ''}
+amount=${amount}
+recipient=${recipientAddress}
+memo=${memo}
+; memo is only for THOR/Maya Chains	
 	`;
 				// only used on THOR/MAYA chain transactions
 				setIniData(data);

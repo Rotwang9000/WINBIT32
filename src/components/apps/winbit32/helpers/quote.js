@@ -153,7 +153,19 @@ export async function getAssetValue(asset, value){
 	let otherBits = {
 		decimalMultiplier,
 	};
+
+	console.log('assetValue', assetValue);
+	console.log('bigIntValue', bigIntValue);
+	console.log('decimalMultiplier', decimalMultiplier);
+	console.log('otherBits', otherBits);
+
 	otherBits.decimalDifference = assetValue.decimal - asset.decimals;
+	//if NaN set to 0
+	if (isNaN(otherBits.decimalDifference)) {
+		otherBits.decimalDifference = 0;
+	}
+
+
 	otherBits.decimalDifferenceDivider = bigInt(10).pow(
 		otherBits.decimalDifference
 	);
