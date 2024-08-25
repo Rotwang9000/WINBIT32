@@ -132,7 +132,7 @@ export const getPrograms = () => {
 				},
 				{
 					progID: 2,
-					title: "Open with...",
+					title: "Open		...",
 					icon: "💰",
 					progName: "winbit32.exe",
 					openLevel: -1,

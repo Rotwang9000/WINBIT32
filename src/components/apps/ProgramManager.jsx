@@ -23,6 +23,7 @@ const ProgramManager = ({ params, programs, onOpenWindow, onMenuAction, windowA,
 		{
 			label: 'Help',
 			submenu: [
+				{ label: 'Source Code...', action: 'source', menuOrder: 1000 },
 				{ label: 'About', action: 'about', menuOrder: 1000 },
 			],
 		}
@@ -42,8 +43,10 @@ const ProgramManager = ({ params, programs, onOpenWindow, onMenuAction, windowA,
 				setShowAboutDialog(true)
 				
 				break;
-
-
+			//https://github.com/Rotwang9000/WINBIT32
+			case 'source':
+				window.open('https://github.com/Rotwang9000/WINBIT32', '_blank');
+				break;
 			default:
 				console.log(`Unknown action: ${action}`);
 				break;

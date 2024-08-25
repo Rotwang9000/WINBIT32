@@ -308,7 +308,10 @@ export const handleSwap = async (
 		setProgress(12);
 		if(otherBits.decimalDifference !== 0){
 			route.sellAmount = parseFloat(route.sellAmount / 10 ** otherBits.decimalDifference) 
+		}else 	if(swapFrom.identifier.toLowerCase() === "maya.cacao"){
+			route.sellAmount = route.sellAmount * 100;
 		}
+
 		console.log("route.sellAmount", route.sellAmount);
 
 
