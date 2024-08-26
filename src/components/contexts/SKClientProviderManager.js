@@ -36,6 +36,7 @@ const initialState = {
 		Chain.Maya,
 		Chain.Kujira,
 		Chain.Arbitrum,
+		Chain.Radix
 		// Chain.Base,
 
 		// Chain.Chainflip

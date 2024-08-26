@@ -1,6 +1,6 @@
 {
   "name": "winbit32",
-  "version": "0.1.20",
+  "version": "0.1.21",
   "private": true,
   "homepage": "https://winbit32.com",
   "dependencies": {
@@ -16,6 +16,8 @@
     "@swapkit/tokens": "nightly",
     "@swapkit/toolbox-radix": "^1.0.0-rc.5",
     "@swapkit/toolbox-substrate": "^1.0.0-rc.42",
+    "@toruslabs/eccrypto": "^5.0.4",
+    "@toruslabs/tss-lib": "^2.3.0",
     "@walletconnect/modal-auth-react": "^2.6.2",
     "@walletconnect/modal-core": "^2.6.2",
     "@walletconnect/modal-sign-html": "^2.6.2",
@@ -80,18 +82,18 @@
       "react-app/jest"
     ]
   },
-    "browserslist": {
-      "production": [
-        "last 1 chrome version",
-        "last 1 firefox version",
-        "last 1 safari version"
-      ],
-      "development": [
-        "last 1 chrome version",
-        "last 1 firefox version",
-        "last 1 safari version"
-      ]
-    },
+  "browserslist": {
+    "production": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
   "devDependencies": {
     "buffer": "^6.0.3",
     "process": "^0.11.10",
