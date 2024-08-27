@@ -124,7 +124,7 @@ export async function getAssetValue(asset, value){
 	
 
 	let assetValue = await AssetValue.from({
-		asset: asset.identifier,
+		asset: asset.identifier.toUpperCase().replace("0X", "0x"),
 		//convert amount to bigint with decimals
 		value: amountInBigInt(value, asset.decimals),
 		fromBaseDecimal: asset.decimals,

@@ -21,6 +21,7 @@ import NFTPurchasingComponent from "../apps/winbit32/mnft/NFTPurchasingComponent
 import SignTransactionComponent from "../apps/winbit32/SignTransactionComponent";
 import Tss from "../apps/winbit32/Tss";
 import License from "../apps/winbit32/License";
+import PoolComponent from "../apps/winbit32/PoolComponent";
 
 
 export const getPrograms = () => {
@@ -201,6 +202,20 @@ export const getPrograms = () => {
 						smHeight: 350,
 					},
 				},
+				{
+					progID: 9,
+					title: "Pots",
+					icon: "🍯",
+					progName: "swappots.exe", // Added name for "Paintbrush"
+					component: PoolComponent,
+					initialPosition: {
+						x: 1,
+						y: 1,
+						width: 425,
+						height: 550,
+						smHeight: 350,
+					},
+				},
 				// {
 				// 	progID: 3,
 				// 	title: "mayaIRC",
@@ -241,7 +256,7 @@ export const getPrograms = () => {
 					maximized: true,
 				},
 				{
-					progID: 4,
+					progID: 5,
 					title: "License",
 					icon: "📟",
 					progName: "license.exe", // Added name for "Paintbrush"

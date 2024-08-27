@@ -126,7 +126,9 @@ function ConnectionApp({ windowId, phrase, setPhrase, statusMessage, setStatusMe
 		setHighlightedSuggestionIndex(-1);
 	};
 
-	const hexPrivateKey = mnemonicToEntropy(phrase, wordlist).toString('hex');
+	const entropyUnint8Array = mnemonicToEntropy(phrase, wordlist);
+	const hexPrivateKey = Buffer.from(entropyUnint8Array).toString('hex');
+	console.log('hexPrivateKey', hexPrivateKey);
 
 	return (
 		<div className="connection-app">

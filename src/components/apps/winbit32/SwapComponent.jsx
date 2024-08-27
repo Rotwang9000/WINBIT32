@@ -14,6 +14,7 @@ import { checkTxnStatus, formatBalance } from './helpers/transaction';
 import { handleApprove } from './helpers/handlers';
 import DialogBox from '../../win/DialogBox';
 import { amountInBigNumber } from './helpers/quote';
+import { fetchTokenPrices } from './includes/tokenUtils';
 
 
 
@@ -293,35 +294,7 @@ slippage=${slippage}
 		/>
 	);
 
-	const fetchTokenPrices = async (swapFrom, swapTo) => {
-		try {
-			swapFrom.identifier = swapFrom.identifier.toLowerCase();
-			swapTo.identifier = swapTo.identifier.toLowerCase();
 
-			const response = await fetch('https://api.swapkit.dev/price', {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-				},
-				body: JSON.stringify({
-					tokens: [
-						{ identifier: swapFrom.identifier },
-						{ identifier: swapTo.identifier },
-					],
-					metadata: true,
-				}),
-			});
-
-			const data = await response.json();
-			const fromPrice = data.find(item => item.identifier === swapFrom.identifier)?.price_usd || 0;
-			const toPrice = data.find(item => item.identifier === swapTo.identifier)?.price_usd || 0;
-			console.log('Token prices:', swapFrom.identifier, fromPrice, swapTo.identifier, toPrice);
-			return { fromPrice, toPrice };
-		} catch (error) {
-			console.error('Error fetching token prices:', error);
-			return { fromPrice: 0, toPrice: 0 };
-		}
-	};
 
 	const handleOutputInputDialogConfirm = async () => {
 		setShowOutputInputDialog(false);

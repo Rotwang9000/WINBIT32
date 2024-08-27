@@ -132,6 +132,8 @@ export const SKClientProviderManager = ({ children }) => {
 				rpcUrls: {
 					FLIP: "https://api-chainflip.dwellir.com/204dd906-d81d-45b4-8bfa-6f5cc7163dbc",
 					ETH: "https://mainnet.infura.io/v3/c3b4e673639742a89bbddcb49895d568",
+					XRD: "https://radix-mainnet.rpc.grove.city/v1/456359ff",
+					Radix: "https://radix-mainnet.rpc.grove.city/v1/456359ff",
 				},
 			});
 			console.log("Created client", client);
