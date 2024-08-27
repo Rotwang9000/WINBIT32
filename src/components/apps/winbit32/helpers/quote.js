@@ -180,8 +180,10 @@ export async function getAssetValue(asset, value){
 
 	if(assetValue.symbol === 'XRD' && assetValue.chainId === "radix-mainnet"){
 		assetValue.address = 'resource_rdx1tknxxxxxxxxxradxrdxxxxxxxxx009923554798xxxxxxxxxradxrd';
+		assetValue.decimal = 0;
+		assetValue.decimalMultiplier = 100000000000000000000000000n;
 	}
-	
+
 	return { assetValue, otherBits } ;
 
 }
