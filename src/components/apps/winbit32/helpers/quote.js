@@ -130,6 +130,7 @@ export async function getAssetValue(asset, value){
 		fromBaseDecimal: asset.decimals,
 		asyncTokenLookup: false,
 
+
 	});
 
 	// assetValue: G;
@@ -176,6 +177,10 @@ export async function getAssetValue(asset, value){
 	assetValue.decimalMultiplier = decimalMultiplier;
 	
 	assetValue.bigIntValue = bigIntValue;
+
+	if(assetValue.symbol === 'XRD' && assetValue.chainId === "radix-mainnet"){
+		assetValue.address = 'resource_rdx1tknxxxxxxxxxradxrdxxxxxxxxx009923554798xxxxxxxxxradxrd';
+	}
 	
 	return { assetValue, otherBits } ;
 
