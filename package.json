@@ -1,6 +1,6 @@
 {
   "name": "winbit32",
-  "version": "0.1.20",
+  "version": "0.1.21",
   "private": true,
   "homepage": "https://winbit32.com",
   "dependencies": {
@@ -10,12 +10,19 @@
     "@fortawesome/free-regular-svg-icons": "^6.6.0",
     "@fortawesome/free-solid-svg-icons": "^6.6.0",
     "@fortawesome/react-fontawesome": "^0.2.2",
+    "@radixdlt/account": "^3.0.14",
+    "@radixdlt/babylon-core-api-sdk": "^1.2.0",
+    "@radixdlt/babylon-gateway-api-sdk": "^1.6.1",
+    "@radixdlt/radix-dapp-toolkit": "^2.0.3",
+    "@radixdlt/radix-engine-toolkit": "^1.0.5",
     "@scure/bip39": "^1.2.1",
     "@swapkit/plugin-chainflip": "^1.0.0-rc.72",
     "@swapkit/sdk": "^1.1.8",
     "@swapkit/tokens": "nightly",
     "@swapkit/toolbox-radix": "^1.0.0-rc.5",
     "@swapkit/toolbox-substrate": "^1.0.0-rc.42",
+    "@toruslabs/eccrypto": "^5.0.4",
+    "@toruslabs/tss-lib": "^2.3.0",
     "@walletconnect/modal-auth-react": "^2.6.2",
     "@walletconnect/modal-core": "^2.6.2",
     "@walletconnect/modal-sign-html": "^2.6.2",
@@ -80,18 +87,18 @@
       "react-app/jest"
     ]
   },
-    "browserslist": {
-      "production": [
-        "last 1 chrome version",
-        "last 1 firefox version",
-        "last 1 safari version"
-      ],
-      "development": [
-        "last 1 chrome version",
-        "last 1 firefox version",
-        "last 1 safari version"
-      ]
-    },
+  "browserslist": {
+    "production": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
   "devDependencies": {
     "buffer": "^6.0.3",
     "process": "^0.11.10",

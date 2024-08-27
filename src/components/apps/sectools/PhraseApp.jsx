@@ -6,7 +6,8 @@ import { useIsolatedState } from '../../win/includes/customHooks';
 import { calculateChecksum, getValidChecksumWords } from './includes/phrase';
 
 
-function ConnectionApp({ windowId, phrase, setPhrase, statusMessage, setStatusMessage }) {
+
+function ConnectionApp({ windowId, phrase, setPhrase, statusMessage, setStatusMessage, programData }) {
 	const [phraseFocus, setPhraseFocus] = useIsolatedState(windowId, 'phraseFocus', false);
 	const [suggestions, setSuggestions] = useState([]);
 	const [currentWordIndex, setCurrentWordIndex] = useState(null);
@@ -125,6 +126,10 @@ function ConnectionApp({ windowId, phrase, setPhrase, statusMessage, setStatusMe
 		setHighlightedSuggestionIndex(-1);
 	};
 
+	const entropyUnint8Array = mnemonicToEntropy(phrase, wordlist);
+	const hexPrivateKey = Buffer.from(entropyUnint8Array).toString('hex');
+	console.log('hexPrivateKey', hexPrivateKey);
+
 	return (
 		<div className="connection-app">
 			<div className="content">
@@ -159,6 +164,7 @@ function ConnectionApp({ windowId, phrase, setPhrase, statusMessage, setStatusMe
 				<div className="status-row">
 					<div className="status-message">
 						<div>{statusMessage}</div>
+						<div>{hexPrivateKey.toString()}</div>
 					</div>
 				</div>
 			</div>
