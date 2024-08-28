@@ -1,6 +1,8 @@
 import { RequestClient } from "@swapkit/helpers";
 import { ChainToExplorerUrl, Chain } from "@swapkit/sdk";
 import bigInt from "big-integer";
+import { e } from "mathjs";
+import { exitCode } from "process";
 
 const baseUrlV1 = "https://api.thorswap.net";
 
@@ -181,3 +183,17 @@ export const checkTxnStatus = async (
 		setSwapInProgress(false);
 	}
 };
+
+
+export const getTxnUrl = (txnHash, chain, skClient) => {
+	try {
+		return skClient.getExplorerTxUrl({chain, txnHash});
+	} catch (error) {
+		console.log("error", error);
+		if(chain === 'XRD'){
+			return `https://dashboard.radixdlt.com/transaction/${txnHash?.id}`;
+		}else{
+			return 'https://www.mayascan.org/tx/'+txnHash;
+		}
+	}
+}
