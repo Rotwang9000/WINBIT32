@@ -8,6 +8,8 @@ import { getAssetValue } from './helpers/quote';
 import { fetchTokenPrices } from './includes/tokenUtils';
 import { TransactionBuilder, RadixEngineToolkit, generateRandomNonce, ManifestBuilder, decimal, address, bucket, enumeration  } from '@radixdlt/radix-engine-toolkit';
 import bigInt from 'big-integer';
+import { Chain } from '@swapkit/sdk';
+import { getMemoForDeposit } from '@swapkit/helpers';
 
 
 
@@ -119,7 +121,7 @@ const PoolComponent = ({ providerKey, windowId, programData }) => {
 				console.log('transactionHeader', transactionHeader);
 				console.log('transactionManifest', transactionManifest);
 
-				memo = memo + ':be:0';
+				// memo = memo + ':be:10';
 
 				const transaction = await TransactionBuilder.new()
 					.then(builder =>
@@ -157,7 +159,7 @@ const PoolComponent = ({ providerKey, windowId, programData }) => {
 					wallet.oDeposit = wallet.deposit;
 					wallet.deposit = function (params
 					) {
-						params.memo = params.memo + ':be:0';
+						params.memo = params.memo + ':be:10';
 						console.log('params', params);
 						return oMayaDeposit(params);
 					};
@@ -168,7 +170,7 @@ const PoolComponent = ({ providerKey, windowId, programData }) => {
 					wallet.oTransfer = wallet.transfer;
 					wallet.transfer = function (params
 					) {
-						params.memo = params.memo + ':be:0';
+						params.memo = params.memo + ':be:10';
 						console.log('params', params);
 						return oMayaTransfer(params);
 					};
@@ -188,7 +190,72 @@ const PoolComponent = ({ providerKey, windowId, programData }) => {
 
 			console.log('liquidityParams', liquidityParams, pluginName);
 
-			const addLiquidityFn = skClient[pluginName].addLiquidity;
+			let addLiquidityFn = skClient[pluginName].addLiquidity;
+			setProgress(13);
+
+			// if(pluginName === 'mayachain'){
+
+			// 	addLiquidityFn = async function addLiquidity({
+			// 		baseAssetValue,
+			// 		assetValue,
+			// 		baseAssetAddr,
+			// 		assetAddr,
+			// 		isPendingSymmAsset,
+			// 		mode = "sym",
+			// 	}) {
+			// 		const { chain, symbol } = assetValue;
+			// 		const isSym = mode === "sym";
+			// 		const baseTransfer = baseAssetValue?.gt(0) && (isSym || mode === "baseAsset");
+			// 		const assetTransfer = assetValue?.gt(0) && (isSym || mode === "asset");
+			// 		const includeBaseAddress = isPendingSymmAsset || baseTransfer;
+			// 		const baseAssetWalletAddress = skClient.getWallet(Chain.Maya).address;
+
+			// 		const baseAddress = includeBaseAddress ? baseAssetAddr || baseAssetWalletAddress : "";
+			// 		const assetAddress =
+			// 			isSym || mode === "asset" ? assetAddr || skClient.getWallet(chain).address : "";
+
+			// 		if (!(baseTransfer || assetTransfer)) {
+			// 			throw new Error("Invalid parameters for adding liquidity");
+			// 		}
+			// 		if (includeBaseAddress && !baseAddress) {
+			// 			throw new Error("Base asset address is required");
+			// 		}
+
+			// 		// First transaction: transfer the asset
+			// 		let assetTx;
+			// 		if (assetTransfer && assetValue) {
+			// 			assetTx = await skClient[pluginName].depositToPool({
+			// 				assetValue,
+			// 				memo: getMemoForDeposit({ chain, symbol, address: baseAddress }),
+			// 			}).catch((err) => {
+			// 				throw new Error(`Error adding liquidity (asset): ${err.message}`);
+			// 			});
+
+			// 			// Ensure the transaction is complete before proceeding (wait 10 seconds, for example)
+			// 			await new Promise(resolve => setTimeout(resolve, 5000));
+			// 		}
+
+			// 		// Check if the first transaction was successful before proceeding
+			// 		if (assetTx) {
+			// 			// Second transaction: transfer the base asset
+			// 			if (baseTransfer && baseAssetValue) {
+			// 				const baseAssetTx = await skClient[pluginName].depositToPool({
+			// 					assetValue: baseAssetValue,
+			// 					memo: getMemoForDeposit({ chain, symbol, address: assetAddress }),
+			// 				}).catch((err) => {
+			// 					throw new Error(`Error adding liquidity (base asset): ${err.message}`);
+			// 				});
+
+			// 				return { baseAssetTx, assetTx };
+			// 			}
+			// 		}
+
+			// 		return { assetTx };
+			// 	};
+			// }
+
+
+
 			const { baseAssetTx, assetTx } = await addLiquidityFn(liquidityParams);
 
 			if (baseAssetTx || assetTx) {
