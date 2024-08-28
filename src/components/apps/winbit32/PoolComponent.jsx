@@ -10,6 +10,8 @@ import { TransactionBuilder, RadixEngineToolkit, generateRandomNonce, ManifestBu
 import bigInt from 'big-integer';
 import { Chain } from '@swapkit/sdk';
 import { getMemoForDeposit } from '@swapkit/helpers';
+import { mayaRadixRouter } from './helpers/maya'
+import { getTxnUrl } from './helpers/transaction'
 
 
 
@@ -26,7 +28,7 @@ const PoolComponent = ({ providerKey, windowId, programData }) => {
 	const [progress, setProgress] = useIsolatedState(windowId, 'progress', 0);
 	const [showProgress, setShowProgress] = useIsolatedState(windowId, 'showProgress', false);
 	const [statusText, setStatusText] = useIsolatedState(windowId, 'statusText', '');
-	const [txnHash, setTxnHash] = useIsolatedState(windowId, 'txnHash', '');
+	const [txnUrls, setTxnUrls] = useIsolatedState(windowId, 'txnUrls', []);
 	const [txnStatus, setTxnStatus] = useIsolatedState(windowId, 'txnStatus', '');
 	const [liquidityMode, setLiquidityMode] = useIsolatedState(windowId, 'liquidityMode', 'sym'); // 'sym' or 'asym'
 	const [swapInProgress, setSwapInProgress] = useIsolatedState(windowId, 'swapInProgress', false);
@@ -48,6 +50,7 @@ const PoolComponent = ({ providerKey, windowId, programData }) => {
 		setProgress(0);
 		try {
 
+			setTxnUrls([]);
 			const baseAssetValue = await getAssetValue(baseAsset, baseAmount);
 			const assetValue = await getAssetValue(asset, assetAmount);
 
@@ -94,6 +97,7 @@ const PoolComponent = ({ providerKey, windowId, programData }) => {
 				console.log('assetValue', assetValue);
 				memo = memo + ':be:10';
 
+				const mayaRouter = await mayaRadixRouter();
 
 
 				console.log('assetBigInt', assetBigInt, decimal(assetNumber.toString()), assetNumber, address(from), address(recipient), memo);
@@ -108,11 +112,11 @@ const PoolComponent = ({ providerKey, windowId, programData }) => {
 					])
 					.takeAllFromWorktop(
 						assetValue.address,
-						(builder, bucketId) => {
-							console.log('bucketId', bucketId, bucket(bucketId));
+						 (builder, bucketId) => {
+							console.log('bucketId', bucketId, bucket(bucketId), mayaRouter);
 
 							return builder
-								.callMethod("component_rdx1cp7hrk7k0pjavnpt5h6dsel096kzlj96r8ukw2ywqgdc5tlvpvn0as", "user_deposit", [
+								.callMethod(mayaRouter, "user_deposit", [
 									address(from),
 									address(recipient),
 									bucket(bucketId),
@@ -272,8 +276,28 @@ const PoolComponent = ({ providerKey, windowId, programData }) => {
 			const { baseAssetTx, assetTx } = await addLiquidityFn(liquidityParams);
 
 			if (baseAssetTx || assetTx) {
-				setStatusText('Liquidity added successfully.');
-				setTxnHash(baseAssetTx?.hash || assetTx?.hash);
+				const howMany = baseAssetTx && assetTx ? "two" : "one";
+
+
+				setStatusText('Liquidity added successfully to '+ howMany +' pot(s)');
+				let txns = [];
+				if(baseAssetTx){
+					try{
+						const url = getTxnUrl(baseAssetTx, baseAsset.chain, skClient);
+						txns.push(url);
+					}catch(e){
+						console.error('Error getting explorer tx url:', e);
+					}
+				}
+				if(assetTx){
+					try{
+						const url = getTxnUrl(assetTx, asset.chain, skClient);
+						txns.push(url);
+					}catch(e){
+						console.error('Error getting explorer tx url:', e);
+					}
+				}
+				setTxnUrls(txns);
 			} else {
 				setStatusText('Liquidity addition failed.');
 			}
@@ -391,6 +415,16 @@ const PoolComponent = ({ providerKey, windowId, programData }) => {
 					<div className="swap-toolbar-icon">🧮</div>
 					Calculate
 				</button>
+				{txnUrls.map((txnHash, index) => (
+					<button className="swap-toolbar-button" onClick={() => window.open(txnHash, '_blank')} key={index} title={txnHash}>
+						<div className="swap-toolbar-icon">🔗</div>
+						Transaction {index + 1}
+					</button>
+				))
+				}
+
+
+
 			</div>
 
 			{renderStatus()}
