@@ -6,10 +6,14 @@ import ProgressBar from '../../win/ProgressBar';
 import './styles/SwapComponent.css';
 import { getAssetValue } from './helpers/quote';
 import { fetchTokenPrices } from './includes/tokenUtils';
+import { TransactionBuilder, RadixEngineToolkit, generateRandomNonce, ManifestBuilder, decimal, address, bucket, enumeration  } from '@radixdlt/radix-engine-toolkit';
+import bigInt from 'big-integer';
+
+
 
 const PoolComponent = ({ providerKey, windowId, programData }) => {
 	const { skClient, tokens, wallets } = useWindowSKClient(providerKey);
-	const { setPhrase } = programData;
+	const { setPhrase, phrase } = programData;
 
 	const [baseAsset, setBaseAsset] = useIsolatedState(windowId, 'baseAsset', null);
 	const [asset, setAsset] = useIsolatedState(windowId, 'asset', null);
@@ -55,6 +59,91 @@ const PoolComponent = ({ providerKey, windowId, programData }) => {
 
 
 			}
+			let radixWallet = skClient.getWallet('XRD');
+			const constructionMetadata = await radixWallet.api.LTS.getConstructionMetadata();
+			
+			console.log('radixWallet', radixWallet, constructionMetadata);
+
+			const { getRadixCoreApiClient, RadixToolbox, createPrivateKey, RadixMainnet } = await import(
+				"@swapkit/toolbox-radix"
+			);
+			const signer = await createPrivateKey(phrase);
+			console.log('signer', signer);
+
+			radixWallet.transfer = async function ({ assetValue, from, recipient, memo }) {
+
+				const assetBigInt = bigInt(assetValue.bigIntValue / 1000000000000000000n);
+				const assetNumber = assetBigInt.toJSNumber();
+
+				const transactionHeader = {
+					networkId: 1,
+					validFromEpoch: Number(constructionMetadata.current_epoch),
+					startEpochInclusive: Number(constructionMetadata.current_epoch),
+					endEpochExclusive: Number(constructionMetadata.current_epoch) + 100,
+					nonce: await generateRandomNonce(),
+					fromAccount: from,
+					signerPublicKey: signer.publicKey(),
+					notaryPublicKey: signer.publicKey(),
+					notaryIsSignatory: true,
+					tipPercentage: (assetNumber < 1000)? 1:0
+				};
+
+				console.log('transactionHeader', transactionHeader);
+				console.log('assetValue', assetValue);
+
+
+
+				console.log('assetBigInt', assetBigInt, decimal(assetNumber.toString()), assetNumber);
+
+				const transactionManifest = new ManifestBuilder()
+					.callMethod(from, "lock_fee", [
+						decimal(10),
+					])
+					.callMethod(from, "withdraw", [
+						address(assetValue.address),
+						decimal(assetNumber.toString()),
+					])
+					.takeAllFromWorktop(
+						assetValue.address,
+						(builder, bucketId) => 
+							builder
+								.callMethod(recipient, "try_deposit_or_abort", [
+									bucket(bucketId),
+									enumeration(
+										0
+
+									)
+						])
+					)
+					.build();
+				console.log('transactionHeader', transactionHeader);
+				console.log('transactionManifest', transactionManifest);
+
+
+				const transaction = await TransactionBuilder.new()
+					.then(builder =>
+						builder
+							.header(transactionHeader)
+							.plainTextMessage(memo || '') // Add the memo
+							.manifest(transactionManifest)
+							.sign(signer) // Sign the transaction
+							.notarize(signer) // Notarize the transaction
+					);
+
+					console.log('transaction', transaction);
+
+				const transactionId = await RadixEngineToolkit.NotarizedTransaction.intentHash(transaction);
+
+				const compiledNotarizedTransaction =
+					await RadixEngineToolkit.NotarizedTransaction.compile(transaction);
+
+				console.log('transactionId', transactionId, compiledNotarizedTransaction);
+
+				await radixWallet.api.LTS.submitTransaction({
+					notarized_transaction_hex: Buffer.from(compiledNotarizedTransaction).toString('hex'),
+				});
+				return transactionId;
+			};
 
 			const liquidityParams = {
 				baseAssetValue: baseAssetValue.assetValue,
