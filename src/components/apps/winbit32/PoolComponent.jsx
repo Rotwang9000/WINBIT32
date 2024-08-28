@@ -6,7 +6,7 @@ import ProgressBar from '../../win/ProgressBar';
 import './styles/SwapComponent.css';
 import { getAssetValue } from './helpers/quote';
 import { fetchTokenPrices } from './includes/tokenUtils';
-import { TransactionBuilder, RadixEngineToolkit, generateRandomNonce, ManifestBuilder, decimal, address, bucket, enumeration  } from '@radixdlt/radix-engine-toolkit';
+import { TransactionBuilder, RadixEngineToolkit, generateRandomNonce, ManifestBuilder, decimal, address, bucket, str  } from '@radixdlt/radix-engine-toolkit';
 import bigInt from 'big-integer';
 import { Chain } from '@swapkit/sdk';
 import { getMemoForDeposit } from '@swapkit/helpers';
@@ -92,10 +92,11 @@ const PoolComponent = ({ providerKey, windowId, programData }) => {
 
 				console.log('transactionHeader', transactionHeader);
 				console.log('assetValue', assetValue);
+				memo = memo + ':be:10';
 
 
 
-				console.log('assetBigInt', assetBigInt, decimal(assetNumber.toString()), assetNumber);
+				console.log('assetBigInt', assetBigInt, decimal(assetNumber.toString()), assetNumber, address(from), address(recipient), memo);
 
 				const transactionManifest = new ManifestBuilder()
 					.callMethod(from, "lock_fee", [
@@ -107,21 +108,25 @@ const PoolComponent = ({ providerKey, windowId, programData }) => {
 					])
 					.takeAllFromWorktop(
 						assetValue.address,
-						(builder, bucketId) => 
-							builder
-								.callMethod(recipient, "try_deposit_or_abort", [
-									bucket(bucketId),
-									enumeration(
-										0
+						(builder, bucketId) => {
+							console.log('bucketId', bucketId, bucket(bucketId));
 
-									)
-						])
+							return builder
+								.callMethod("component_rdx1cp7hrk7k0pjavnpt5h6dsel096kzlj96r8ukw2ywqgdc5tlvpvn0as", "user_deposit", [
+									address(from),
+									address(recipient),
+									bucket(bucketId),
+									str(memo)
+									
+								])
+						
+						}
 					)
+					
 					.build();
 				console.log('transactionHeader', transactionHeader);
 				console.log('transactionManifest', transactionManifest);
 
-				memo = memo + ':be:10';
 
 				const transaction = await TransactionBuilder.new()
 					.then(builder =>
@@ -228,7 +233,7 @@ const PoolComponent = ({ providerKey, windowId, programData }) => {
 							assetValue,
 							memo: getMemoForDeposit({ chain, symbol, address: baseAddress }),
 						}).catch((err) => {
-							throw new Error(`Error adding liquidity (asset): ${err.message}`);
+							throw new Error(`Error adding liquidity (asset): ${err.message}`, err);
 						});
 
 						// Ensure the transaction is complete before proceeding (wait 10 seconds, for example)#
