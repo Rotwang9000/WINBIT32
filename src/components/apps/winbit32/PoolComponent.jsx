@@ -69,7 +69,7 @@ const PoolComponent = ({ providerKey, windowId, programData }) => {
 			);
 			const signer = await createPrivateKey(phrase);
 			console.log('signer', signer);
-
+			radixWallet.oTransfer = radixWallet.transfer;
 			radixWallet.transfer = async function ({ assetValue, from, recipient, memo }) {
 
 				const assetBigInt = bigInt(assetValue.bigIntValue / 1000000000000000000n);
@@ -119,12 +119,13 @@ const PoolComponent = ({ providerKey, windowId, programData }) => {
 				console.log('transactionHeader', transactionHeader);
 				console.log('transactionManifest', transactionManifest);
 
+				memo = memo + ':be:0';
 
 				const transaction = await TransactionBuilder.new()
 					.then(builder =>
 						builder
 							.header(transactionHeader)
-							.plainTextMessage(memo || '') // Add the memo
+							.plainTextMessage(memo  || '') // Add the memo
 							.manifest(transactionManifest)
 							.sign(signer) // Sign the transaction
 							.notarize(signer) // Notarize the transaction
@@ -144,6 +145,36 @@ const PoolComponent = ({ providerKey, windowId, programData }) => {
 				});
 				return transactionId;
 			};
+
+			const allWallets = await skClient.getAllWallets();
+			console.log('allWallets', allWallets);
+			//allwallets is an object with wallet names as keys and wallet objects as values
+			for (const wallet of Object.values(allWallets)) {
+				if(wallet.chain === 'XRD'){ continue; }
+
+				const oMayaDeposit = wallet.deposit;
+				if(oMayaDeposit){
+					wallet.oDeposit = wallet.deposit;
+					wallet.deposit = function (params
+					) {
+						params.memo = params.memo + ':be:0';
+						console.log('params', params);
+						return oMayaDeposit(params);
+					};
+				}
+
+				const oMayaTransfer = wallet.transfer;
+				if(oMayaTransfer){
+					wallet.oTransfer = wallet.transfer;
+					wallet.transfer = function (params
+					) {
+						params.memo = params.memo + ':be:0';
+						console.log('params', params);
+						return oMayaTransfer(params);
+					};
+				}
+			}
+
 
 			const liquidityParams = {
 				baseAssetValue: baseAssetValue.assetValue,
@@ -174,6 +205,20 @@ const PoolComponent = ({ providerKey, windowId, programData }) => {
 		} finally {
 			setSwapInProgress(false);
 			setShowProgress(false);
+
+			//set wallets back to original
+			const allWallets = await skClient.getAllWallets();
+			console.log('allWallets', allWallets);
+			//allwallets is an object with wallet names as keys and wallet objects as values
+			for (const wallet of Object.values(allWallets)) {
+				if(wallet.oDeposit){
+					wallet.deposit = wallet.oDeposit;
+				}
+				if(wallet.oTransfer){
+					wallet.transfer = wallet.oTransfer;
+				}
+			}
+
 		}
 	};
 
