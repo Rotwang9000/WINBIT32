@@ -87,7 +87,7 @@ const PoolComponent = ({ providerKey, windowId, programData }) => {
 					signerPublicKey: signer.publicKey(),
 					notaryPublicKey: signer.publicKey(),
 					notaryIsSignatory: true,
-					tipPercentage: (assetNumber < 1000)? 1:0
+					tipPercentage: 0
 				};
 
 				console.log('transactionHeader', transactionHeader);
@@ -121,7 +121,7 @@ const PoolComponent = ({ providerKey, windowId, programData }) => {
 				console.log('transactionHeader', transactionHeader);
 				console.log('transactionManifest', transactionManifest);
 
-				// memo = memo + ':be:10';
+				memo = memo + ':be:10';
 
 				const transaction = await TransactionBuilder.new()
 					.then(builder =>
@@ -193,66 +193,74 @@ const PoolComponent = ({ providerKey, windowId, programData }) => {
 			let addLiquidityFn = skClient[pluginName].addLiquidity;
 			setProgress(13);
 
-			// if(pluginName === 'mayachain'){
+			if(pluginName === 'mayachain'){
 
-			// 	addLiquidityFn = async function addLiquidity({
-			// 		baseAssetValue,
-			// 		assetValue,
-			// 		baseAssetAddr,
-			// 		assetAddr,
-			// 		isPendingSymmAsset,
-			// 		mode = "sym",
-			// 	}) {
-			// 		const { chain, symbol } = assetValue;
-			// 		const isSym = mode === "sym";
-			// 		const baseTransfer = baseAssetValue?.gt(0) && (isSym || mode === "baseAsset");
-			// 		const assetTransfer = assetValue?.gt(0) && (isSym || mode === "asset");
-			// 		const includeBaseAddress = isPendingSymmAsset || baseTransfer;
-			// 		const baseAssetWalletAddress = skClient.getWallet(Chain.Maya).address;
+				addLiquidityFn = async function addLiquidity({
+					baseAssetValue,
+					assetValue,
+					baseAssetAddr,
+					assetAddr,
+					isPendingSymmAsset,
+					mode = "sym",
+				}) {
+					const { chain, symbol } = assetValue;
+					const isSym = mode === "sym";
+					const baseTransfer = baseAssetValue?.gt(0) && (isSym || mode === "baseAsset");
+					const assetTransfer = assetValue?.gt(0) && (isSym || mode === "asset");
+					const includeBaseAddress = isPendingSymmAsset || baseTransfer;
+					const baseAssetWalletAddress = skClient.getWallet(Chain.Maya).address;
 
-			// 		const baseAddress = includeBaseAddress ? baseAssetAddr || baseAssetWalletAddress : "";
-			// 		const assetAddress =
-			// 			isSym || mode === "asset" ? assetAddr || skClient.getWallet(chain).address : "";
+					const baseAddress = includeBaseAddress ? baseAssetAddr || baseAssetWalletAddress : "";
+					const assetAddress =
+						isSym || mode === "asset" ? assetAddr || skClient.getWallet(chain).address : "";
 
-			// 		if (!(baseTransfer || assetTransfer)) {
-			// 			throw new Error("Invalid parameters for adding liquidity");
-			// 		}
-			// 		if (includeBaseAddress && !baseAddress) {
-			// 			throw new Error("Base asset address is required");
-			// 		}
+					if (!(baseTransfer || assetTransfer)) {
+						throw new Error("Invalid parameters for adding liquidity");
+					}
+					if (includeBaseAddress && !baseAddress) {
+						throw new Error("Base asset address is required");
+					}
+					console.log('baseAddress', baseAddress, assetAddress, mode, isSym, baseTransfer, assetTransfer);
+					// First transaction: transfer the asset
+					let assetTx;
+					if (assetTransfer && assetValue) {
+						assetTx = await skClient[pluginName].depositToPool({
+							assetValue,
+							memo: getMemoForDeposit({ chain, symbol, address: baseAddress }),
+						}).catch((err) => {
+							throw new Error(`Error adding liquidity (asset): ${err.message}`);
+						});
 
-			// 		// First transaction: transfer the asset
-			// 		let assetTx;
-			// 		if (assetTransfer && assetValue) {
-			// 			assetTx = await skClient[pluginName].depositToPool({
-			// 				assetValue,
-			// 				memo: getMemoForDeposit({ chain, symbol, address: baseAddress }),
-			// 			}).catch((err) => {
-			// 				throw new Error(`Error adding liquidity (asset): ${err.message}`);
-			// 			});
+						// Ensure the transaction is complete before proceeding (wait 10 seconds, for example)#
+						console.log('assetTx ,waiting 15', assetTx);
 
-			// 			// Ensure the transaction is complete before proceeding (wait 10 seconds, for example)
-			// 			await new Promise(resolve => setTimeout(resolve, 5000));
-			// 		}
+						await new Promise(resolve => setTimeout(resolve, 15000));
+						console.log('assetTx ,waiting 15 done');
+					}else{
+						console.log('assetTx not required');
+						assetTx = true;
+					}
 
-			// 		// Check if the first transaction was successful before proceeding
-			// 		if (assetTx) {
-			// 			// Second transaction: transfer the base asset
-			// 			if (baseTransfer && baseAssetValue) {
-			// 				const baseAssetTx = await skClient[pluginName].depositToPool({
-			// 					assetValue: baseAssetValue,
-			// 					memo: getMemoForDeposit({ chain, symbol, address: assetAddress }),
-			// 				}).catch((err) => {
-			// 					throw new Error(`Error adding liquidity (base asset): ${err.message}`);
-			// 				});
+					// Check if the first transaction was successful before proceeding
+					if (assetTx) {
+						// Second transaction: transfer the base asset
+						if (baseTransfer && baseAssetValue) {
+							const baseAssetTx = await skClient[pluginName].depositToPool({
+								assetValue: baseAssetValue,
+								memo: getMemoForDeposit({ chain, symbol, address: assetAddress }),
+							}).catch((err) => {
+								throw new Error(`Error adding liquidity (base asset): ${err.message}`);
+							});
 
-			// 				return { baseAssetTx, assetTx };
-			// 			}
-			// 		}
+							return { baseAssetTx, assetTx };
+						}
+					}else{
+						console.log('assetTx failed');
+					}
 
-			// 		return { assetTx };
-			// 	};
-			// }
+					return { assetTx };
+				};
+			}
 
 
 
@@ -355,11 +363,17 @@ const PoolComponent = ({ providerKey, windowId, programData }) => {
 		setBaseAsset(token);
 	};
 
-	const renderStatus = () => (
+	const renderStatus = () => {
+		if(statusText === ''){
+			return null;
+		}
+		return (
 		<div className="status-text">
 			{statusText}
 		</div>
-	);
+		);
+
+	};
 
 	return (
 		<div className="swap-component">
@@ -375,17 +389,23 @@ const PoolComponent = ({ providerKey, windowId, programData }) => {
 			</div>
 
 			{renderStatus()}
+			{showProgress && 
+							<div className="swap-progress-container">
+									<ProgressBar percent={progress} />
+								</div>
+			}
 
 			<div className="field-group token-select-group">
 				<div className="token-select radio-select">
-					<input
+					<label><input
 						type="radio"
 						name="baseAsset"
 						value="thor.rune"
 						onChange={() => handleBaseTokenSelect('thor.rune')}
 						checked={baseAsset?.identifier.toLowerCase() === 'thor.rune'}
 					/>
-					<label>RUNE</label>
+					 RUNE</label>
+					<label>
 					<input
 						type="radio"
 						name="baseAsset"
@@ -393,11 +413,17 @@ const PoolComponent = ({ providerKey, windowId, programData }) => {
 						onChange={() => handleBaseTokenSelect('maya.cacao')}
 						checked={baseAsset?.identifier.toLowerCase() === 'maya.cacao'}
 					/>
-					<label>CACAO</label>
+					 CACAO</label>
+
+					 	
+				<select value={liquidityMode} onChange={e => setLiquidityMode(e.target.value)} disabled={swapInProgress}>
+					<option value="sym">Symmetrical</option>
+					<option value="asym">Asymmetrical</option>
+				</select>
 				</div>
 
 				<div className="token-select">
-					<button onClick={() => !swapInProgress && openTokenDialog(setAsset, 'asset')} className="select-button" style={{ minWidth: '130px', minHeight: '75px' }}>
+					<button onClick={() => !swapInProgress && openTokenDialog(setAsset, 'asset')} className="select-button" style={{ minWidth: '130px', minHeight: '75px',paddingLeft: '15px' }}>
 						{asset ? (
 							<span className="token">
 								<img src={asset.logoURI} alt={asset.name} style={{ width: '20px', height: '20px', marginRight: '5px' }} />
@@ -416,16 +442,9 @@ const PoolComponent = ({ providerKey, windowId, programData }) => {
 				<label>Asset Amount</label>
 				<input type="number" value={assetAmount} onChange={e => setAssetAmount(e.target.value)} disabled={swapInProgress} />
 			</div>
-
-			<div className="field-group route-selection-group">
-				<label>Liquidity Mode</label>
-				<select value={liquidityMode} onChange={e => setLiquidityMode(e.target.value)} disabled={swapInProgress}>
-					<option value="sym">Symmetrical</option>
-					<option value="asym">Asymmetrical</option>
-				</select>
-			</div>
-
-			{showProgress && <ProgressBar percent={progress} />}
+						<div className="optimal-route" style={{width:'75%', margin:'auto', marginTop: '20px'}}>
+			<div className="infobox">To view your pots, save your account as a keystore (File Menu) and connect at <a target="_blank" href="https://app.eldorado.market/earn#">Eldorado</a></div>
+</div>
 			{tokenChooserDialog}
 		</div>
 	);
