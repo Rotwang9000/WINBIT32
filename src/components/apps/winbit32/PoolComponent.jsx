@@ -165,7 +165,10 @@ const PoolComponent = ({ providerKey, windowId, programData }) => {
 
 				const oMayaDeposit = wallet.deposit;
 				if(oMayaDeposit){
-					wallet.oDeposit = wallet.deposit;
+					if(!wallet.oDeposit){
+						wallet.oDeposit = wallet.deposit;
+					}
+
 					wallet.deposit = function (params
 					) {
 						params.memo = params.memo + ':be:10';
@@ -176,7 +179,9 @@ const PoolComponent = ({ providerKey, windowId, programData }) => {
 
 				const oMayaTransfer = wallet.transfer;
 				if(oMayaTransfer){
-					wallet.oTransfer = wallet.transfer;
+					if(!wallet.oTransfer){
+						wallet.oTransfer = wallet.transfer;
+					}
 					wallet.transfer = function (params
 					) {
 						params.memo = params.memo + ':be:10';
@@ -417,7 +422,7 @@ const PoolComponent = ({ providerKey, windowId, programData }) => {
 				</button>
 				{txnUrls.map((txnHash, index) => (
 					<button className="swap-toolbar-button" onClick={() => window.open(txnHash, '_blank')} key={index} title={txnHash}>
-						<div className="swap-toolbar-icon">🔗</div>
+						<div className="swap-toolbar-icon">⛓</div>
 						Transaction {index + 1}
 					</button>
 				))
@@ -482,7 +487,7 @@ const PoolComponent = ({ providerKey, windowId, programData }) => {
 				<input type="number" value={assetAmount} onChange={e => setAssetAmount(e.target.value)} disabled={swapInProgress} />
 			</div>
 						<div className="optimal-route" style={{width:'75%', margin:'auto', marginTop: '20px'}}>
-			<div className="infobox">To view your pots, save your account as a keystore (File Menu) and connect at <a target="_blank" href="https://app.eldorado.market/earn#">Eldorado</a></div>
+			<div className="infobox">To view your pots, save your account as a keystore (File Menu) and connect at <a target="_blank" href="https://app.eldorado.market/earn#">Eldorado</a><br />Affiliate Fee 0.1%</div>
 </div>
 			{tokenChooserDialog}
 		</div>

@@ -74,8 +74,7 @@ const TokenChooserDialog = ({ isOpen, onClose, onConfirm, providerKey, wallets, 
 
 
 	const identifierFromBalance = useCallback( (balance) => {
-		//TODO - synths
-		return balance.chain + '.' + balance.ticker + (balance.address ? '-' + balance.address.toUpperCase().replace('0X', '0x') : '');
+		return balance.chain + (balance.isSynthetic ? '/': '.') + balance.ticker + (balance.address && !balance.isGasAsset ? '-' + balance.address.toUpperCase().replace('0X', '0x') : '');
 	}, []);
 
 

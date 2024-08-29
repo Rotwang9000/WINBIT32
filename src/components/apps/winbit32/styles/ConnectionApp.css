@@ -81,7 +81,10 @@ textarea {
 	margin-left: 10px;
 	border: 1px solid #000;
 	background-color: #f00;
-	/* default red */
+	display: flex;
+	text-align: center;
+	flex-direction: column;
+
 }
 
 .status-row {
