@@ -89,7 +89,7 @@ const Portfolio = ({ providerKey }) => {
 
 	const columns = [
 		{ name: 'Chain', selector: row => row.chain, width: '75px', sortable: true },
-		{ name: 'Token', selector: row => row.symbol, width: '100px', sortable: true, hide: 'sm' },
+		{ name: 'Token', selector: row => row.ticker, width: '100px', sortable: true, hide: 'sm' },
 		{
 			name: 'Address', selector: row => row.address, grow: 2, cell: row => (
 				<div>
@@ -106,8 +106,9 @@ const Portfolio = ({ providerKey }) => {
 		chain: wallet.chain, // [0] is used to get the chain of the first token in the wallet. All tokens in the wallet are assumed to be of the same chain
 		symbol: wallet.balance?.find(b => b.isGasAsset)?.symbol || wallet.balance[0]?.symbol,
 		address: wallet.address,
+		ticker: wallet.balance?.find(b => b.isGasAsset)?.ticker || wallet.balance[0]?.ticker,
 		balance: wallet.balance.find(b => b.isGasAsset)?.bigIntValue ? Number(wallet.balance.find(b => b.isGasAsset).bigIntValue) / Number(wallet.balance.find(b => b.isGasAsset).decimalMultiplier) : Number(wallet.balance[0].bigIntValue) / Number(wallet.balance[0].decimalMultiplier),
-		link: getExplorerAddressUrl(wallet.chain, wallet.address),
+		link: getExplorerAddressUrl(wallet.chain, wallet.address).replace('https://dashboard.radixdlt.com/address/', 'https://dashboard.radixdlt.com/account/'),
 		tokens: wallet.balance ? wallet.balance.map(token => ({
 			symbol: token.symbol,
 			ticker: token.ticker,

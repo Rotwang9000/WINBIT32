@@ -54,6 +54,7 @@ export const chainImages = {
 	THOR: "https://static.thorswap.net/token-list/images/thor.rune.png",
 	BNB: "https://static.thorswap.net/token-list/images/bnb.bnb.png",
 	GAIA: "https://static.thorswap.net/token-list/images/gaia.atom.png",
+	XRD: "https://storage.googleapis.com/token-list-swapkit-dev/images/xrd.xrd.png",
 };
 
 export 	const fetchTokenPrices = async (swapFrom, swapTo) => {

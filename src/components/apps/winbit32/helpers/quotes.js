@@ -5,7 +5,7 @@ import { SwapKitApi } from "@swapkit/api";
 import bigInt from "big-integer";
 
 export const getQuotes = async (
-	swapFrom,
+	oSwapFrom,
 	swapTo,
 	amount,
 	destinationAddress,
@@ -22,6 +22,8 @@ export const getQuotes = async (
 ) => {
 	const thisDestinationAddress =
 		destinationAddress || chooseWalletForToken(swapTo, wallets)?.address;
+		//clone oSwapFrom
+	let swapFrom = JSON.parse(JSON.stringify(oSwapFrom));
 
 	if (swapFrom && swapTo && amount && thisDestinationAddress) {
 		setStatusText("");
@@ -32,7 +34,14 @@ export const getQuotes = async (
 				? 16
 				: 32;
 
-		
+		if(swapFrom.identifier === "XRD.XRD"){
+			console.log(swapFrom);
+			swapFrom.identifier =
+				"radix-mainnet.XRD-" +
+				"resource_rdx1tknxxxxxxxxxradxrdxxxxxxxxx009923554798xxxxxxxxxradxrd";
+			console.log(swapFrom);
+		}
+
 		const swapKitQuoteParams = {
 			sellAsset: swapFrom.identifier,
 			buyAsset: swapTo.identifier,
@@ -42,7 +51,7 @@ export const getQuotes = async (
 			affiliateFee: basisPoints,
 			affiliate: "be",
 			slippage: slippage,
-			// providers: ["MAYACHAIN"],
+			//  providers: ["MAYACHAIN"],
 		};
 
 		console.log("AssetValue", swapFrom.identifier, swapTo.identifier);

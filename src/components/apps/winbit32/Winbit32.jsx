@@ -178,6 +178,15 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 				result.chain = walletChains[i].toString();
 				result.chainObj = walletChains[i];
 				result.chainId = ChainToChainId[walletChains[i]];
+				if (result.balance){
+					const xrdBalance = result.balance.find(b => b.ticker === 'resource_rdx1tknxxxxxxxxxradxrdxxxxxxxxx009923554798xxxxxxxxxradxrd');
+					if (xrdBalance) {
+						xrdBalance.ticker = 'XRD';
+						xrdBalance.isGasAsset = true;
+					}
+				}
+
+
 				//export const createKeyring = async (phrase: string, networkPrefix: number) => {
 				if(result.createKeyring){
 					result.keyRing = await result.createKeyring(phrase, result.network.prefix);

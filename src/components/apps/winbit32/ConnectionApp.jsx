@@ -103,7 +103,7 @@ function ConnectionApp({ windowId, providerKey, phrase, setPhrase, connectionSta
 							}
 						}
 						}
-					className="traffic-light" style={{ backgroundColor: trafficLightColor() }}></div>
+							className="traffic-light" style={{ backgroundColor: trafficLightColor(), color: 'white' }}>🗘</div>
 				</div>
 				}	
 				<div className="status-row">

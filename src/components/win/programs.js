@@ -162,7 +162,7 @@ export const getPrograms = () => {
 				{
 					progID: 1,
 					title: "Exchange",
-					icon: "🔄",
+					icon: "🔀",
 					progName: "exchange.exe", // Added name for "File Manager"
 					component: SwapComponent,
 					defaultOpen: false,

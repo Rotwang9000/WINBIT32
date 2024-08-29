@@ -3,7 +3,7 @@ import { amountInBigNumber, getAssetValue, getQuoteFromSwapKit } from "./quote";
 import { AssetValue, RequestClient, SwapKitNumber } from "@swapkit/helpers";
 import { FeeOption, SwapKitApi } from "@swapkit/sdk";
 import { ChainIdToChain } from "@swapkit/sdk";
-import { getTxnDetails, getTxnDetailsV2 } from "./transaction";
+import { getTxnDetails, getTxnDetailsV2, getTxnUrl } from "./transaction";
 import { getTokenForProvider } from './token';
 
 export const chooseWalletForToken = (token, wallets) => {
@@ -115,7 +115,7 @@ export const handleApprove = async (
 		});
 	console.log("approveTxnHash", approveTxnHash);
 	try{
-		const explURL = skClient.getExplorerTxUrl({ chain: wallet.chain, txHash: approveTxnHash});
+		const explURL = getTxnUrl(approveTxnHash, wallet.chain, skClient);
 		console.log("explURL", explURL);
 		setExplorerUrl(explURL);
 		setShowProgress(false);

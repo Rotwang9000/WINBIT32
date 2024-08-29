@@ -140,17 +140,17 @@ slippage=${slippage}
 		console.log('Selected token:', token);
 		const wallet = wallets.find(w => w?.chain === token?.chain);
 		console.log('Wallet:', wallet);
-		const balance = wallet?.balance?.find(b => b.isSynthetic !== true && b.chain + '.' + b.symbol.toUpperCase() === token.identifier.toUpperCase()) || wallet?.balance?.find(b => b.isSynthetic === true && b.symbol.toUpperCase() === token.identifier.toUpperCase());
+		const balance = wallet?.balance?.find(b => b.isSynthetic !== true && b.chain + '.' + b.ticker.toUpperCase() === token.identifier.toUpperCase()) || wallet?.balance?.find(b => b.isSynthetic === true && b.symbol.toUpperCase() === token.identifier.toUpperCase());
 		console.log('Balance:', balance);
 		if (balance) {
 			//const readableBalance = formatBigIntToSafeValue(bigInt(balance.bigIntValue), balance.decimal, balance.decimal);
-			const readableBalance = formatBalance(bigInt(balance.bigIntValue), (balance.decimal === 6)? 8 :  balance.decimal);
-			console.log('Readable balance:', readableBalance.toString(), bigInt(balance.bigIntValue), (balance.decimal === 6) ? 8 : balance.decimal, token.identifier);
+			const readableBalance = Number(balance.bigIntValue) / Number(balance.decimalMultiplier);
+			console.log('Readable balance:', readableBalance.toString(),Number(balance.bigIntValue) / Number(balance.decimalMultiplier), token.identifier);
 			setMaxAmount(readableBalance.toString());
 		} else {
 			setMaxAmount('0');
 		}
-	}, [swapFrom, wallets]);
+	}, [setMaxAmount, swapFrom, wallets]);
 
 	const handleTextareaFocus = () => {
 		setTextareaActive(true);

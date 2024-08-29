@@ -189,11 +189,13 @@ export const getTxnUrl = (txnHash, chain, skClient) => {
 	try {
 		return skClient.getExplorerTxUrl({chain, txnHash});
 	} catch (error) {
-		console.log("error", error);
-		if(chain === 'XRD'){
-			return `https://dashboard.radixdlt.com/transaction/${txnHash?.id}`;
-		}else{
-			return 'https://www.mayascan.org/tx/'+txnHash;
+		console.log("error", error, txnHash, chain, skClient);
+		if (chain === "XRD" || chain === 'radix-mainnet') {
+			if (txnHash?.id)
+				return `https://dashboard.radixdlt.com/transaction/${txnHash?.id}`;
+			else return `https://dashboard.radixdlt.com/transaction/${txnHash}`;
+		} else {
+			return "https://www.mayascan.org/tx/" + txnHash;
 		}
 	}
 }

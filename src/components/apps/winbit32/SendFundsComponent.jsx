@@ -1,17 +1,18 @@
-	import React, { useEffect, useCallback, useRef } from 'react';
-	import { FeeOption, AssetValue } from '@swapkit/sdk';
-	import TokenChooserDialog from './TokenChooserDialog';
-	import ProgressBar from '../../win/ProgressBar';
-	import TitleBar from '../../win/TitleBar';
-	import MenuBar from '../../win/MenuBar';
-	import { saveAs } from 'file-saver';
-	import './styles/SwapComponent.css';
+import React, { useEffect, useCallback, useRef } from 'react';
+import { FeeOption, AssetValue } from '@swapkit/sdk';
+import TokenChooserDialog from './TokenChooserDialog';
+import ProgressBar from '../../win/ProgressBar';
+import TitleBar from '../../win/TitleBar';
+import MenuBar from '../../win/MenuBar';
+import { saveAs } from 'file-saver';
+import './styles/SwapComponent.css';
 
-	import './styles/SendFundsComponent.css';
-	import { useWindowSKClient } from '../../contexts/SKClientProviderManager';
-	import { useIsolatedState } from '../../win/includes/customHooks';
-	import { formatBalance } from './helpers/transaction';
-	import { getAssetValue } from './helpers/quote';
+import './styles/SendFundsComponent.css';
+import { useWindowSKClient } from '../../contexts/SKClientProviderManager';
+import { useIsolatedState } from '../../win/includes/customHooks';
+import { formatBalance } from './helpers/transaction';
+import { getAssetValue } from './helpers/quote';
+import { getTxnUrl } from './helpers/transaction';
 
 
 
@@ -44,20 +45,26 @@
 		const handleTokenSelect = useCallback((token) => {
 			setSelectedToken(token);
 			console.log('Selected token:', token);
-			const wallet = wallets.find(w => w.chain === token.chain);
-			console.log('Wallet:', wallet);
-			const balance = wallet?.balance?.find(b => b.isSynthetic !== true && b.chain + '.' + b.symbol.toUpperCase() === token.identifier.toUpperCase()) || wallet?.balance?.find(b => b.isSynthetic === true && b.symbol.toUpperCase() === token.identifier.toUpperCase());
-			console.log('Balance:', balance);
-			if (balance) {
-				//const readableBalance = formatBigIntToSafeValue(bigInt(balance.bigIntValue), balance.decimal, balance.decimal);
-				const readableBalance = formatBalance(bigInt(balance.bigIntValue), (balance.decimal === 6) ? 8 : balance.decimal);
-				console.log('Readable balance:', readableBalance, bigInt(balance.bigIntValue), balance.decimal);
-				setMaxAmount(readableBalance.toString());
-			}else{
-				setMaxAmount('0');
-			}
 			setIsTokenDialogOpen(false);
-		}, [bigInt, setIsTokenDialogOpen, setMaxAmount, setSelectedToken, wallets]);
+		}, [setIsTokenDialogOpen, setSelectedToken]);
+
+
+		useEffect(() => {
+			//get balance and set maxamount
+			if (selectedToken) {
+				const wallet = wallets.find(w => w.chain === selectedToken.chain);
+				const balance = wallet?.balance?.find(b => b.isSynthetic !== true && b.chain + '.' + b.ticker.toUpperCase() === selectedToken.identifier.toUpperCase()) || wallet?.balance?.find(b => b.isSynthetic === true && b.symbol.toUpperCase() === selectedToken.identifier.toUpperCase());
+				if (balance) {
+					console.log('Balance:', balance);
+					const readableBalance = Number(balance.bigIntValue) / Number(balance.decimalMultiplier);
+					setMaxAmount(readableBalance.toString());
+				}else{
+					setMaxAmount('0');
+				}
+			}
+		}, [selectedToken, wallets, bigInt, setMaxAmount]);
+
+
 
 		const sendFunds = async () => {
 			if (!selectedToken) {
@@ -121,7 +128,7 @@
 				const txID = await sendingWallet.transfer(txData);
 				console.log('Transaction ID:', txID);
 				setProgress(87);
-				const explorerUrl = skClient.getExplorerTxUrl({chain: sendingWallet.chainObj, txHash:txID});
+				const explorerUrl = getTxnUrl(txID, selectedToken.chain, skClient);
 				console.log('Explorer URL:', explorerUrl);
 				setProgress(93);
 				setTxUrl(explorerUrl);
