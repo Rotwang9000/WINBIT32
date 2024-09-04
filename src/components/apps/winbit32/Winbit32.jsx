@@ -3,6 +3,7 @@ import { useIsolatedState, useIsolatedRef } from '../../win/includes/customHooks
 import WindowContainer from '../../win/WindowContainer';
 import ConnectionApp from './ConnectionApp';
 import { generateMnemonic, entropyToMnemonic } from '@scure/bip39';
+import { mnemonicToSeed } from "@scure/bip39";
 import { wordlist } from '@scure/bip39/wordlists/english';
 import { saveAs } from 'file-saver';
 import { useWindowSKClient } from '../../contexts/SKClientProviderManager';
@@ -12,7 +13,9 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { isValidMnemonic } from './helpers/phrase';
 import { processKeyPhrase, setupFileInput, triggerFileInput } from '../sectools/includes/KeyStoreFunctions';
 import { createKeyring } from '@swapkit/toolbox-substrate';
-import License from './License';
+import { createHash } from "crypto-browserify";
+import {  networks } from 'bitcoinjs-lib';
+import { Signer, SignerAsync, ECPairInterface, ECPairFactory, ECPairAPI, TinySecp256k1Interface } from 'ecpair';
 
 function generatePhrase(size = 12) {
 	const entropy = size === 12 ? 128 : 256;
@@ -98,7 +101,7 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 	}, [phrase]);
 
 	const checkValidPhrase = useCallback(async (chkPhrase) => {
-		let words = chkPhrase.split(' ');
+		let words = chkPhrase.trim().split(' ');
 		if(words.length > 0 && (words[0] === 'WALLETCONNECT' || words[0] === 'XDEFI'))
 				 return true;
 			//if not private key
@@ -131,21 +134,77 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 				return false;
 			}
 		}else{
-			//if private key
-			// const isValid = currentPhraseRef.current.match(/^[0-9a-fA-F]+$/);
-			// if (!isValid) {
-			// 	console.log('Invalid private key');
-			// 	return false;
-			// }
+			//chkPhrase is actually a private key
+			const isValid = chkPhrase.match(/^[0-9a-zA-Z]+$/);
+			if (!isValid) {
+				console.log('Invalid private key');
+				return false;
+			}
 			try{
-				//get entropy from seed
-				const entropy = Buffer.from(chkPhrase, 'hex');
-				const phrase = entropyToMnemonic(entropy, wordlist);
+				//We don't know what format private key is in so need to try different ones
+				const chkPrivateKey = chkPhrase.trim();
+				let isValid = false;
+				let phrase = chkPhrase;
+				let chkPrivateKeyBuffer;
+				//try decoding chkPrivateKey as HEX for EVM
+				chkPrivateKeyBuffer = Buffer.from(chkPrivateKey, 'hex');
+				if (chkPrivateKeyBuffer.length === 32) {
+					const entropy = chkPrivateKeyBuffer.toString('hex');
+					try{
+						phrase = entropyToMnemonic(entropy);
+					
+					if(phrase){
+						console.log('Valid private key for EVM');
+						isValid = true;
+
+						}else{
+							console.log('Invalid private key for EVM');
+						}
+					} catch (e) {
+						console.log('Invalid private key for EVM', e);
+					}
+				}
+				//Try decoding as a private key for BTC
+				if (!isValid) {
+					console.log('Trying as a private key for BTC');
+					try {
+						const tinysecp = require('@bitcoinerlab/secp256k1');
+						const ECPair = ECPairFactory(tinysecp);
+						//it likely is not hex but a string
+						chkPrivateKeyBuffer = Buffer.from(chkPrivateKey, 'hex');
+						if (chkPrivateKeyBuffer.length === 0) {
+							chkPrivateKeyBuffer = Buffer.from(chkPrivateKey, 'utf8');
+							//compress from 52 to 32
+							if (chkPrivateKeyBuffer.length === 52) {
+								chkPrivateKeyBuffer = Buffer.from(chkPrivateKeyBuffer.toString('base64'), 'base64');
+							}
+						}
+						const keyPair = ECPair.fromPrivateKey(chkPrivateKeyBuffer, { network: 	networks.bitcoin });
+						//get phrase
+						phrase = keyPair.toWIF();
+
+						isValid = true;
+					} catch (e) {
+						console.log('Invalid private key for BTC', e);
+					}
+				}
+
+
+				//Try decoding as a private key for ETH
+
+				//Try decoding as a private key for XRD
+
+				//Try decoding as a private key for DOT
+
+
+
+
+				
 				// console.log('phrase', phrase);
 				setPhrase(phrase);
 				return 2;
 			}catch(e){
-				console.log('Invalid private key', e);
+				console.log('Invalid private key', chkPhrase, e);
 				return false;
 			}
 		}
@@ -183,6 +242,10 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 					if (xrdBalance) {
 						xrdBalance.ticker = 'XRD';
 						xrdBalance.isGasAsset = true;
+
+
+
+
 					}
 				}
 

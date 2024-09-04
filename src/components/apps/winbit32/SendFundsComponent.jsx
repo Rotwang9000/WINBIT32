@@ -113,19 +113,33 @@ import { getTxnUrl } from './helpers/transaction';
 			// };
 
 		
-			const txData = {
+			let txData;
+			let fn = sendingWallet.transfer;
+
+			if(recipientAddress.toLowerCase() === 'deposit'){
+				fn = sendingWallet.deposit;
+				txData = {
+					assetValue: assetValue,
+					from: sendingWallet.address,
+					memo,
+				};
+
+
+			}else{
+				txData = {
 				assetValue: assetValue,
 				from: sendingWallet.address,
 				feeOptionKey: FeeOption.Average,
 				memo,
 				recipient: recipientAddress,
-
-			};
+				};
+			}
+			
 			setProgress(13);
 			console.log('Sending funds:', txData, sendingWallet);
 
 			try { 
-				const txID = await sendingWallet.transfer(txData);
+				const txID = await fn(txData);
 				console.log('Transaction ID:', txID);
 				setProgress(87);
 				const explorerUrl = getTxnUrl(txID, selectedToken.chain, skClient);
@@ -147,13 +161,13 @@ import { getTxnUrl } from './helpers/transaction';
 
 		const updateIniData = () => {
 			if (!textareaActive) {
-			const data = `token=${selectedToken?.identifier || ''}
+				let data = `token=${selectedToken?.identifier || ''}
 amount=${amount}
 recipient=${recipientAddress}
 memo=${memo}
-; memo is only for THOR/Maya Chains	
-	`;
-				// only used on THOR/MAYA chain transactions
+; memo is only for THOR/Maya Chains
+`;
+
 				setIniData(data);
 			}
 		};
@@ -344,7 +358,7 @@ memo=${memo}
 								''
 							)}
 						</div>
-					<div className="field-group">
+					<div className="field-group" title="Use 'deposit' to deposit to protocol (Thor/Maya)">
 						<label>Recipient Address</label>
 						<input type="text" value={recipientAddress} onChange={e => setRecipientAddress(e.target.value)} />
 					</div>

@@ -156,7 +156,10 @@ export const handleSwap = async (
 	quoteId,
 	feeOption,
 	currentTxnStatus,
-	chainflipBroker
+	chainflipBroker,
+	isStreamingSwap,
+	streamingInterval,
+	streamingNumSwaps
 ) => {
 	if (swapInProgress) return;
 	setSwapInProgress(true);
@@ -174,13 +177,10 @@ export const handleSwap = async (
 		return;
 	}
 
-	
 	setShowProgress(true);
 	setProgress(0);
 
 	console.log("SelectedRoute", selectedRoute);
-
-
 
 	const wallet = chooseWalletForToken(swapFrom, wallets);
 	if (!wallet) {
@@ -192,37 +192,42 @@ export const handleSwap = async (
 	console.log("wallet", wallet);
 
 	// try {
-		const route =
-			selectedRoute === "optimal" && routes.length > 0
-				? routes.find(({ optimal }) => optimal) || routes[0]
-				: routes.find((route) => route.providers.join(", ") === selectedRoute);
-		if (!route) {
-			setStatusText("No route selected");
-			setSwapInProgress(false);
-			setShowProgress(false);
-			return;
-		}
+	const route =
+		selectedRoute === "optimal" && routes.length > 0
+			? routes.find(({ optimal }) => optimal) || routes[0]
+			: routes.find((route) => route.providers.join(", ") === selectedRoute);
+	if (!route) {
+		setStatusText("No route selected");
+		setSwapInProgress(false);
+		setShowProgress(false);
+		return;
+	}
 
-		console.log("route", route);	
-	
+	if(isStreamingSwap){
+		const parts = route.memo.split(":");
+		const splitP3 = parts[3].split("/");
+		const newSplitP3 = splitP3[0] + '/' + streamingInterval + '/' + streamingNumSwaps;
+		parts[3] = newSplitP3;
+		route.memo = parts.join(":");
 
-		//ensure the right version of the token is used
-		swapFrom = getTokenForProvider(
-			tokens,
-			swapFrom,
-			route.providers[0]
-		);
+	}
 
-		console.log("route", route);
-		setTxnHash("");
-		setExplorerUrl("");
-		setTxnStatus(null);
-		setProgress(8);
-		const { assetValue, otherBits } = await getAssetValue(swapFrom, amount);
 
-		console.log("assetValue", assetValue, swapFrom, amount, otherBits);
+	console.log("route", route);
 
-		let cfAddress = null;
+	//ensure the right version of the token is used
+	swapFrom = getTokenForProvider(tokens, swapFrom, route.providers[0]);
+
+	console.log("route", route);
+	setTxnHash("");
+	setExplorerUrl("");
+	setTxnStatus(null);
+	setProgress(8);
+	const { assetValue, otherBits } = await getAssetValue(swapFrom, amount);
+
+	console.log("assetValue", assetValue, swapFrom, amount, otherBits);
+
+	let cfAddress = null;
 	if (route.providers[0] === "CHAINFLIP") {
 		const dotWallet = wallets.find((wallet) => wallet.chain === "DOT");
 
@@ -253,7 +258,7 @@ export const handleSwap = async (
 			swapToAssetValue.toString().toUpperCase(),
 			assetValue.toString().toUpperCase()
 		);
-		try{
+		try {
 			cfAddress = await broker.requestSwapDepositAddress({
 				route: route,
 				sellAsset: assetValue,
@@ -261,222 +266,222 @@ export const handleSwap = async (
 				recipient: destinationAddress,
 				brokerCommissionBPS: 9,
 			});
-		}catch(error){
-				console.log("error", error);
-				setStatusText("Error getting target address " + error.message);
-				setSwapInProgress(false);
-				setShowProgress(false);
-				return null;
+		} catch (error) {
+			console.log("error", error);
+			setStatusText("Error getting target address " + error.message);
+			setSwapInProgress(false);
+			setShowProgress(false);
+			return null;
 		}
 
 		console.log("targetAddress", cfAddress);
 		setProgress(9);
 	} else if (
-			wallet.chain === "ETH" ||
-			wallet.chain === "BSC" ||
-			wallet.chain === "POLYGON" ||
-			wallet.chain === "AVAX" ||
-			wallet.chain === "ARB" ||
-			wallet.chain === "OP"
-		) {
-			console.log("wallet.chain", wallet.chain);
-			const ApproveParams = {
-				assetValue,
-				spenderAddress: route.contract || route.targetAddress,
-			};
-
-			console.log("ApproveParams", ApproveParams);
-
-			const allowance = await skClient.evm
-				.isAssetValueApproved(ApproveParams)
-				.catch((error) => {
-					setStatusText("Error checking allowance");
-					setSwapInProgress(false);
-					setShowProgress(false);
-					return null;
-				});
-			console.log("allowance", allowance);
-			if (!allowance) {
-				setStatusText("Approval Required");
-				setSwapInProgress(false);
-				setShowProgress(false);
-				return;
-			}
-		}
-		 console.log("route.sellAmount Before", route.sellAmount);
-
-		setProgress(12);
-		if(otherBits.decimalDifference !== 0){
-			route.sellAmount = parseFloat(route.sellAmount / 10 ** otherBits.decimalDifference) 
-		}else 	if(swapFrom.identifier.toLowerCase() === "maya.cacao"){
-			route.sellAmount = route.sellAmount * 100;
-		}
-
-		console.log("route.sellAmount", route.sellAmount);
-
-
-		const swapParams = {
-			route: route,
-			streamSwap: route.streamingSwap ? true : false,
-			feeOption: FeeOption[feeOption] || FeeOption.Average,
-			recipient: destinationAddress,
+		wallet.chain === "ETH" ||
+		wallet.chain === "BSC" ||
+		wallet.chain === "POLYGON" ||
+		wallet.chain === "AVAX" ||
+		wallet.chain === "ARB" ||
+		wallet.chain === "OP"
+	) {
+		console.log("wallet.chain", wallet.chain);
+		const ApproveParams = {
+			assetValue,
+			spenderAddress: route.contract || route.targetAddress,
 		};
 
+		console.log("ApproveParams", ApproveParams);
 
-		if (route.providers[0] === "MAYACHAIN") swapParams.pluginName = "mayachain";
-		else if (route.providers[0] === "CHAINFLIP"){
-			swapParams.pluginName = "chainflip";
-			// swapParams.recipientAddress = cfAddress.depositAddress;
-			// swapParams.chainflipBrokerUrl = "http://chainflip.winbit32.com:10997"; 
-
-			//send to the recipient address
-			const txData = {
-				assetValue: assetValue,
-				from: wallet.address,
-				recipient: cfAddress.depositAddress,
-			};
-			setProgress(13);
-			console.log("Sending funds:", txData, wallet);
-
-			try { 
-				const txID = await wallet.transfer(txData);
-							setProgress(87);
-							const explorerUrl = "https://scan.chainflip.io/channels/" + cfAddress.depositChannelId;
-							console.log("Explorer URL:", explorerUrl);
-							setProgress(93);
-							setExplorerUrl(explorerUrl);
-							setProgress(100);
-							return;
-			} catch (error) {
-				console.error('Error sending funds:', error);
-				setStatusText('Error sending funds: ' + error.message);
+		const allowance = await skClient.evm
+			.isAssetValueApproved(ApproveParams)
+			.catch((error) => {
+				setStatusText("Error checking allowance");
 				setSwapInProgress(false);
 				setShowProgress(false);
-				return;
-			}	
-
-		} 
-
-				console.log("swapParams", swapParams);
-
-
-		const swapResponse = await skClient.swap(swapParams).catch((error) => {
-			setStatusText("Error swapping:: " + error.message);
-			setSwapInProgress(false);
-			setShowProgress(false);
-			return null;
-		});
-
-		if (!swapResponse) return;
-
-		const walletChain = ChainIdToChain[wallet.chainId];
-		try{
-			const exURL = skClient.getExplorerTxUrl({
-				chain: walletChain,
-				txHash: swapResponse,
+				return null;
 			});
-			setExplorerUrl(exURL);
-
-			console.log("exURL", exURL);
-		}catch(error){
-			setStatusText("Transaction sent but error getting result " + error.message);
+		console.log("allowance", allowance);
+		if (!allowance) {
+			setStatusText("Approval Required");
 			setSwapInProgress(false);
 			setShowProgress(false);
 			return;
 		}
-		
-		// Function to log properties for debugging
-		// Function to log properties for debugging
-		function logObjectProperties(obj, name) {
-			console.log(`${name}:`, JSON.stringify(obj, null, 2));
-		}
+	}
+	console.log("route.sellAmount Before", route.sellAmount);
 
-		// Function to create a base64 encoded value for transaction messages
-		function createBase64Value(data) {
-			if (typeof window !== "undefined" && typeof window.btoa === "function") {
-				// Browser environment
-				const encoder = new TextEncoder();
-				const dataBuffer = encoder.encode(JSON.stringify(data));
-				return btoa(String.fromCharCode(...dataBuffer));
-			} else {
-				// Node.js environment
-				return Buffer.from(JSON.stringify(data)).toString("base64");
-			}
-		}
+	setProgress(12);
+	if (otherBits.decimalDifference !== 0) {
+		route.sellAmount = parseFloat(
+			route.sellAmount / 10 ** otherBits.decimalDifference
+		);
+	} else if (swapFrom.identifier.toLowerCase() === "maya.cacao") {
+		route.sellAmount = route.sellAmount * 100;
+	}
 
-		// Construct the transaction object with messages array
-		const transactionBit = {
-			memo: route.memo,
-			messages: [
-				{
-					type_url: "/types.MsgDeposit",
-					value: createBase64Value({ memo: route.memo }),
-				},
-			],
-			...(route.transaction || {}),
+	console.log("route.sellAmount", route.sellAmount);
+
+	const swapParams = {
+		route: route,
+		streamSwap: route.streamingSwap ? true : false,
+		feeOption: FeeOption[feeOption] || FeeOption.Average,
+		recipient: destinationAddress,
+	};
+
+	if (route.providers[0] === "MAYACHAIN") swapParams.pluginName = "mayachain";
+	else if (route.providers[0] === "CHAINFLIP") {
+		swapParams.pluginName = "chainflip";
+		// swapParams.recipientAddress = cfAddress.depositAddress;
+		// swapParams.chainflipBrokerUrl = "http://chainflip.winbit32.com:10997";
+
+		//send to the recipient address
+		const txData = {
+			assetValue: assetValue,
+			from: wallet.address,
+			recipient: cfAddress.depositAddress,
 		};
-		logObjectProperties(transactionBit, "transactionBit");
+		setProgress(13);
+		console.log("Sending funds:", txData, wallet);
 
-		// Prepare the route object with the transaction
-		const routeWithTransaction = {
-			...route,
-			transaction: transactionBit,
-		};
-		logObjectProperties(routeWithTransaction, "routeWithTransaction");
+		try {
+			const txID = await wallet.transfer(txData);
+			setProgress(87);
+			const explorerUrl =
+				"https://scan.chainflip.io/channels/" + cfAddress.depositChannelId;
+			console.log("Explorer URL:", explorerUrl);
+			setProgress(93);
+			setExplorerUrl(explorerUrl);
+			setProgress(100);
+			return;
+		} catch (error) {
+			console.error("Error sending funds:", error);
+			setStatusText("Error sending funds: " + error.message);
+			setSwapInProgress(false);
+			setShowProgress(false);
+			return;
+		}
+	}
 
-		// Construct the txDetailsToSend object
-		const txDetailsToSend = {
-			txn: {
-				hash: swapResponse,
-				quoteId: quoteId,
-				route: routeWithTransaction,
-				feeOption: swapParams.feeOption,
-				recipient: swapParams.recipient,
-				pluginName: swapParams.pluginName,
+	console.log("swapParams", swapParams);
+
+	const swapResponse = await skClient.swap(swapParams).catch((error) => {
+		setStatusText("Error swapping:: " + error.message);
+		setSwapInProgress(false);
+		setShowProgress(false);
+		return null;
+	});
+
+	if (!swapResponse) return;
+
+	const walletChain = ChainIdToChain[wallet.chainId];
+	try {
+		const exURL = skClient.getExplorerTxUrl({
+			chain: walletChain,
+			txHash: swapResponse,
+		});
+		setExplorerUrl(exURL);
+
+		console.log("exURL", exURL);
+	} catch (error) {
+		setStatusText("Transaction sent but error getting result " + error.message);
+		setSwapInProgress(false);
+		setShowProgress(false);
+		return;
+	}
+
+	// Function to log properties for debugging
+	// Function to log properties for debugging
+	function logObjectProperties(obj, name) {
+		console.log(`${name}:`, JSON.stringify(obj, null, 2));
+	}
+
+	// Function to create a base64 encoded value for transaction messages
+	function createBase64Value(data) {
+		if (typeof window !== "undefined" && typeof window.btoa === "function") {
+			// Browser environment
+			const encoder = new TextEncoder();
+			const dataBuffer = encoder.encode(JSON.stringify(data));
+			return btoa(String.fromCharCode(...dataBuffer));
+		} else {
+			// Node.js environment
+			return Buffer.from(JSON.stringify(data)).toString("base64");
+		}
+	}
+
+	// Construct the transaction object with messages array
+	const transactionBit = {
+		memo: route.memo,
+		messages: [
+			{
+				type_url: "/types.MsgDeposit",
+				value: createBase64Value({ memo: route.memo }),
 			},
-		};
-		logObjectProperties(txDetailsToSend, "txDetailsToSend");
-		setStatusText("Transaction Sent");
+		],
+		...(route.transaction || {}),
+	};
+	logObjectProperties(transactionBit, "transactionBit");
 
-		// Send the transaction details
-		const txDetails = await getTxnDetails(txDetailsToSend).catch((error) => {
-			const txDetailsV2 = getTxnDetailsV2(swapResponse, route.sourceAddress).then((txDetailsV2) => {
+	// Prepare the route object with the transaction
+	const routeWithTransaction = {
+		...route,
+		transaction: transactionBit,
+	};
+	logObjectProperties(routeWithTransaction, "routeWithTransaction");
+
+	// Construct the txDetailsToSend object
+	const txDetailsToSend = {
+		txn: {
+			hash: swapResponse,
+			quoteId: quoteId,
+			route: routeWithTransaction,
+			feeOption: swapParams.feeOption,
+			recipient: swapParams.recipient,
+			pluginName: swapParams.pluginName,
+		},
+	};
+	logObjectProperties(txDetailsToSend, "txDetailsToSend");
+	setStatusText("Transaction Sent");
+
+	// Send the transaction details
+	const txDetails = await getTxnDetails(txDetailsToSend).catch((error) => {
+		const txDetailsV2 = getTxnDetailsV2(swapResponse, route.sourceAddress)
+			.then((txDetailsV2) => {
 				console.log("txDetailsV2", txDetailsV2);
 				if (txDetailsV2) {
 					txDetailsV2.done = false;
 					txDetailsV2.lastCheckTime = 1;
-				
+
 					currentTxnStatus.current = txDetailsV2;
 					return txDetailsV2;
 				}
-			}).catch((error) => {
+			})
+			.catch((error) => {
 				console.log("error", error);
 				setStatusText("Cannot follow this tx. Check Navigator");
 				setSwapInProgress(false);
 				setShowProgress(false);
 				return { done: true, status: "pending", lastCheckTime: 1 };
-			}
-			);
-			return txDetailsV2;
-		});
-		console.log("txDetails", txDetails);
+			});
+		return txDetailsV2;
+	});
+	console.log("txDetails", txDetails);
 
-		if (txDetails?.done === true) {
-			setStatusText("Transaction complete");
-			setSwapInProgress(false);
-			setShowProgress(false);
-			return;
-		}
-	
-		txDetails.done = false;
-		txDetails.status = "pending";
-		txDetails.lastCheckTime = 1;
-		currentTxnStatus.current = txDetails;
+	if (txDetails?.done === true) {
+		setStatusText("Transaction Successfully Started");
+		setSwapInProgress(false);
+		setShowProgress(false);
+		return;
+	}
 
-		setTxnStatus(txDetails);
-		setTxnHash(swapResponse);
+	txDetails.done = false;
+	txDetails.status = "pending";
+	txDetails.lastCheckTime = 1;
+	currentTxnStatus.current = txDetails;
 
-		setProgress(13);
+	setTxnStatus(txDetails);
+	setTxnHash(swapResponse);
+
+	setProgress(13);
 	// } catch (error) {
 	// 	setStatusText("Error swapping: " + error.message);
 	// //} finally {
@@ -522,7 +527,8 @@ export const delayedParseIniData = (
 	setSlippage,
 	setSelectedRoute,
 	routes,
-	tokens
+	tokens,
+	setManualStreamingSet, setStreamingInterval, setStreamingNumSwaps
 ) => {
 	setIniData(_iniData);
 	setTimeout(() => {
@@ -536,7 +542,10 @@ export const delayedParseIniData = (
 			setSlippage,
 			setSelectedRoute,
 			routes,
-			tokens
+			tokens,
+			setManualStreamingSet,
+			setStreamingInterval,
+			setStreamingNumSwaps
 		);
 	}, 1000);
 };
@@ -551,7 +560,10 @@ const parseIniData = (
 	setSlippage,
 	setSelectedRoute,
 	routes,
-	tokens
+	tokens,
+	setManualStreamingSet,
+	setStreamingInterval,
+	setStreamingNumSwaps
 ) => {
 	const lines = data.split("\n");
 	lines.forEach((line) => {
@@ -564,9 +576,9 @@ const parseIniData = (
 					(token) =>
 						token.identifier.toLowerCase() === value.trim().toLowerCase()
 				);
-				if (fromToken){
+				if (fromToken) {
 					fromToken.identifier = fromToken.identifier.replace("0X", "0x");
-					 setSwapFrom(fromToken);
+					setSwapFrom(fromToken);
 				}
 				break;
 			case "token_to":
@@ -601,6 +613,14 @@ const parseIniData = (
 				} else {
 					setSelectedRoute("optimal");
 				}
+				break;
+			case "swap_count":
+				setManualStreamingSet(true);
+				setStreamingNumSwaps(parseInt(value.trim()));
+				break;
+			case "swap_interval":
+				setManualStreamingSet(true);
+				setStreamingInterval(parseInt(value.trim()));
 				break;
 			default:
 				break;

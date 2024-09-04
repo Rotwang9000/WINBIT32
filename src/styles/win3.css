@@ -25,6 +25,31 @@ button {
 		font-family: "play", fixedsys, consolas, monospace;
 }
 
+.welcome-warning{
+	font-size: 14px;
+	font-family: "play",
+		fixedsys,
+		consolas,
+		monospace;
+	margin-top: -10px;
+}
+
+.welcome-warning b{
+	font-weight: 800;
+	text-transform:uppercase;
+}
+
+.welcome-dialog>.content{
+	display:block!important;
+	padding:20px;
+}
+.welcome-dialog>.content>.message{
+	margin-left:2vw;
+}
+.welcome-dialog>.content>div.icon{
+	margin:20px;
+}
+
 @media screen and (max-width: 600px) {
 	#root {
 		width: 100%;

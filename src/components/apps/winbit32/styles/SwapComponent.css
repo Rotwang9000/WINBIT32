@@ -297,6 +297,34 @@ input[type="number"]::-webkit-inner-spin-button {
 }
 
 
+.streaming-group{
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 2px;
+}
+
+.streaming-group>label{
+  display: flex;
+  flex-direction: row;
+  margin-bottom: 3px;
+}
+
+.streaming-group>div{
+  width: 100%;
+}
+
+.streaming-group>div>div{
+  display: flex;
+  flex-direction: row;
+  margin-bottom: 3px;
+  align-items: baseline;
+}
+
+.infobox>div>div{
+  display:flex;
+  flex-direction: column;
+}
+
 .infobox{
 
   margin: 5px 5px 2px 2px;
