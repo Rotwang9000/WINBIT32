@@ -3,6 +3,7 @@ import { getQuoteFromThorSwap, getQuoteFromSwapKit } from "./quote";
 import { amountInBigNumber } from "./quote";
 import { SwapKitApi } from "@swapkit/api";
 import bigInt from "big-integer";
+import { getQuoteFromMaya } from "./maya";
 
 export const getQuotes = async (
 	oSwapFrom,
@@ -18,12 +19,15 @@ export const getQuotes = async (
 	tokens,
 	setDestinationAddress,
 	setSelectedRoute,
-	wallets
+	wallets,
+	selectedRoute
 ) => {
 	const thisDestinationAddress =
 		destinationAddress || chooseWalletForToken(swapTo, wallets)?.address;
 		//clone oSwapFrom
 	let swapFrom = JSON.parse(JSON.stringify(oSwapFrom));
+
+	const currentSelectedRoute = selectedRoute || "optimal";
 
 	if (swapFrom && swapTo && amount && thisDestinationAddress) {
 		setStatusText("");
@@ -34,13 +38,9 @@ export const getQuotes = async (
 				? 16
 				: 32;
 
-		if(swapFrom.identifier === "XRD.XRD"){
-			console.log(swapFrom);
-			swapFrom.identifier =
-				"radix-mainnet.XRD-" +
-				"resource_rdx1tknxxxxxxxxxradxrdxxxxxxxxx009923554798xxxxxxxxxradxrd";
-			console.log(swapFrom);
-		}
+		//if(swapFrom.identifier === "XRD.XRD"){
+		//https://mayanode.mayachain.info/mayachain/quote/swap?from_asset=XRD.XRD&to_asset=MAYA.CACAO&amount=2000000000&destination=maya1jpvhncl60k5q3dljw354t0ccg54j3pkjcag9ef&affiliate_bps=44&affiliate=cs
+		//}
 
 		const swapKitQuoteParams = {
 			sellAsset: swapFrom.identifier,
@@ -71,6 +71,7 @@ export const getQuotes = async (
 			const [swapKitResponse, thorSwapResponse] = await Promise.allSettled([
 				//SwapKitApi.getSwapQuoteV2(swapKitQuoteParams),
 				getQuoteFromSwapKit(swapKitQuoteParams),
+				getQuoteFromMaya(swapKitQuoteParams, swapTo, swapFrom)
 				// getQuoteFromThorSwap(thorSwapQuoteParams),
 			]);
 
@@ -98,7 +99,13 @@ export const getQuotes = async (
 					: thorSwapResponse.value.quoteId
 			);
 
-			setSelectedRoute("optimal");
+			//see if selectedRoute is still valid
+			const selectedRouteIndex = combinedRoutes.findIndex(
+				(route) => route.providers.join(',') === currentSelectedRoute
+			);	
+			if (!selectedRouteIndex){ 
+				setSelectedRoute('optimal');
+			}
 
 			
 			//const optimalRoute =
@@ -155,7 +162,12 @@ export const getQuotes = async (
 			setQuoteStatus(
 				<>
 					<div>
-						<span>Optimal: {optimalRoute.providers.join(", ")} </span>
+						<span>Optimal: </span>
+						<span>{optimalRoute.providers.join(", ")} </span>
+
+					</div>
+					<div>
+						<span>Time (In+Swap+Out)</span>
 						<span>
 							{parseFloat(parseFloat(optimalRouteTime).toPrecision(3))} mins
 						</span>

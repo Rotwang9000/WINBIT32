@@ -1,7 +1,8 @@
+import { ethers } from "ethers";
 import { useState } from "react";
 import axios from "axios";
 
-const FIAT24_API_BASE = "https://api.fiat24.com"; // Replace with actual API base URL
+const FIAT24_API_BASE = "https://api.fiat24.com"; // Replace with the actual API base URL
 
 const useFiat24Api = (wallet) => {
 	const [authToken, setAuthToken] = useState(null);

@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 
 import ProgressBar from '../../win/ProgressBar';
-import { generateMnemonic } from '@scure/bip39';
 import { wordlist } from '@scure/bip39/wordlists/english';
 import './styles/ConnectionApp.css';
 import { useIsolatedState } from '../../win/includes/customHooks';
-
+import { generateMnemonic, mnemonicToSeedSync } from 'bip39';
+import {
+	derivePath as deriveEd25519Path,
+} from 'ed25519-hd-key'
 
 // Function to generate a random phrase
 function generatePhrase(size = 12) {
@@ -31,11 +33,53 @@ function ConnectionApp({ windowId, providerKey, phrase, setPhrase, connectionSta
 			if(!isNaN(words[words.length - 1])){
 				index = words.pop();
 			}
+			
+			const trimWords = phrase.trim().split(' ');
+			if(trimWords.length === 1){
+				console.log('trimWords', trimWords);
+				setPhrase(phrase.replace(/[^a-zA-Z0-9 ]/g, ' ').replace(/  +/g, ' '));
+				return;
+			}
 
 			const validWords = words.filter(word => wordlist.includes(word));
 			setPhrase(validWords.join(' ') + (index ? ' ' + index : ''));
 		}
 	}, [phraseFocus]);
+
+
+
+	const testRadix = async (phrase) => {
+
+		const { RadixEngineToolkit, PrivateKey, NetworkId } = await import(
+			"@radixdlt/radix-engine-toolkit");
+
+
+		const createRadixWallet = async (mnemonic, index = 0) => {
+
+		
+			let seed = mnemonicToSeedSync(mnemonic);
+			const derivedKeys = deriveEd25519Path("m/44'/1022'/1'/525'/1460'/"+index+"'", seed)
+			const privateKey = new PrivateKey.Ed25519(new Uint8Array(derivedKeys.key));
+			const virtualAccountAddress = await RadixEngineToolkit.Derive.virtualAccountAddressFromPublicKey(
+				privateKey.publicKey(),
+				NetworkId.Mainnet
+			);
+
+			return {
+				privateKey: privateKey,
+				publicKey: privateKey.publicKeyHex(),
+				address: virtualAccountAddress.toString(),
+			};
+		};
+
+
+		const rw = await createRadixWallet(phrase);
+
+		console.log(rw)
+
+	}
+
+
 
 
 	const trafficLightColor = () => {
@@ -104,6 +148,7 @@ function ConnectionApp({ windowId, providerKey, phrase, setPhrase, connectionSta
 						}
 						}
 							className="traffic-light" style={{ backgroundColor: trafficLightColor(), color: 'white' }}>🗘</div>
+						{/* <button onClick={() => testRadix(phrase)}>Test Radix</button> */}
 				</div>
 				}	
 				<div className="status-row">

@@ -139,6 +139,14 @@ README&#9;TXT&#9;69420&#9;&nbsp;&#9;&nbsp;&#9;11-01-1993&#9;01:40p<br />
 		console.log('Command:', command);
 		let [commandName, ...args] = command.split(' ');
 		let output = '';
+		const aliases = {
+			'cls': 'clear',
+			'cat': 'ls'
+		};
+		if (aliases[commandName]) {
+			commandName = aliases[commandName];
+		}
+		
 
 		if (functionMap[commandName]) {
 			output = functionMap[commandName](args);

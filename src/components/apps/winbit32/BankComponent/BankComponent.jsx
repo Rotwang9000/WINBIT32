@@ -1,16 +1,16 @@
 import React, { useEffect, useState } from 'react';
-import { useWindowSKClient } from '../../contexts/SKClientProviderManager';
+import { useWindowSKClient } from '../../../contexts/SKClientProviderManager';
 import AccountInfo from './AccountInfo';
 import PaymentForm from './PaymentForm';
 import useFiat24Api from './useFiat24Api';
 import useFiat24Contract from './useFiat24Contract';
-import TitleBar from '../../win/TitleBar';
-import MenuBar from '../../win/MenuBar';
-import './BankComponent.css';
+import TitleBar from '../../../win/TitleBar';
+import MenuBar from '../../../win/MenuBar';
+import './styles/BankComponent.css';
 
 const BankComponent = ({ providerKey, windowId }) => {
 	const { wallets } = useWindowSKClient(providerKey);
-	const wallet = wallets.find((w) => w.chain === 'ETH');
+	const wallet = wallets.find((w) => w.chain === 'ARB');
 
 	const { getAccountInfo, makeApiPayment } = useFiat24Api(wallet);
 	const { getOnChainAccountInfo, makeOnChainPayment } = useFiat24Contract(wallet);

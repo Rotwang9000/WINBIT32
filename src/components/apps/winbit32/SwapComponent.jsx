@@ -52,6 +52,10 @@ const SwapComponent = ({ providerKey, windowId, programData }) => {
 	const [showOutputInputDialog, setShowOutputInputDialog] = useState(false);
 	const [outputAmount, setOutputAmount] = useState('');
 	const [outputType, setOutputType] = useState('expected');
+	const [isStreamingSwap, setIsStreamingSwap] = useIsolatedState(windowId, 'isStreamingSwap', false);
+	const [streamingInterval, setStreamingInterval] = useIsolatedState(windowId, 'streamingInterval', 10); //blocks
+	const [streamingNumSwaps, setStreamingNumSwaps] = useIsolatedState(windowId, 'streamingNumSwaps', 0); //0 = optimal, otherwise max 20
+	const [manualStreamingSet, setManualStreamingSet] = useIsolatedState(windowId, 'manualStreamingSet', false);
 	const bigInt = require('big-integer');
 
 	const txnTimerRef = useRef(txnTimer);
@@ -60,6 +64,16 @@ const SwapComponent = ({ providerKey, windowId, programData }) => {
 		setCurrentTokenSetter(() => setter);
 		setIsTokenDialogOpen(toFrom || true);
 	};
+
+
+	const secsToDisplay = useCallback((secs) => {
+		var date = new Date(0);
+		date.setSeconds(secs); // specify value for SECONDS here
+		console.log(secs, date.toISOString());
+		var timeString = date.toISOString().substring(11, 19);
+		return timeString;
+	}, []);
+
 
 	const closeTokenDialog = useCallback(() => {
 		setIsTokenDialogOpen(false);
@@ -82,8 +96,9 @@ const SwapComponent = ({ providerKey, windowId, programData }) => {
 			setDestinationAddress,
 			setSelectedRoute,
 			wallets,
+			selectedRoute,
 			);
-	}, [swapFrom, swapTo, amount, destinationAddress, slippage, setStatusText, setQuoteStatus, setRoutes, setQuoteId, chooseWalletForToken, tokens, setDestinationAddress, setSelectedRoute, wallets]);
+	}, [swapInProgress, swapFrom, swapTo, amount, destinationAddress, slippage, setStatusText, setQuoteStatus, setRoutes, setQuoteId, tokens, setDestinationAddress, setSelectedRoute, wallets]);
 
 
 
@@ -93,7 +108,7 @@ const SwapComponent = ({ providerKey, windowId, programData }) => {
 			const route = (routes && routes.length === 0 && selectedRoute && selectedRoute !== 'optimal') ? selectedRoute : 'optimal';
 
 
-			const data = `token_from=${swapFrom?.identifier || ''}
+			let data = `token_from=${swapFrom?.identifier || ''}
 token_to=${swapTo?.identifier || ''}
 amount=${amount}
 destination=${destinationAddress}
@@ -101,6 +116,14 @@ route=${route}
 fee_option=${FeeOption[selectedRoute] || 'Average'}
 slippage=${slippage}
 `;
+
+			if (manualStreamingSet){
+					data +=
+`swap_interval=${streamingInterval}
+swap_count=${streamingNumSwaps}
+`;
+			}
+
 			setIniData(data);
 		}
 	};
@@ -108,7 +131,7 @@ slippage=${slippage}
 	useEffect(() => {
 		// Update the INI data whenever state changes
 		updateIniData();
-	}, [swapFrom, swapTo, amount, destinationAddress, selectedRoute, textareaActive]);
+	}, [swapFrom, swapTo, amount, destinationAddress, selectedRoute, textareaActive, slippage]);
 
 
 	useEffect(() => {
@@ -120,6 +143,11 @@ slippage=${slippage}
 	}, [swapTo, wallets]);
 
 	useEffect(() => {
+
+		//reset routes
+		setRoutes([]);
+		setQuoteStatus('Requote Required');
+
 		const timer = setTimeout(() => {
 			doGetQuotes();
 		}, 3000);
@@ -128,7 +156,7 @@ slippage=${slippage}
 			clearTimeout(timer);
 			console.log("Clearing timer");
 		};
-	}, [swapFrom, swapTo, amount, destinationAddress]);
+	}, [swapFrom, swapTo, amount, destinationAddress, slippage, doGetQuotes]);
 
 	useEffect(() => {
 		if (txnHash !== '') checkTxnStatus(txnHash, txnHash + '', 0, swapInProgress, txnStatus, setStatusText, setSwapInProgress, setShowProgress, setProgress, setTxnStatus, setTxnTimer,  txnTimerRef);
@@ -169,7 +197,11 @@ slippage=${slippage}
 			return <TokenChooserDialog
 				isOpen={isTokenDialogOpen}
 				onClose={() => setIsTokenDialogOpen(false)}
-				onConfirm={token => handleTokenSelect(token, currentTokenSetter, () => setIsTokenDialogOpen(false))}
+				onConfirm={token => {
+					setManualStreamingSet(false);
+					return handleTokenSelect(token, currentTokenSetter, () => setIsTokenDialogOpen(false));
+				}
+				}
 				wallets={wallets}
 				otherToken={swapFrom}
 				windowId={windowId + '_token_chooser'}
@@ -298,7 +330,7 @@ slippage=${slippage}
 
 	const handleOutputInputDialogConfirm = async () => {
 		setShowOutputInputDialog(false);
-
+		setManualStreamingSet(false);
 		if (!outputAmount || !swapTo) {
 			setStatusText('Please enter a valid output amount and select a token to swap to.');
 			return;
@@ -346,7 +378,8 @@ slippage=${slippage}
 					tokens,
 					setDestinationAddress,
 					setSelectedRoute,
-					wallets
+					wallets,
+					selectedRoute
 				);
 				
 				setProgress(13 + (i * 7));
@@ -425,6 +458,29 @@ slippage=${slippage}
 	};
 
 
+	useEffect(
+		() => {
+			const r = routes.find(route => selectedRoute === route.providers.join(', ') || (selectedRoute === 'optimal' && route.optimal));
+
+			if (r) {
+				const parts = r.memo.split(":");
+				if (parts.length > 3) {
+					const splitP3 = parts[3].split("/");
+					if (splitP3.length > 1) {
+						setIsStreamingSwap(true);
+						if(!manualStreamingSet) {
+							setStreamingInterval(parseInt(splitP3[1]));
+							setStreamingNumSwaps(parseInt(splitP3[2]));
+						}
+					}else{
+						setIsStreamingSwap(false);
+					}
+				}
+			}
+		}
+
+	,[selectedRoute, routes, setStreamingInterval, setStreamingNumSwaps, setIsStreamingSwap]);
+
 	return (
 		<>
 			<div className="swap-toolbar">
@@ -451,7 +507,10 @@ slippage=${slippage}
 					quoteId,
 					feeOption,
 					currentTxnStatus,
-					chainflipBroker
+					chainflipBroker,
+					isStreamingSwap,
+					streamingInterval,
+					streamingNumSwaps
 					)}>
 					<div className='swap-toolbar-icon'>🔄</div>
 					Execute
@@ -489,6 +548,7 @@ slippage=${slippage}
 				</button>
 				<button className='swap-toolbar-button' onClick={() => {
 					const swapX = swapFrom;
+					setManualStreamingSet(false);
 					setSwapFrom(swapTo);
 					setSwapTo(swapX);
 				}}>
@@ -629,10 +689,50 @@ slippage=${slippage}
 
 							</div>
 						))}
+					{isStreamingSwap && (
+						<>
+						<div className="field-group streaming-group">
+							<label>Streaming</label>
+							<div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+									<div>
+										<span>Block Interval (~6s):</span><input type="number" value={streamingInterval} onChange={e => setStreamingInterval(e.target.value)} disabled={swapInProgress} /></div>
+									<div><span>Number of swaps:</span><input type="number" value={streamingNumSwaps}  disabled={swapInProgress} 
+									//max 20
+										onChange={e => {
+											setStreamingNumSwaps(e.target.value);
+											setManualStreamingSet(true);
+											}
+										}
+									/></div>
+									<div><span>Max Slippage %</span><input type="number" value={slippage} onChange={e => {
+										setSlippage(e.target.value)
+										setManualStreamingSet(true);
+									}}
+										disabled={swapInProgress} /></div>
+							</div>
+						</div>
+						<div className="infobox">
 
+							{streamingNumSwaps * streamingInterval > 14400? 
+							<div><span>Warning:</span><span>Maximum Time Exceeded, Swap will fail.</span> </div> :
 
-
-
+							streamingNumSwaps > 0 && <div><span>Swapping Duration Estimate:</span><span>{secsToDisplay(streamingInterval * streamingNumSwaps * 6)}</span></div>
+							}
+							<div><span>Swaps</span><span>{streamingNumSwaps === 0 ? 'Automatic' : (amount / streamingNumSwaps) + ' ' + swapFrom.ticker + ' per Swap.'}</span> </div>
+								
+						
+							<div>
+								<span>Information:</span>
+								<span>
+									<a href="https://docs.mayaprotocol.com/mayachain-dev-docs/introduction/swapping-guide/streaming-swaps" target="_blank">Maya</a> - 
+									<a href="https://dev.thorchain.org/swap-guide/streaming-swaps.html" target="_blank" >Thorchain</a>
+								</span>
+							</div>
+						</div>
+						</>
+					)}	
+					
+					
 					<div className="field-group flex-wrap route-selection-group">
 						<label>Route Selection</label>
 						{!swapInProgress ? (
@@ -685,7 +785,7 @@ slippage=${slippage}
 					/>
 					<MenuBar menu={menu} windowId={windowId} onMenuClick={handleMenuClick} />
 					<textarea value={iniData}
-						onChange={e => delayedParseIniData(e.target.value, setIniData, setSwapFrom, setSwapTo, setAmount, setDestinationAddress, setFeeOption, setSlippage, setSelectedRoute, routes, tokens)} 
+						onChange={e => delayedParseIniData(e.target.value, setIniData, setSwapFrom, setSwapTo, setAmount, setDestinationAddress, setFeeOption, setSlippage, setSelectedRoute, routes, tokens, setManualStreamingSet, setStreamingInterval, setStreamingNumSwaps)} 
 						style={{ width: '100%', height: '150px', boxSizing: 'border-box', 'border': 'none' }}
 						onFocus={handleTextareaFocus}
 						onBlur={handleTextareaBlur}
@@ -703,7 +803,7 @@ slippage=${slippage}
 								reader.onload = (ev) => {
 									console.log('File loaded:', ev.target.result);
 									setIniData(ev.target.result);
-									delayedParseIniData(ev.target.result, setIniData, setSwapFrom, setSwapTo, setAmount, setDestinationAddress, setFeeOption, setSlippage, setSelectedRoute, routes, tokens);
+									delayedParseIniData(ev.target.result, setIniData, setSwapFrom, setSwapTo, setAmount, setDestinationAddress, setFeeOption, setSlippage, setSelectedRoute, routes, tokens, setManualStreamingSet, setStreamingInterval, setStreamingNumSwaps);
 								};
 								reader.readAsText(file);
 							}
