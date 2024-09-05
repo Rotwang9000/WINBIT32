@@ -7,7 +7,7 @@ const Password = ({ onConfirm, onCancel, box, pinMode = false }) => {
 	const [filename, setFilename] = useState('');
 
 	const handleConfirm = useCallback(() => {
-		console.log(pinMode ? 'PIN' : 'Password', password);
+		// console.log(pinMode ? 'PIN' : 'Password', password);
 		onConfirm({ password, filename });
 	}, [onConfirm, password, filename, pinMode]);
 

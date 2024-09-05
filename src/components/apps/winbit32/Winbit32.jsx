@@ -212,11 +212,30 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 		return true;
 	}, [currentPhraseRef]);
 
-	const addSingleWallet = useCallback(async (wallet, phrase) => {
+	const addSingleWallet = useCallback(async (wallet, chain, phrase) => {
 		if (connectedRef.current !== phrase || currentPhraseRef.current !== phrase) {
 			// console.log('Phrase changed, not updating wallets', phrase, currentRef.current);
 			return false;
 		}
+
+		wallet.qrimage = renderToStaticMarkup(<QRCodeSVG renderAs='svg' value={wallet.address} />).toString();
+		wallet.chain = chain.toString();
+		wallet.chainObj = chain;
+		wallet.chainId = ChainToChainId[chain];
+		if (wallet.balance) {
+			const xrdBalance = wallet.balance.find(b => b.ticker === 'resource_rdx1tknxxxxxxxxxradxrdxxxxxxxxx009923554798xxxxxxxxxradxrd');
+			if (xrdBalance) {
+				xrdBalance.ticker = 'XRD';
+				xrdBalance.isGasAsset = true;
+			}
+		}
+		//export const createKeyring = async (phrase: string, networkPrefix: number) => {
+		if (wallet.createKeyring) {
+			wallet.keyRing = await wallet.createKeyring(phrase, wallet.network.prefix);
+			wallet.cfKeyRing = await createKeyring(phrase, 2112);
+		}
+		console.log('Connect Result', wallet);
+
 		addWallet(wallet);
 		console.log('addSingleWallet', wallet, wallets);
 		return true;
@@ -242,14 +261,8 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 					if (xrdBalance) {
 						xrdBalance.ticker = 'XRD';
 						xrdBalance.isGasAsset = true;
-
-
-
-
 					}
 				}
-
-
 				//export const createKeyring = async (phrase: string, networkPrefix: number) => {
 				if(result.createKeyring){
 					result.keyRing = await result.createKeyring(phrase, result.network.prefix);
@@ -305,53 +318,51 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 			console.log('connecting with skClient:', skClient);
 
 			try {
-				connect(phrase.trim(), index)
-					.then(async (wallet) => {
-						if (currentPhraseRef.current !== p) {
-							// console.log('Phrase changed, not updating wallets', phrase, currentRef.current);
-							return false;
-						}
-						console.log('Connected successfully', wallet);
-						setConnectedPhrase(phrase);
-						connectedRef.current = p;
-						setProgress(98);
-
-						skClient.getWalletWithBalance(Chain.Arbitrum).then(async (result) => {
-							if (currentPhraseRef.current !== p || connectedRef.current !== p) {
-								// console.log('Phrase changed, not updating wallets', p, currentRef.current);
+				const promises = await connect(phrase.trim(), index,
+					async (wallet, chain) => { //from getWalletWithBalance
+						try{
+							if (currentPhraseRef.current !== p) {
+								// console.log('Phrase changed, not updating wallets', phrase, currentRef.current);
 								return false;
 							}
-							setProgress(99);
-							await getWallets(phrase, p);
+							console.log('Connected successfully', wallet);
+							setConnectedPhrase(phrase);
+							connectedRef.current = p;
+						
+							await addSingleWallet(wallet, chain, p);
 							if (currentPhraseRef.current !== p || connectedRef.current !== p) {
 								// console.log('Phrase changed, not updating wallets', phrase, currentRef.current);
 								return false;
 							}
-							setTimeout(() => {
-								setProgress(100);
-								console.log('Connected successfully', wallets);
-								setPhraseSaved(false);
-								setConnectionStatus('connected');
-								setStatusMessage('Connected successfully.');
-								setTimeout(() => {
-									console.log('Connected successfully, hiding progress', wallets);
-									setShowProgress(false);
-									setProgress(0);
-								}, 2000);
-							},1500);
-						}).catch((error) => {
+							return true;
+							
+						} catch(error) {
 							console.error('Error getting Balance', error);
-							setConnectionStatus('disconnected');
-							setStatusMessage(`TC Connection failed: ${error.message}`);
+							//setConnectionStatus('disconnected');
+							//setStatusMessage(`TC Connection failed: ${error.message}`);
 						}
-						);
-					})
-					.catch((error) => {
-						console.error('Connection failed', error);
-						setConnectionStatus('disconnected');
-						setStatusMessage(`Connection failed: ${error.message}`);
-					}).finally(() => {
-					});
+					}
+				);
+						
+				await Promise.all(promises);
+
+				if (currentPhraseRef.current !== p || connectedRef.current !== p) {
+					// console.log('Phrase changed, not updating wallets', phrase, currentRef.current);
+					return false;
+				}
+			
+				setProgress(100);
+				console.log('Connected successfully', wallets);
+				setPhraseSaved(false);
+				setConnectionStatus('connected');
+				setStatusMessage('Connected successfully.');
+				setTimeout(() => {
+					console.log('Connected successfully, hiding progress', wallets);
+					setShowProgress(false);
+					setProgress(0);
+				}, 2000);
+				
+
 			} catch (error) {
 				setConnectedPhrase('');
 				console.error('Connection failed', error);
