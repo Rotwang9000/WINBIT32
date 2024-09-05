@@ -463,8 +463,8 @@ swap_count=${streamingNumSwaps}
 			const r = routes.find(route => selectedRoute === route.providers.join(', ') || (selectedRoute === 'optimal' && route.optimal));
 
 			if (r) {
-				const parts = r.memo.split(":");
-				if (parts.length > 3) {
+				const parts = r.memo?.split(":");
+				if (parts && parts.length > 3) {
 					const splitP3 = parts[3].split("/");
 					if (splitP3.length > 1) {
 						setIsStreamingSwap(true);

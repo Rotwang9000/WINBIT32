@@ -48,6 +48,7 @@ button {
 }
 .welcome-dialog>.content>div.icon{
 	margin:20px;
+	float: left;
 }
 
 @media screen and (max-width: 600px) {

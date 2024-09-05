@@ -10,6 +10,7 @@ import { ChainflipBroker } from "@swapkit/plugin-chainflip";
 import { ChainflipToolbox } from "@swapkit/toolbox-substrate";
 import { createSwapKit, Chain, WalletOption, AssetValue } from "@swapkit/sdk";
 import { walletconnectWallet } from "@swapkit/wallet-wc";
+import { result } from "lodash";
 
 
 const SKClientContext = createContext(null);
@@ -433,7 +434,8 @@ export const useWindowSKClient = (key) => {
 	);
 
 	const connect = useCallback(
-		async (phrase, index) =>{
+		async (phrase, index, callback) =>{
+			let promises = [];
 			if(phrase === "WALLETCONNECT"){
 
 				console.log(
@@ -457,7 +459,7 @@ export const useWindowSKClient = (key) => {
 						Chain.Ethereum,
 						// Chain.THORChain,
 						 Chain.Avalanche,
-							Chain.Arbitrum,
+						Chain.Arbitrum,
 						// Chain.Base,
 						// Chain.Optimism,
 						// Chain.Polygon,
@@ -468,12 +470,36 @@ export const useWindowSKClient = (key) => {
 					setChains(chains);
 
 					w = await skClient.connectWalletconnect(chains, {metadata});
+
+					if(w){
+						// w.on("disconnect", () => {
+						// 	console.log("Disconnected from walletconnect");
+						// 	document.getElementById("root").style.display = "block";
+						// });
+						// w.on("accountsChanged", (accounts) => {
+						// 	console.log("Accounts changed", accounts);
+						// });
+						// w.on("chainChanged", (chainId) => {
+						// 	console.log("Chain changed", chainId);
+						// });
+						// w.on("networkChanged", (networkId) => {
+						// 	console.log("Network changed", networkId);
+						// });
+
+						for(const chain of chains){
+							const wallet = await skClient.getWalletWithBalance(chain);
+							if(wallet){
+								promises.push(callback(wallet, chain));
+							}
+						}
+					}
+
 				}catch(e){
 					console.log("Error", e);
 				}
 				console.log("Connected with walletconnect", w);
 				document.getElementById("root").style.display = "block";
-				return w;
+				return promises;
 			}else if(phrase === "XDEFI"){
 				console.log("Connecting with xdefi");
 				//add xdefiwallet to skclient
@@ -498,13 +524,35 @@ export const useWindowSKClient = (key) => {
 				setChains(chains);
 
 
-				return skClient.connectXDEFI(chains);
+				if(await skClient.connectXDEFI(chains)){
+					console.log("Connected with xdefi");
 
+					for(const chain of chains){
+						const wallet = await skClient.getWalletWithBalance(chain);
+						if(wallet){
+								promises.push(callback(wallet, chain));
+						}
+					}
+				}
+				return promises;
 			}
-			return skClient.connectKeystore(connectChains, phrase.trim(), index);
-			
+
+			for (const chain of connectChains) {
+			 promises.push(skClient.connectKeystore([chain], phrase.trim(), index).then(async () => {
+					console.log("Connected to chain", chain);
+					if(!result) return;
+					const wallet = await skClient.getWalletWithBalance(chain);
+					if(wallet){
+						callback(wallet, chain);
+					}
+
+				}).catch( (e) => {
+					console.log("Error connecting to chain", chain, e);
+				}));
+			}
+			return promises;
 		},
-		[connectChains, skClient]
+		[connectChains, setChains, skClient]
 	);
 
 
