@@ -16,13 +16,14 @@ import { createKeyring } from '@swapkit/toolbox-substrate';
 import { createHash } from "crypto-browserify";
 import {  networks } from 'bitcoinjs-lib';
 import { Signer, SignerAsync, ECPairInterface, ECPairFactory, ECPairAPI, TinySecp256k1Interface } from 'ecpair';
+import { fetchMNFTsForAccount } from './mnft/mnftfuncs';
 
 function generatePhrase(size = 12) {
 	const entropy = size === 12 ? 128 : 256;
 	return generateMnemonic(wordlist, entropy);
 }
 
-const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave, handleStateChange, metadata, hashPath, sendUpHash }) => {
+const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave, handleStateChange, metadata, hashPath, sendUpHash, appData }) => {
 	const [phrase, setPhrase] = useIsolatedState(windowId, 'phrase', metadata?.phrase || generatePhrase());
 	const [connectedPhrase, setConnectedPhrase] = useIsolatedState(windowId, 'connectedPhrase', '');
 	const [connectionStatus, setConnectionStatus] = useIsolatedState(windowId, 'connectionStatus', 'disconnected');
@@ -36,7 +37,7 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 	const [programData, setProgramData] = useIsolatedState(windowId, 'programData', { phrase, statusMessage, setPhrase, setStatusMessage });
 	const [lockMode, setLockMode] = useIsolatedState(windowId, 'lockMode', false);
 
-
+	const { setLicense } = appData;
 	const { skClient, setWallets, wallets, connectChains, disconnect, addWallet, resetWallets, connect } = useWindowSKClient(windowName);
 
 	const currentRef = useRef(phrase);
@@ -214,7 +215,7 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 
 	const addSingleWallet = useCallback(async (wallet, chain, phrase) => {
 		if (connectedRef.current !== phrase || currentPhraseRef.current !== phrase) {
-			// console.log('Phrase changed, not updating wallets', phrase, currentRef.current);
+			console.log('Phrase changed, not updating wallets', phrase, currentRef.current);
 			return false;
 		}
 
@@ -229,15 +230,36 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 				xrdBalance.isGasAsset = true;
 			}
 		}
+		if (wallet.chain === 'MAYA') {
+			//check for license NFT
+			console.log('Checking for license NFTs');
+			fetchMNFTsForAccount(wallet.address).then((accountMNFTs) => {
+				if (accountMNFTs && accountMNFTs.length > 0) {
+					wallet.mnfts = accountMNFTs;
+					//search symbol WB32
+					console.log('Account MNFTs', accountMNFTs);
+					const wb32 = accountMNFTs.find(mnft => mnft.symbol === 'WB32');
+					if (wb32) {
+						console.log('WB32', wb32);
+						if (wb32.ids?.length > 0) {
+							//Site is licenced - update global.
+							console.log('Site is licenced', wb32.ids[0]);
+							setLicense(wb32.ids[0]);
+						}
+					}
+				}
+			});
+
+		}
 		//export const createKeyring = async (phrase: string, networkPrefix: number) => {
 		if (wallet.createKeyring) {
 			wallet.keyRing = await wallet.createKeyring(phrase, wallet.network.prefix);
 			wallet.cfKeyRing = await createKeyring(phrase, 2112);
 		}
-		console.log('Connect Result', wallet);
+		//console.log('Connect Result', wallet);
 
 		addWallet(wallet);
-		console.log('addSingleWallet', wallet, wallets);
+		console.log('addSingleWallet', wallet.chain, wallet, wallets);
 		return true;
 	}, [addWallet, phrase, wallets]);
 
@@ -621,6 +643,7 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 			programData={programData}
 			hashPath={hashPath}
 			sendUpHash={sendUpHash}
+			appData={appData}
 		>
 			<ConnectionApp
 				windowId={windowId}

@@ -1,7 +1,7 @@
 {
   "name": "winbit32",
-  "version": "0.1.29",
-  "private": true,
+  "version": "0.1.30",
+  "private": false,
   "homepage": "https://winbit32.com",
   "dependencies": {
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11",

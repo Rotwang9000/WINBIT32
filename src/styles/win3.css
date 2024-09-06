@@ -325,6 +325,11 @@ input{
 	text-shadow: -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black;
 }
 
+.window .title.inactivewindow{
+	background-color: #fff;
+	color: #000;
+}
+
 .window-content, .dialog-box .content {
 	/*fill remaining height, if there is a title, it will be subtracted and also menu if there is one*/
 	height: calc(100% - 26px);

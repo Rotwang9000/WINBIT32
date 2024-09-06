@@ -20,7 +20,8 @@ export const getQuotes = async (
 	setDestinationAddress,
 	setSelectedRoute,
 	wallets,
-	selectedRoute
+	selectedRoute,
+	license
 ) => {
 	const thisDestinationAddress =
 		destinationAddress || chooseWalletForToken(swapTo, wallets)?.address;
@@ -33,7 +34,7 @@ export const getQuotes = async (
 		setStatusText("");
 		setQuoteStatus("Getting Quotes...", swapFrom, swapTo, amount);
 
-		const basisPoints =
+		const basisPoints = license? 16:
 			swapFrom.identifier.includes("/") || swapTo.identifier.includes("/")
 				? 16
 				: 32;

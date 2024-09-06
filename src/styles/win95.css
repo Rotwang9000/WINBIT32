@@ -1,0 +1,37 @@
+
+
+.win95 .maxmin .button{
+	width: 14px;
+	height: 14px;
+	line-height: 14px;
+	font-size: 12px;
+	border: 2px outset #fff;
+	margin:1px;
+	box-shadow: 1px 1px 1px #000;
+	font-weight: 600;
+}
+
+.win95 .maxmin .button:hover{
+	background-color: #c0c0c0;
+}
+
+
+.win95 .titleclose{
+	margin-left:2px!important;
+	margin-right: 2px!important;
+}
+
+.win95 .title{
+	background-color: #02007c;
+}
+
+.win95 .handle{
+	width: 50%;
+	height: 50%;
+	border:0;
+}
+
+.win95 .title.inactivewindow{
+	background-color: #817f80;
+	color: #c9c7c8;
+}

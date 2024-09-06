@@ -8,6 +8,7 @@ import { WindowDataProvider } from "./components/win/includes/WindowContext";
 import { SKClientProviderManager } from "./components/contexts/SKClientProviderManager";
 import { Toaster } from "react-hot-toast";
 import { StateSetterProvider } from "./components/contexts/SetterContext";
+import "./styles/win95.css";
 
 const programs = getPrograms();
 

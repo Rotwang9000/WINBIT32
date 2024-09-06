@@ -19,9 +19,10 @@ import { fetchTokenPrices } from './includes/tokenUtils';
 
 
 
-const SwapComponent = ({ providerKey, windowId, programData }) => {
+const SwapComponent = ({ providerKey, windowId, programData, appData }) => {
 	const { skClient, tokens, wallets, chainflipBroker } = useWindowSKClient(providerKey);
 	const { setPhrase } = programData;
+	const { license } = appData || {}
 	const [swapFrom, setSwapFrom] = useIsolatedState(windowId, 'swapFrom', null);
 	const [swapTo, setSwapTo] = useIsolatedState(windowId, 'swapTo', null);
 	const [amount, setAmount] = useIsolatedState(windowId, 'amount', 0);
@@ -43,7 +44,7 @@ const SwapComponent = ({ providerKey, windowId, programData }) => {
 	const [txnStatus, setTxnStatus] = useIsolatedState(windowId, 'txnStatus', '');
 	const currentTxnStatus = useRef(txnStatus);
 	const [statusText, setStatusText] = useIsolatedState(windowId, 'statusText', '');
-	const [quoteStatus, setQuoteStatus] = useIsolatedState(windowId, 'quoteStatus', 'Aff. fee 0.32% (0.16% for synths)');
+	const [quoteStatus, setQuoteStatus] = useIsolatedState(windowId, 'quoteStatus', (license? '0.16% Affiliate fee':'Aff. fee 0.32% (0.16% for synths)'));
 	const [quoteId, setQuoteId] = useIsolatedState(windowId, 'quoteId', '');
 	const [maxAmount, setMaxAmount] = useIsolatedState(windowId, 'maxAmount', '0');
 	const [txnTimer, setTxnTimer] = useIsolatedState(windowId, 'txnTimer', null);
@@ -97,6 +98,7 @@ const SwapComponent = ({ providerKey, windowId, programData }) => {
 			setSelectedRoute,
 			wallets,
 			selectedRoute,
+			license
 			);
 	}, [swapInProgress, swapFrom, swapTo, amount, destinationAddress, slippage, setStatusText, setQuoteStatus, setRoutes, setQuoteId, tokens, setDestinationAddress, setSelectedRoute, wallets]);
 
@@ -146,11 +148,19 @@ swap_count=${streamingNumSwaps}
 
 		//reset routes
 		setRoutes([]);
-		setQuoteStatus('Requote Required');
+		let timer = 0;
 
-		const timer = setTimeout(() => {
-			doGetQuotes();
-		}, 3000);
+		const thisDestinationAddress =
+			destinationAddress || chooseWalletForToken(swapTo, wallets)?.address;
+		if (swapFrom && swapTo && amount && thisDestinationAddress) {
+
+			setQuoteStatus('Requote Required');
+		
+
+			timer = setTimeout(() => {
+				doGetQuotes();
+			}, 3000);
+		}
 
 		return () => {
 			clearTimeout(timer);
@@ -777,7 +787,7 @@ swap_count=${streamingNumSwaps}
 					marginLeft: '2px', marginRight: 0, border: '1px solid black', marginBottom: '2px', width: 'calc(100% - 5px)', overflowX: 'hidden',
 					display: showSwapini ? 'flex' : 'none'
 				}} className='inibox'>
-					<TitleBar title="swap.ini" showMinMax={false}
+					<TitleBar title="swap.ini" showMinMax={false} isActiveWindow={true}
 						onContextMenu={() => {
 							setShowSwapini(false)
 						}
