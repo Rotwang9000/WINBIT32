@@ -377,7 +377,7 @@ memo=${memo}
 					<div style={{
 						marginLeft: '2px', marginRight: 0, border: '1px solid black', marginBottom: '2px', width: 'calc(100% - 5px)', overflowX: 'hidden',
 						display: showSwapini ? 'flex' : 'none'
-					}} className='inibox'>				<TitleBar title="send.ini" showMinMax={false} onContextMenu={() => {
+					}} className='inibox'>				<TitleBar title="send.ini" showMinMax={false} isActiveWindow={true} onContextMenu={() => {
 						setShowSwapini(false)
 					}
 					} />

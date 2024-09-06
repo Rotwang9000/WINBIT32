@@ -16,10 +16,17 @@ const WindowBorder = React.memo(({
 	maximised,
 	initialPosition,
 	zIndex,
+	appData,
+	icon,
+	isActiveWindow,
 	children
 }) => {
 	const { getWindowContent } = useWindowData();
 	const content = getWindowContent(windowId);
+	const { license } = appData;
+
+	const windowIcon = icon || content?.icon || '🖼️';
+		
 
 	const MyHandle = useMemo(() => forwardRef((props, ref) => {
 		const { handleAxis, ...restProps } = props;
@@ -47,6 +54,9 @@ const WindowBorder = React.memo(({
 						onContextMenu={onContextMenu}
 						maximised={maximised}
 						onClick={onClick}
+						appData={appData}
+						icon={windowIcon}
+						isActiveWindow={isActiveWindow}
 					>
 						{children} {/* Additional content */}
 					</Window>
@@ -99,7 +109,7 @@ const WindowBorder = React.memo(({
 			enableUserSelectHack={false}
 			cancel='.search-text-box'
 		>
-			<div className="window-border" style={{ zIndex: zIndex, 'width': 'fit-content' }}>
+			<div className={'window-border' + (license? ' win95':'')} style={{ zIndex: zIndex, 'width': 'fit-content' }}>
 				<ResizableBox
 					width={initialPosition.width}
 					height={initialPosition.height}
@@ -116,6 +126,10 @@ const WindowBorder = React.memo(({
 							onClose={onClose}
 							onContextMenu={onContextMenu}
 							maximised={maximised}
+							icon={windowIcon}
+
+							appData={appData}
+							isActiveWindow={isActiveWindow}
 						>
 							{children} {/* Additional content */}
 						</Window>

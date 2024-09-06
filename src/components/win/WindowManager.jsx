@@ -10,6 +10,7 @@ import { useIsolatedRef, useIsolatedReducer } from './includes/customHooks';
 import { getPrograms } from './programs';
 import { useWindowData } from './includes/WindowContext';
 import './styles/scrollbar.css';
+
 import { createNewWindow, convertObjectFunctions } from './includes/WindowManagerFunctions';
 
 const WindowManager = ({ programs, windowName, windowId, handleOpenFunction, setStateAndSave, providerKey, setWindowMenu, programData, setProgramData, handleOpenArray, handleExit, appData = {}, hashPath = [], sendUpHash = () => {} }) => {
@@ -290,6 +291,8 @@ const WindowManager = ({ programs, windowName, windowId, handleOpenFunction, set
 							maximised={window.maximized}
 							initialPosition={window.initialPosition}
 							zIndex={window.zIndex}
+							appData={appData}
+							isActiveWindow={getCurrentFrontWindow.id === window.id}
 							{...window}
 						>
 							{window.menu && (
