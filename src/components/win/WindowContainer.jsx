@@ -19,6 +19,7 @@ const WindowContainer = ({
 	hashPath,
 	sendUpHash,
 	appData,
+	onOpenWindow,
 	onSubProgramClick = () => { },
 	...rest
 }) => {
@@ -72,6 +73,7 @@ const WindowContainer = ({
 					programData={programData}
 					setProgramData={setProgramData}
 					handleOpenArray={handleOpenArray}
+					onOpenWindow={onOpenWindow}
 					hashPath={hashPath}
 					sendUpHash={sendUpHash}
 					windowId={windowId}

@@ -48,7 +48,7 @@ export const getPrograms = () => {
 			minimized: false,
 			maximized: false,
 			component: Notepad,
-			initialPosition: { x: 10, y: 10, width: 380, height: 200 },
+			initialPosition: { x: 10, y: 10, width:720, height:480, smWidth: 380, smHeight: 300 },
 		},
 		{
 			progID: 2,

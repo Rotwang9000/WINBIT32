@@ -23,7 +23,7 @@ function generatePhrase(size = 12) {
 	return generateMnemonic(wordlist, entropy);
 }
 
-const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave, handleStateChange, metadata, hashPath, sendUpHash, appData }) => {
+const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave, handleStateChange, metadata, hashPath, sendUpHash, appData, handleOpenArray, onOpenWindow }) => {
 	const [phrase, setPhrase] = useIsolatedState(windowId, 'phrase', metadata?.phrase || generatePhrase());
 	const [connectedPhrase, setConnectedPhrase] = useIsolatedState(windowId, 'connectedPhrase', '');
 	const [connectionStatus, setConnectionStatus] = useIsolatedState(windowId, 'connectionStatus', 'disconnected');
@@ -644,6 +644,8 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 			hashPath={hashPath}
 			sendUpHash={sendUpHash}
 			appData={appData}
+			handleOpenArray={handleOpenArray}
+			onOpenWindow={onOpenWindow}
 		>
 			<ConnectionApp
 				windowId={windowId}

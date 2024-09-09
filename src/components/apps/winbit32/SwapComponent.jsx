@@ -15,11 +15,12 @@ import { handleApprove } from './helpers/handlers';
 import DialogBox from '../../win/DialogBox';
 import { amountInBigNumber } from './helpers/quote';
 import { fetchTokenPrices } from './includes/tokenUtils';
+import { generateSwapReport } from './helpers/report';
 
 
 
 
-const SwapComponent = ({ providerKey, windowId, programData, appData }) => {
+const SwapComponent = ({ providerKey, windowId, programData, appData, onOpenWindow }) => {
 	const { skClient, tokens, wallets, chainflipBroker } = useWindowSKClient(providerKey);
 	const { setPhrase } = programData;
 	const { license } = appData || {}
@@ -57,6 +58,7 @@ const SwapComponent = ({ providerKey, windowId, programData, appData }) => {
 	const [streamingInterval, setStreamingInterval] = useIsolatedState(windowId, 'streamingInterval', 10); //blocks
 	const [streamingNumSwaps, setStreamingNumSwaps] = useIsolatedState(windowId, 'streamingNumSwaps', 0); //0 = optimal, otherwise max 20
 	const [manualStreamingSet, setManualStreamingSet] = useIsolatedState(windowId, 'manualStreamingSet', false);
+	const [reportData, setReportData] = useIsolatedState(windowId, 'reportData', {});
 	const bigInt = require('big-integer');
 
 	const txnTimerRef = useRef(txnTimer);
@@ -70,7 +72,7 @@ const SwapComponent = ({ providerKey, windowId, programData, appData }) => {
 	const secsToDisplay = useCallback((secs) => {
 		var date = new Date(0);
 		date.setSeconds(secs); // specify value for SECONDS here
-		console.log(secs, date.toISOString());
+		//console.log(secs, date.toISOString());
 		var timeString = date.toISOString().substring(11, 19);
 		return timeString;
 	}, []);
@@ -98,7 +100,9 @@ const SwapComponent = ({ providerKey, windowId, programData, appData }) => {
 			setSelectedRoute,
 			wallets,
 			selectedRoute,
-			license
+			license,
+			(txnStatus === '')? setReportData: () => {},
+			iniData
 			);
 	}, [swapInProgress, swapFrom, swapTo, amount, destinationAddress, slippage, setStatusText, setQuoteStatus, setRoutes, setQuoteId, tokens, setDestinationAddress, setSelectedRoute, wallets]);
 
@@ -389,7 +393,10 @@ swap_count=${streamingNumSwaps}
 					setDestinationAddress,
 					setSelectedRoute,
 					wallets,
-					selectedRoute
+					selectedRoute,
+					license,
+					false,
+					''
 				);
 				
 				setProgress(13 + (i * 7));
@@ -470,10 +477,11 @@ swap_count=${streamingNumSwaps}
 
 	useEffect(
 		() => {
-			const r = routes.find(route => selectedRoute === route.providers.join(', ') || (selectedRoute === 'optimal' && route.optimal));
+			const r = routes.find(route => selectedRoute === route.providers.join(', ') || (selectedRoute === 'optimal' && route.optimal === true));
 
 			if (r) {
 				const parts = r.memo?.split(":");
+				
 				if (parts && parts.length > 3) {
 					const splitP3 = parts[3].split("/");
 					if (splitP3.length > 1) {
@@ -485,6 +493,8 @@ swap_count=${streamingNumSwaps}
 					}else{
 						setIsStreamingSwap(false);
 					}
+				}else{
+					setIsStreamingSwap(false);
 				}
 			}
 		}
@@ -520,7 +530,9 @@ swap_count=${streamingNumSwaps}
 					chainflipBroker,
 					isStreamingSwap,
 					streamingInterval,
-					streamingNumSwaps
+					streamingNumSwaps,
+					setReportData,
+					iniData
 					)}>
 					<div className='swap-toolbar-icon'>🔄</div>
 					Execute
@@ -587,6 +599,17 @@ swap_count=${streamingNumSwaps}
 						View TX
 					</button>
 					: ''
+				}
+				{reportData && reportData.ini &&
+					<button className='swap-toolbar-button' onClick={() => {
+						generateSwapReport(reportData, onOpenWindow);
+					}}>
+						<div className='swap-toolbar-icon' >📋</div>
+						Report
+					</button>
+				
+				
+				
 				}
 			</div>
 			{(statusText && statusText !== '') &&
