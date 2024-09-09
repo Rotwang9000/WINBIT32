@@ -55,7 +55,7 @@ export function createNewWindow(
 			program.openLevel < 0
 				? handleOpenArray.length + program.openLevel
 				: program.openLevel;
-		if (level >= 0 && level < handleOpenArray.length) {
+		if (level >= 0 && level < handleOpenArray?.length) {
 			console.log(
 				"Opening window in level",
 				level,

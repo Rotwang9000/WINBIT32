@@ -1,10 +1,13 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { saveAs } from 'file-saver';
 import { useIsolatedState, useIsolatedRef } from '../win/includes/customHooks';
+import { useReactToPrint } from 'react-to-print';
 
-const Notepad = ({ onMenuAction, windowA, windowId }) => {
-	const [text, setText] = useIsolatedState(windowId,  'text', '');
+
+const Notepad = ({ onMenuAction, windowA, windowId, metadata }) => {
+	const [text, setText] = useIsolatedState(windowId,  'text', metadata?.text || '');
 	const textRef = useIsolatedRef(windowId, 'text', ''); // Use `useRef` for real-time text tracking
+	const textBoxRef = useRef(null);
 
 	textRef.current = text;
 	// Menu structure defined within the component
@@ -14,6 +17,7 @@ const Notepad = ({ onMenuAction, windowA, windowId }) => {
 			submenu: [
 				{ label: 'Open...', action: 'open' },
 				{ label: 'Save', action: 'save' },
+				{ label: 'Print', action: 'print' },
 				{ label: 'Exit', action: 'exit' },
 			],
 		},
@@ -31,6 +35,12 @@ const Notepad = ({ onMenuAction, windowA, windowId }) => {
 		textRef.current = text; // Update `useRef` when `text` changes
 	}, [text]);
 
+	const handlePrint = useReactToPrint({
+		documentTitle: "WINBIT32.COM",
+		onBeforePrint: () => console.log("before printing..."),
+		onAfterPrint: () => console.log("after printing..."),
+		removeAfterPrint: true,
+	});
 	
 	// Handle menu click events
 	const handleMenuClick = useCallback((action) => {
@@ -51,6 +61,10 @@ const Notepad = ({ onMenuAction, windowA, windowId }) => {
 			case 'copy':
 				navigator.clipboard.writeText(currentText); // Copy to clipboard
 				console.log('Copied:', currentText)
+				break;
+			case 'print':
+
+				handlePrint(null, () => textBoxRef.current); // Print
 				break;
 			case 'paste':
 				navigator.clipboard.readText().then((clipboardText) => {
@@ -80,7 +94,7 @@ const Notepad = ({ onMenuAction, windowA, windowId }) => {
 				onChange={(e) => setText(e.target.value)}
 				placeholder="Type here..."
 				style={{ resize: 'none', padding: '0', width: '100%', height: 'calc(100% - 5px)', border: 'none', outline: 'none', fontFamily: 'fixedsys, consolas, monospace', background: 'none'}}
-
+				ref={textBoxRef}
 			></textarea>
 			<input
 				type="file"

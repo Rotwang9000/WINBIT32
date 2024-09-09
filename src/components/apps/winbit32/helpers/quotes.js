@@ -21,7 +21,9 @@ export const getQuotes = async (
 	setSelectedRoute,
 	wallets,
 	selectedRoute,
-	license
+	license,
+	setReportData,
+	iniData
 ) => {
 	const thisDestinationAddress =
 		destinationAddress || chooseWalletForToken(swapTo, wallets)?.address;
@@ -52,7 +54,7 @@ export const getQuotes = async (
 			affiliateFee: basisPoints,
 			affiliate: "be",
 			slippage: slippage,
-			//  providers: ["MAYACHAIN"],
+			providers: ["MAYACHAIN", "MAYACHAIN_STREAMING", "THORCHAIN", "THORCHAIN_STREAMING"],
 		};
 
 		console.log("AssetValue", swapFrom.identifier, swapTo.identifier);
@@ -159,6 +161,37 @@ export const getQuotes = async (
 					optimalRoute.expectedBuyAmountMaxSlippage,
 				swapTo.decimals
 			).toString();
+
+			if(setReportData){
+				console.log('setting report data');
+				setReportData({
+					Quote:{
+					quoteId: swapKitResponse.value.quoteId,
+					quoteTime: new Date().toISOString(),
+					quoteStatus: swapKitResponse.status === "fulfilled" ? "Success" : "Error",
+					quoteError: swapKitResponse.status === "fulfilled" ? "" : swapKitResponse.reason,
+					quoteSource: "SwapKit",
+					quoteParams: swapKitQuoteParams,
+					quoteResponse: swapKitResponse.value,
+					quoteRoutes: combinedRoutes,
+					optimalRoute: optimalRoute,
+					optimalRouteTime: optimalRouteTime,
+					expectedUSD: expectedUSD,
+					minRecd: minRecd,
+					destinationAddress: thisDestinationAddress,
+					swapFrom: swapFrom,
+					swapTo: swapTo,
+					amount: amount,
+					slippage: slippage,
+					license: license,
+					},
+					ini: iniData,
+					Log: [swapKitQuoteParams, combinedRoutes] 
+				});
+
+
+			}
+
 
 			setQuoteStatus(
 				<>

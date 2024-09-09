@@ -159,7 +159,9 @@ export const handleSwap = async (
 	chainflipBroker,
 	isStreamingSwap,
 	streamingInterval,
-	streamingNumSwaps
+	streamingNumSwaps,
+	setReportData,
+	iniData
 ) => {
 	if (swapInProgress) return;
 	setSwapInProgress(true);
@@ -328,6 +330,12 @@ export const handleSwap = async (
 		recipient: destinationAddress,
 	};
 
+	//set report data with clones so stays static
+	setReportData({
+		swapParams: { ...swapParams },
+		ini: iniData?.trim(),
+	});
+
 	if (route.providers[0] === "MAYACHAIN") swapParams.pluginName = "mayachain";
 	else if (route.providers[0] === "CHAINFLIP") {
 		swapParams.pluginName = "chainflip";
@@ -349,6 +357,19 @@ export const handleSwap = async (
 			const explorerUrl =
 				"https://scan.chainflip.io/channels/" + cfAddress.depositChannelId;
 			console.log("Explorer URL:", explorerUrl);
+
+			//add tx info to reportData
+			setReportData(prev => {
+				return {
+					...prev,
+					result: {txData: txData,
+					txID: txID,
+					explorerUrl: explorerUrl}
+				}
+			});
+
+
+
 			setProgress(93);
 			setExplorerUrl(explorerUrl);
 			setProgress(100);
@@ -366,12 +387,28 @@ export const handleSwap = async (
 
 	const swapResponse = await skClient.swap(swapParams).catch((error) => {
 		setStatusText("Error swapping:: " + error.message);
+		//add tx info to reportData
+		setReportData(prev => {
+			return {
+				...prev,
+				result: {error: error.message}
+			}
+		});
 		setSwapInProgress(false);
 		setShowProgress(false);
 		return null;
 	});
 
 	if (!swapResponse) return;
+
+
+	//add tx info to reportData
+	setReportData(prev => {
+		return {
+			...prev,
+			result: {swapResponse: swapResponse}
+		}
+	});
 
 	const walletChain = ChainIdToChain[wallet.chainId];
 	try {
@@ -380,6 +417,14 @@ export const handleSwap = async (
 			txHash: swapResponse,
 		});
 		setExplorerUrl(exURL);
+
+		//add explorer url to reportData.result
+		setReportData(prev => {
+			return {
+				...prev,
+				result: {explorerUrl: exURL, swapResponse: swapResponse}
+			}
+		});
 
 		console.log("exURL", exURL);
 	} catch (error) {
@@ -392,6 +437,16 @@ export const handleSwap = async (
 	// Function to log properties for debugging
 	// Function to log properties for debugging
 	function logObjectProperties(obj, name) {
+
+		setReportData(prev => {
+			if(!prev.log) prev.log = [];
+			
+			return {
+				...prev,
+				log: [{name: obj, value: JSON.stringify(obj, null, 2)}, ...prev.log]
+			}
+		});
+
 		console.log(`${name}:`, JSON.stringify(obj, null, 2));
 	}
 

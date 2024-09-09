@@ -13,11 +13,12 @@ import { useIsolatedState } from '../../win/includes/customHooks';
 import { formatBalance } from './helpers/transaction';
 import { getAssetValue } from './helpers/quote';
 import { getTxnUrl } from './helpers/transaction';
+import { generateSendReport } from './helpers/report';
 
 
 
 
-	const SendFundsComponent = ({ providerKey, windowId }) => {
+	const SendFundsComponent = ({ providerKey, windowId, onOpenWindow }) => {
 		var bigInt = require("big-integer");
 
 		const { skClient, wallets, tokens } = useWindowSKClient(providerKey);
@@ -34,6 +35,8 @@ import { getTxnUrl } from './helpers/transaction';
 		const [maxAmount, setMaxAmount]= useIsolatedState(windowId, 'maxAmount', '');
 		const [sendInProgress, setSendInProgress] = useIsolatedState(windowId, 'sendInProgress', false);
 		const [showSwapini, setShowSwapini] = useIsolatedState(windowId, 'showSwapini', false);
+		const [reportData, setReportData] = useIsolatedState(windowId, 'reportData', {});
+
 
 
 		const [isTokenDialogOpen, setIsTokenDialogOpen] = useIsolatedState(windowId, 'isTokenDialogOpen', false);
@@ -137,6 +140,10 @@ import { getTxnUrl } from './helpers/transaction';
 			
 			setProgress(13);
 			console.log('Sending funds:', txData, sendingWallet);
+			setReportData({
+				sendParams: { ...txData },
+				ini: iniData?.trim(),
+			});
 
 			try { 
 				const txID = await fn(txData);
@@ -144,6 +151,19 @@ import { getTxnUrl } from './helpers/transaction';
 				setProgress(87);
 				const explorerUrl = getTxnUrl(txID, selectedToken.chain, skClient);
 				console.log('Explorer URL:', explorerUrl);
+
+				//add tx info to reportData
+				setReportData(prev => {
+					return {
+						...prev,
+						result: {
+							txID: txID,
+							explorerUrl: explorerUrl
+						}
+					}
+				});
+
+
 				setProgress(93);
 				setTxUrl(explorerUrl);
 				setProgress(100);
@@ -151,6 +171,18 @@ import { getTxnUrl } from './helpers/transaction';
 				setError(`Error sending funds: ${error.message}`);
 				console.error('Error during transaction:', error);
 				console.log('skClient', skClient);
+
+				//add error to reportData
+				setReportData(prev => {
+					return {
+						...prev,
+						result: {
+							error: error.message
+						}
+					}
+				});
+
+
 			}
 			setTimeout(() => {
 				setSendInProgress(false);
@@ -284,6 +316,17 @@ memo=${memo}
 							View TX
 						</button>
 						: ''
+					}
+					{reportData && reportData.ini &&
+						<button className='swap-toolbar-button' onClick={() => {
+							generateSendReport(reportData, onOpenWindow);
+						}}>
+							<div className='swap-toolbar-icon' >📋</div>
+							Report
+						</button>
+
+
+
 					}
 				</div>
 				{(error && error !== '') &&
