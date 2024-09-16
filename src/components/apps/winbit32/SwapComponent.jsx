@@ -179,11 +179,13 @@ swap_count=${streamingNumSwaps}
 
 	useEffect(() => {
 		const token = swapFrom;
-		console.log('Selected token:', token);
 		const wallet = wallets.find(w => w?.chain === token?.chain);
-		console.log('Wallet:', wallet);
-		const balance = wallet?.balance?.find(b => b.isSynthetic !== true && b.chain + '.' + b.ticker.toUpperCase() === token.identifier.toUpperCase()) || wallet?.balance?.find(b => b.isSynthetic === true && b.symbol.toUpperCase() === token.identifier.toUpperCase());
-		console.log('Balance:', balance);
+		const balance = wallet?.balance?.find(
+			b => b.isSynthetic !== true && (b.chain + '.' + b.ticker.toUpperCase() === token.identifier.toUpperCase() || b.chain + '.' + b.symbol.toUpperCase() === token.identifier.toUpperCase() ))
+				|| wallet?.balance?.find(b => b.isSynthetic === true && b.symbol.toUpperCase() === token.identifier.toUpperCase());
+		if(token){
+			console.log('Selected token:', token, 'wallet',wallet, 'Balance:', balance);
+		}
 		if (balance) {
 			//const readableBalance = formatBigIntToSafeValue(bigInt(balance.bigIntValue), balance.decimal, balance.decimal);
 			const readableBalance = Number(balance.bigIntValue) / Number(balance.decimalMultiplier);
@@ -605,7 +607,7 @@ swap_count=${streamingNumSwaps}
 						generateSwapReport(reportData, onOpenWindow);
 					}}>
 						<div className='swap-toolbar-icon' >📋</div>
-						Report
+						Log
 					</button>
 				
 				

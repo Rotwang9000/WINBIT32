@@ -3,7 +3,6 @@ import { useIsolatedState, useIsolatedRef } from '../../win/includes/customHooks
 import WindowContainer from '../../win/WindowContainer';
 import ConnectionApp from './ConnectionApp';
 import { generateMnemonic, entropyToMnemonic } from '@scure/bip39';
-import { mnemonicToSeed } from "@scure/bip39";
 import { wordlist } from '@scure/bip39/wordlists/english';
 import { saveAs } from 'file-saver';
 import { useWindowSKClient } from '../../contexts/SKClientProviderManager';
@@ -12,11 +11,14 @@ import { QRCodeSVG } from 'qrcode.react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { isValidMnemonic } from './helpers/phrase';
 import { processKeyPhrase, setupFileInput, triggerFileInput } from '../sectools/includes/KeyStoreFunctions';
+import { processSKKeyPhrase, setupSKFileInput, triggerSKFileInput } from './includes/secureKeystoreFunctions';
+
 import { createKeyring } from '@swapkit/toolbox-substrate';
-import { createHash } from "crypto-browserify";
 import {  networks } from 'bitcoinjs-lib';
-import { Signer, SignerAsync, ECPairInterface, ECPairFactory, ECPairAPI, TinySecp256k1Interface } from 'ecpair';
+import { ECPairFactory, } from 'ecpair';
 import { fetchMNFTsForAccount } from './mnft/mnftfuncs';
+import { walletNames } from '../../win/includes/constants';
+import { sec } from 'mathjs';
 
 function generatePhrase(size = 12) {
 	const entropy = size === 12 ? 128 : 256;
@@ -44,6 +46,7 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 	const connectedRef = useRef(connectedPhrase);
 	const currentWalletsRef = useRef(wallets);
 	const fileInputRef = useRef(null);
+	const secureKeystoreFileInputRef = useRef(null);
 	const handleSubProgramClickRef = useRef(handleSubProgramClick);
 
 	useEffect(() => {
@@ -59,7 +62,18 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 				document.body.removeChild(fileInputRef.current);
 			}
 		};
+
 	}, [setPhrase, setStatusMessage, setLockMode]);	
+
+	useEffect(() => {
+		secureKeystoreFileInputRef.current = setupSKFileInput(setPhrase, setStatusMessage, setLockMode, skClient);
+		return () => {
+			if (secureKeystoreFileInputRef.current) {	
+				document.body.removeChild(secureKeystoreFileInputRef.current);
+			}
+		};
+	}, [setPhrase, setStatusMessage, setLockMode, skClient, connectChains]);
+
 
 	const handleOpenFile = useCallback(() => {
 		triggerFileInput(fileInputRef.current);
@@ -77,11 +91,9 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 
 	useEffect(() => {
 
-		if (/^WALLETCONNECT/.test(phrase)) {
-			currentPhraseRef.current = "WALLETCONNECT";
-		}
-		if (/^XDEFI/.test(phrase)) {
-			currentPhraseRef.current = "XDEFI";
+		//if a walletName is in the phrase, then set it as the currentPhrase
+		if(walletNames.includes(phrase.toUpperCase().trim())){
+			currentPhraseRef.current = phrase.toUpperCase().trim();
 		}
 
 		if(phrase.trim().split(' ').length === 1) {
@@ -103,7 +115,7 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 
 	const checkValidPhrase = useCallback(async (chkPhrase) => {
 		let words = chkPhrase.trim().split(' ');
-		if(words.length > 0 && (words[0] === 'WALLETCONNECT' || words[0] === 'XDEFI'))
+		if(words.length > 0 && walletNames.includes(words[0].toUpperCase().trim()))
 				 return true;
 			//if not private key
 		if(words.length !== 1) {
@@ -252,10 +264,10 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 
 		}
 		//export const createKeyring = async (phrase: string, networkPrefix: number) => {
-		if (wallet.createKeyring) {
-			wallet.keyRing = await wallet.createKeyring(phrase, wallet.network.prefix);
-			wallet.cfKeyRing = await createKeyring(phrase, 2112);
-		}
+		// if (wallet.createKeyring) {
+		// 	wallet.keyRing = await wallet.createKeyring(phrase, wallet.network.prefix);
+		// 	wallet.cfKeyRing = await createKeyring(phrase, 2112);
+		// }
 		//console.log('Connect Result', wallet);
 
 		addWallet(wallet);
@@ -286,10 +298,10 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 					}
 				}
 				//export const createKeyring = async (phrase: string, networkPrefix: number) => {
-				if(result.createKeyring){
-					result.keyRing = await result.createKeyring(phrase, result.network.prefix);
-					result.cfKeyRing = await createKeyring(phrase, 2112);
-				}
+				// if(result.createKeyring){
+				// 	result.keyRing = await result.createKeyring(phrase, result.network.prefix);
+				// 	result.cfKeyRing = await createKeyring(phrase, 2112);
+				// }
 				console.log('Connect Result', result);
 
 				if (await addSingleWallet(result, p) === false) {
@@ -365,6 +377,9 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 						}
 					}
 				);
+				if (promises === false || promises.length === 0) {
+					throw new Error('Failed to connect');
+				}
 						
 				await Promise.all(promises);
 
@@ -411,6 +426,13 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 				//setStatusMessage('Connecting..');
 			} else {
 				console.log('Invalid phrase');
+				if(phrase.trim() === ''){
+					setStatusMessage('Phrase removed from memory. You will need to re-enter it to refresh.');
+					setPhraseSaved(true);
+					setShowProgress(false);
+					setConnectedPhrase('');
+					return;
+				}
 				setConnectionStatus('disconnected');
 				setStatusMessage('Invalid phrase');
 				disconnect();
@@ -441,6 +463,7 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 		{ label: 'WalletConnect (EVM Only)', action: 'walletconnect' },
 		{ label: 'Phrase', action: 'phrase' },
 		{ label: 'WinBit TSS', action: 'winbittss' },
+		{ label: 'Winbit Disconnect', action: 'winbitoffline' },
 	]
 	, []);
 
@@ -454,6 +477,7 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 				submenu: [
 					{ label: (connectionStatus === 'connecting' ? 'Connecting...' : connectionStatus === 'connected' ? 'Refresh' : 'Connect'), action: 'connect' },
 					{ label: 'Open...', action: 'open' },
+					{ label: 'Open Keystore Securely...', action: 'openSecureKeystore' },
 					{ label: 'Exit', action: 'exit' },
 				],
 			},
@@ -488,6 +512,8 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 			submenu: [
 				{ label: (connectionStatus === 'connecting' ? 'Connecting...' : connectionStatus === 'connected' ? 'Refresh' : 'Connect'), action: 'connect' },
 				{ label: 'Open...', action: 'open' },
+				{ label: 'Open Keystore Securely...', action: 'openSecureKeystore' },
+
 				{ label: 'Save as text', action: 'save' },
 				{ label: 'Save as Keystore', action: 'saveKeystore' },
 				{ label: 'Exit', action: 'exit' },
@@ -534,6 +560,18 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 			case 'open':
 				handleOpenFile();
 				break;
+			case 'openSecureKeystore':
+				setConnectionStatus('connecting');
+				setStatusMessage('Connecting...');
+				setShowProgress(true);
+				skClient.disconnectAll();
+				setWallets([]);
+				resetWallets();
+				setPhrase('');
+
+				triggerSKFileInput(secureKeystoreFileInputRef.current);
+				break;
+				
 			case 'readQR':
 				if (handleSubProgramClickRef.current) {
 					handleSubProgramClickRef.current('readqr.exe');
@@ -583,6 +621,10 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 				break;
 			case 'walletconnect':
 				setPhrase('WALLETCONNECT');
+				setLockMode(true);
+				break;
+			case 'winbitoffline':
+				setPhrase('WINBIT');
 				setLockMode(true);
 				break;
 			case 'phrase':

@@ -11,6 +11,21 @@ import { ChainflipToolbox } from "@swapkit/toolbox-substrate";
 import { createSwapKit, Chain, WalletOption, AssetValue } from "@swapkit/sdk";
 import { walletconnectWallet } from "@swapkit/wallet-wc";
 import { result } from "lodash";
+import { secureKeystoreWallet } from '../wallets/secureKeystore/index.ts';
+
+// import { coinbaseWallet } from "@swapkit/wallet-coinbase";
+// import { evmWallet } from "@swapkit/wallet-evm-extensions";
+// import { keepkeyWallet } from "@swapkit/wallet-keepkey";
+// import { keplrWallet } from "@swapkit/wallet-keplr";
+// import { ledgerWallet } from "@swapkit/wallet-ledger";
+// import { okxWallet } from "@swapkit/wallet-okx";
+// import { phantomWallet } from "@swapkit/wallet-phantom";
+// import { polkadotWallet } from "@swapkit/wallet-polkadotjs";
+// import { talismanWallet } from "@swapkit/wallet-talisman";
+// import { trezorWallet } from "@swapkit/wallet-trezor";
+import { xdefiWallet } from "@swapkit/wallet-xdefi";
+import { keystoreWallet } from "@swapkit/wallet-keystore";
+
 
 
 const SKClientContext = createContext(null);
@@ -116,17 +131,15 @@ export const SKClientProviderManager = ({ children }) => {
 				return state.clients[key];
 			}
 
+			console.log(secureKeystoreWallet);
+
 			const client = createSwapKit({
 				config: {
 					utxoApiKey: "A___UmqU7uQhRUl4" + "UhNzCi5LOu81LQ1T",
 					covalentApiKey: "cqt_rQygB4xJkdv" + "m8fxRcBj3MxBhCHv4",
 					ethplorerApiKey: "EK-8ftjU-8Ff" + "7UfY-JuNGL",
 					walletConnectProjectId: "dac706e68e589ffa15fed9bbccd825f7",
-					wallets: [
-						WalletOption.KEYSTORE,
-						WalletOption.XDEFI,
-						WalletOption.WALLETCONNECT,
-					],
+
 					chainflipBrokerUrl: "https://chainflip.winbit32.com",
 					thorswapApiKey: "",
 				},
@@ -135,6 +148,12 @@ export const SKClientProviderManager = ({ children }) => {
 					ETH: "https://mainnet.infura.io/v3/c3b4e673639742a89bbddcb49895d568",
 					// XRD: "https://radix-mainnet.rpc.grove.city/v1/456359ff",
 					// Radix: "https://radix-mainnet.rpc.grove.city/v1/456359ff",
+				},
+				wallets: {
+					...walletconnectWallet,
+					...keystoreWallet,
+					...xdefiWallet,
+					...secureKeystoreWallet,
 				},
 			});
 			console.log("Created client", client);
@@ -323,6 +342,10 @@ export const SKClientProviderManager = ({ children }) => {
 						`https://api.swapkit.dev/tokens?provider=${provider.provider}`
 					);
 					const tokenData = await tokenResponse.json();
+					if(!tokenData.tokens){
+						console.log("Error fetching tokens", tokenData);
+						return [];
+					}
 					const tokenData2 = tokenData.tokens.map((token) => {
 						if (token.identifier.includes("/")) {
 							const splitImage = token.logoURI.split("/");
@@ -533,6 +556,62 @@ export const useWindowSKClient = (key) => {
 								promises.push(callback(wallet, chain));
 						}
 					}
+				}
+				return promises;
+			}else if(phrase === "WINBIT"){
+				console.log("Connecting with WinBitWallet");
+				
+				const chains = [
+					Chain.Arbitrum,
+					Chain.Avalanche,
+					Chain.BinanceSmartChain,
+					Chain.Bitcoin,
+					Chain.BitcoinCash,
+					Chain.Cosmos,
+					Chain.Dogecoin,
+					Chain.Ethereum,
+					Chain.Kujira,
+					Chain.Litecoin,
+					Chain.Maya,
+					Chain.Optimism,
+					Chain.Polygon,
+					Chain.Solana,
+					Chain.THORChain,
+					// Chain.Base,
+				];
+				setChains(chains);
+
+
+				if (await skClient.connectWinbitWallet(chains)) {
+					console.log("Connected with Winbit");
+
+					for (const chain of chains) {
+						const wallet = await skClient.getWalletWithBalance(chain);
+						if (wallet) {
+							promises.push(callback(wallet, chain));
+						}
+					}
+				}
+				return promises;
+			}else if(phrase === "SECUREKEYSTORE"){
+				console.log("Connecting with SecureKeystore");
+				const password = await skClient.promptForPassword();
+				if(!password){
+					return;
+				}
+
+				for (const chain of connectChains) {
+				promises.push(skClient.connectSecureKeystore([chain], password, index).then(async () => {
+						console.log("Connected to chain", chain);
+						if(!result) return;
+						const wallet = await skClient.getWalletWithBalance(chain);
+						if(wallet){
+							callback(wallet, chain);
+						}
+
+					}).catch( (e) => {
+						console.log("Error connecting to chain", chain, e);
+					}));
 				}
 				return promises;
 			}

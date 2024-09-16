@@ -2,7 +2,7 @@ import React, { useState, useCallback } from 'react';
 import DialogBox from './DialogBox';
 import './styles/Password.css';
 
-const Password = ({ onConfirm, onCancel, box, pinMode = false }) => {
+const Password = ({ onConfirm, onCancel, box, pinMode = false, options = {} }) => {
 	const [password, setPassword] = useState('');
 	const [filename, setFilename] = useState('');
 
@@ -11,9 +11,11 @@ const Password = ({ onConfirm, onCancel, box, pinMode = false }) => {
 		onConfirm({ password, filename });
 	}, [onConfirm, password, filename, pinMode]);
 
+	const title = options.title || (pinMode ? 'Enter PIN' : 'Save As KeyStore...');
+
 	return (
 		<DialogBox
-			title={pinMode ? 'Enter PIN' : 'Save As KeyStore...'}
+			title={title}
 			content={
 				<div className="dialog-content">
 					<div style={{ textAlign: 'center', marginBottom: '10px' }} className="dialog-field">

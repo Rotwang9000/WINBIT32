@@ -5,6 +5,7 @@ import { FeeOption, SwapKitApi } from "@swapkit/sdk";
 import { ChainIdToChain } from "@swapkit/sdk";
 import { getTxnDetails, getTxnDetailsV2, getTxnUrl } from "./transaction";
 import { getTokenForProvider } from './token';
+import { re } from "mathjs";
 
 export const chooseWalletForToken = (token, wallets) => {
 	if (!token) return null;
@@ -97,15 +98,38 @@ export const handleApprove = async (
 		swapFrom,
 		amount,
 	);
+
+
+
+	// const ApproveParams = {
+	// 	assetValue,
+	// 	spenderAddress: route.contract || route.targetAddress,
+	// };
+
+//export type ApproveParams = {
+//   assetAddress: string;
+//   spenderAddress: string;
+//   feeOptionKey?: FeeOption;
+//   amount?: BigNumberish;
+//   from: string;
+//   // Optional fallback in case estimation for gas limit fails
+//   gasLimitFallback?: BigNumberish;
+//   nonce?: number;
+// };
+
 	const ApproveParams = {
-		assetValue,
+		assetAddress: swapFrom.address,
 		spenderAddress: route.contract || route.targetAddress,
+		feeOptionKey: FeeOption.Average,
+		amount: assetValue.assetValue.bigIntValue,
+		from: wallet.address,
 	};
+
 	console.log("ApproveParams", ApproveParams, route);
 	setProgress(13);
 
-	const approveTxnHash = await skClient.evm
-		.approveAssetValue(ApproveParams)
+	const approveTxnHash = await wallet
+		.approve(ApproveParams)
 		.catch((error) => {
 			console.log("error", error);
 			setStatusText("Error approving transaction " + error.message);
@@ -113,9 +137,18 @@ export const handleApprove = async (
 			setShowProgress(false);
 			return null;
 		});
+	if(!approveTxnHash){
+		return null;
+	}
 	console.log("approveTxnHash", approveTxnHash);
 	try{
 		const explURL = getTxnUrl(approveTxnHash, wallet.chain, skClient);
+		if(!explURL){
+			setStatusText("Approval transaction sent but unknown result.");
+			setSwapInProgress(false);
+			setShowProgress(false);
+			return null
+		}
 		console.log("explURL", explURL);
 		setExplorerUrl(explURL);
 		setShowProgress(false);

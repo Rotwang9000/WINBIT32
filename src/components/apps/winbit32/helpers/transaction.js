@@ -187,6 +187,9 @@ export const checkTxnStatus = async (
 
 export const getTxnUrl = (txnHash, chain, skClient) => {
 	try {
+		if(txnHash === null){
+			return "";
+		}
 		return skClient.getExplorerTxUrl({chain, txnHash});
 	} catch (error) {
 		console.log("error", error, txnHash, chain, skClient);
