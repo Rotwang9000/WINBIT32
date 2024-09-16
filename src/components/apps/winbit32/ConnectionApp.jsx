@@ -8,6 +8,8 @@ import { generateMnemonic, mnemonicToSeedSync } from 'bip39';
 import {
 	derivePath as deriveEd25519Path,
 } from 'ed25519-hd-key'
+import { walletNames } from '../../win/includes/constants';
+
 
 // Function to generate a random phrase
 function generatePhrase(size = 12) {
@@ -25,7 +27,8 @@ function ConnectionApp({ windowId, providerKey, phrase, setPhrase, connectionSta
 	//on phrase blur then remove all invalid words
 	useEffect(() => {
 		if (!phraseFocus) {
-			if(/^WALLETCONNECT/.test(phrase) || /^XDEFI/.test(phrase)){
+			//if phrase is a walletName, then return
+			if (walletNames.includes(phrase.toUpperCase().trim())) {
 				return;
 			}
 			const words = phrase.split(' ');
@@ -154,7 +157,7 @@ function ConnectionApp({ windowId, providerKey, phrase, setPhrase, connectionSta
 				<div className="status-row">
 					<div className="status-message">
 						<div>{statusMessage}</div>
-						{!phraseSaved && <div style={{ color: 'red' }} onClick={() => setPhraseSaved(true)}>Phrase not saved or copied <span style={{cursor: 'pointer'}}>❌</span></div>}
+						{!phraseSaved && !programData.lockMode && <div style={{ color: 'red' }} onClick={() => setPhraseSaved(true)}>Phrase not saved or copied <span style={{cursor: 'pointer'}}>❌</span></div>}
 			
 					</div>
 					<div style={

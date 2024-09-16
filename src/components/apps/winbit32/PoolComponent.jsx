@@ -12,12 +12,13 @@ import { Chain } from '@swapkit/sdk';
 import { getMemoForDeposit } from '@swapkit/helpers';
 import { mayaRadixRouter } from './helpers/maya'
 import { getTxnUrl } from './helpers/transaction'
+import { validateMnemonic } from '@scure/bip39'
 
 
 
 const PoolComponent = ({ providerKey, windowId, programData }) => {
 	const { skClient, tokens, wallets } = useWindowSKClient(providerKey);
-	const { setPhrase, phrase } = programData;
+	const { setPhrase, phrase, lockMode } = programData;
 
 	const [baseAsset, setBaseAsset] = useIsolatedState(windowId, 'baseAsset', null);
 	const [asset, setAsset] = useIsolatedState(windowId, 'asset', null);
@@ -68,6 +69,12 @@ const PoolComponent = ({ providerKey, windowId, programData }) => {
 			const constructionMetadata = await radixWallet.api.LTS.getConstructionMetadata();
 			
 			console.log('radixWallet', radixWallet, constructionMetadata);
+
+			if (lockMode || !validateMnemonic(phrase)){
+				//can't do this yet
+				throw new Error('Lock mode not supported yet');
+			}
+
 
 			const { getRadixCoreApiClient, RadixToolbox, createPrivateKey, RadixMainnet } = await import(
 				"@swapkit/toolbox-radix"

@@ -43,7 +43,7 @@ export function createNewWindow(
 	}
 
 	console.log("Creating new window", program.progName);
-	console.log("Opening window", program, metadata, save);
+	// console.log("Opening window", program, metadata, save);
 
 	if (!program) {
 		console.error("Program not found or undefined", program);
