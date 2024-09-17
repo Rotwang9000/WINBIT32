@@ -459,29 +459,29 @@ export const useWindowSKClient = (key) => {
 	const connect = useCallback(
 		async (phrase, index, callback) =>{
 			let promises = [];
-			if(phrase === "WALLETCONNECT"){
 
-				console.log(
-					"Connecting with walletconnect"				);
+			const pSplit = phrase.toUpperCase().trim().split(" ");
+			const firstWord = pSplit[0] || '';
+
+
+			if (firstWord === "WALLETCONNECT") {
+				console.log("Connecting with walletconnect");
 
 				//hide #root
 				document.getElementById("root").style.display = "none";
 				let w;
-				try{
+				try {
 					const metadata = {
 						name: "WINBIT32",
-						description:
-							"WINBIT32 does stuff.",
+						description: "WINBIT32 does stuff.",
 						url: "https://winbit32.com/",
-						icons: [
-							"https://winbit32.com/favicon/android-icon-192x192.png",
-						],
+						icons: ["https://winbit32.com/favicon/android-icon-192x192.png"],
 					};
 					const chains = [
 						Chain.BinanceSmartChain,
 						Chain.Ethereum,
 						// Chain.THORChain,
-						 Chain.Avalanche,
+						Chain.Avalanche,
 						Chain.Arbitrum,
 						// Chain.Base,
 						// Chain.Optimism,
@@ -492,9 +492,9 @@ export const useWindowSKClient = (key) => {
 					];
 					setChains(chains);
 
-					w = await skClient.connectWalletconnect(chains, {metadata});
+					w = await skClient.connectWalletconnect(chains, { metadata });
 
-					if(w){
+					if (w) {
 						// w.on("disconnect", () => {
 						// 	console.log("Disconnected from walletconnect");
 						// 	document.getElementById("root").style.display = "block";
@@ -509,21 +509,20 @@ export const useWindowSKClient = (key) => {
 						// 	console.log("Network changed", networkId);
 						// });
 
-						for(const chain of chains){
+						for (const chain of chains) {
 							const wallet = await skClient.getWalletWithBalance(chain);
-							if(wallet){
+							if (wallet) {
 								promises.push(callback(wallet, chain));
 							}
 						}
 					}
-
-				}catch(e){
+				} catch (e) {
 					console.log("Error", e);
 				}
 				console.log("Connected with walletconnect", w);
 				document.getElementById("root").style.display = "block";
 				return promises;
-			}else if(phrase === "XDEFI"){
+			} else if (firstWord === "XDEFI") {
 				console.log("Connecting with xdefi");
 				//add xdefiwallet to skclient
 				const chains = [
@@ -546,21 +545,20 @@ export const useWindowSKClient = (key) => {
 				];
 				setChains(chains);
 
-
-				if(await skClient.connectXDEFI(chains)){
+				if (await skClient.connectXDEFI(chains)) {
 					console.log("Connected with xdefi");
 
-					for(const chain of chains){
+					for (const chain of chains) {
 						const wallet = await skClient.getWalletWithBalance(chain);
-						if(wallet){
-								promises.push(callback(wallet, chain));
+						if (wallet) {
+							promises.push(callback(wallet, chain));
 						}
 					}
 				}
 				return promises;
-			}else if(phrase === "WINBIT"){
+			} else if (firstWord === "WINBIT") {
 				console.log("Connecting with WinBitWallet");
-				
+
 				const chains = [
 					Chain.Arbitrum,
 					Chain.Avalanche,
@@ -581,7 +579,6 @@ export const useWindowSKClient = (key) => {
 				];
 				setChains(chains);
 
-
 				if (await skClient.connectWinbitWallet(chains)) {
 					console.log("Connected with Winbit");
 
@@ -593,26 +590,51 @@ export const useWindowSKClient = (key) => {
 					}
 				}
 				return promises;
-			}else if(phrase === "SECUREKEYSTORE"){
+			} else if (firstWord === "SECUREKEYSTORE") {
 				console.log("Connecting with SecureKeystore");
-				const password = await skClient.promptForPassword();
-				if(!password){
+				const { password, dIndex } = await skClient.promptForPassword({
+					extraContent: (
+						<div className="dialog-field">
+							<label>Derivation Index:</label>
+							<select name="dIndex">
+								<option value="-1">Legacy</option>
+								<option value="0" selected>
+									0
+								</option>
+								<option value="1">1</option>
+								<option value="2">2</option>
+								<option value="3">3</option>
+								<option value="4">4</option>
+								<option value="5">5</option>
+								<option value="6">6</option>
+								<option value="7">7</option>
+								<option value="8">8</option>
+								<option value="9">9</option>
+							</select>
+						</div>
+					),
+				});
+				if (!password) {
 					return;
 				}
 
 				for (const chain of connectChains) {
-					console.log("chains",connectChains);
-				promises.push(skClient.connectSecureKeystore([chain], password, index).then(async () => {
-						console.log("Connected to chain", chain);
-						if(!result) return;
-						const wallet = await skClient.getWalletWithBalance(chain);
-						if(wallet){
-							callback(wallet, chain);
-						}
-
-					}).catch( (e) => {
-						console.log("Error connecting to chain", chain, e);
-					}));
+					console.log("chains", connectChains, dIndex);
+					promises.push(
+						skClient
+							.connectSecureKeystore([chain], password, dIndex)
+							.then(async () => {
+								console.log("Connected to chain", chain);
+								if (!result) return;
+								const wallet = await skClient.getWalletWithBalance(chain);
+								if (wallet) {
+									callback(wallet, chain);
+								}
+							})
+							.catch((e) => {
+								console.log("Error connecting to chain", chain, e);
+							})
+					);
 				}
 				return promises;
 			}

@@ -16,11 +16,17 @@ import { mnemonicToSeedSync } from 'bip39';
 import {
 	derivePath as deriveEd25519Path,
 } from 'ed25519-hd-key'
-import { sign } from "mathjs";
+import {
+	RadixEngineToolkit,
+	PrivateKey,
+	NetworkId,
+
+} from "@radixdlt/radix-engine-toolkit";
+import { countNonPushOnlyOPs } from "bitcoinjs-lib/src/script";
 
 // Internal variables to store the encrypted keystore and the password request function
 let encryptedKeystore: Keystore | null = null;
-let passwordRequestFunction: ((options?: object) => Promise<string>) | null = null;
+let passwordRequestFunction: ((options?: object) => Promise<object>) | null = null;
 
 type SecureKeystoreOptions = {
 	ethplorerApiKey?: string;
@@ -34,9 +40,10 @@ type Params = SecureKeystoreOptions & {
 	rpcUrl?: string;
 	chain: Chain;
 	keystore: Keystore;
-	passwordRequest: (options?: object) => Promise<string>;
+	passwordRequest: (options?: object) => Promise<object>;
 	derivationPath: string;
 	password: string;
+	index: number;
 };
 
 // Function to set the encrypted keystore
@@ -49,18 +56,18 @@ const setEncryptedKeystore = ({ ...params }) => {
 
 // Function to set the password request function
 const setPasswordRequestFunction = ({ ...params }) => {
-	return function setPasswordRequestFunction(passwordFunction: () => Promise<string>) {
+	return function setPasswordRequestFunction(passwordFunction: () => Promise<object>) {
 		passwordRequestFunction = passwordFunction;
 	};
 };
 
 // Function to prompt for password
-const promptForPassword = ({ ...params }) => {
-	return async function promptForPassword() {
+const promptForPassword = () => {
+	return async function promptForPassword(...args: any[]) {
 		if (!passwordRequestFunction) {
 			throw new Error("Password request function is not set.");
 		}
-		return passwordRequestFunction();
+		return passwordRequestFunction(...args);
 	};
 };
 
@@ -114,6 +121,7 @@ const getWalletMethodsForChain = async ({
 	derivationPath,
 	stagenet,
 	password,
+	index,
 }: Params) => {
 	// Decrypt the phrase once to get the address
 	const phrase = await decryptFromKeystore(keystore, password);
@@ -147,7 +155,8 @@ const getWalletMethodsForChain = async ({
 
 			// Wrap sensitive methods
 			const wrappedToolbox = wrapSensitiveMethods(toolbox, (originalMethodName) => async (...args: any[]) => {
-				const password = await passwordRequest({title: "EVM wallet password for " + originalMethodName + " required"});
+				const { password }
+					= await passwordRequest({title: "EVM wallet password for " + originalMethodName + " required"}) as { password: string };
 				const phrase = await decryptFromKeystore(keystore, password);
 				const wallet = HDNodeWallet.fromPhrase(phrase).connect(provider);
 				const signerToolbox = getToolboxByChain(chain)({ ...keys, api, provider, signer: wallet });	
@@ -171,7 +180,7 @@ const getWalletMethodsForChain = async ({
 			sensitiveMethods = ['transfer', 'buildTx', 'buildBCHTx'];
 
 			const wrappedToolbox = wrapSensitiveMethods(toolbox, (originalMethod) => async (...args: any[]) => {
-				const password = await passwordRequest({title: "BitcoinCash password for " + originalMethod + " required"});
+				const { password } = await passwordRequest({ title: "BitcoinCash password for " + originalMethod + " required" }) as { password: string };
 				const phrase = await decryptFromKeystore(keystore, password);
 				const keys = await toolbox.createKeysForPath({ phrase, derivationPath });
 				debugLog("Calling on WrappedToolbox:", originalMethod, toolbox, args);
@@ -208,7 +217,7 @@ const getWalletMethodsForChain = async ({
 			sensitiveMethods = ['transfer', 'createKeysForPath', 'getAddressFromKeys','getPrivateKeyFromMnemonic'];
 
 			const wrappedToolbox = wrapSensitiveMethods(toolbox, (originalMethod) => async (...args: any[]) => {
-				const password = await passwordRequest({title: "UTXO wallet password for " + originalMethod + " required"});
+				const { password } = await passwordRequest({ title: "UTXO wallet password for " + originalMethod + " required" }) as { password: string };
 				const phrase = await decryptFromKeystore(keystore, password);
 				const keys = toolbox.createKeysForPath({ phrase, derivationPath });
 				debugLog("Calling on WrappedToolbox:", originalMethod, toolbox, args);
@@ -231,7 +240,7 @@ const getWalletMethodsForChain = async ({
 			// Specify sensitive methods for Cosmos-based chains
 			sensitiveMethods = ['transfer', 'signMessage', 'deposit', 'getSigner' ]
 			const wrappedToolbox = wrapSensitiveMethods(toolbox, (originalMethod) => async (...args: any[]) => {
-				const password = await passwordRequest({title: "Cosmos wallet password for " + originalMethod + " required"});
+				const { password } = await passwordRequest({ title: "Cosmos wallet password for " + originalMethod + " required" }) as { password: string };
 				const phrase = await decryptFromKeystore(keystore, password);
 				const signer = await toolbox.getSigner(phrase);
 				const from = await toolbox.getAddressFromMnemonic(phrase);
@@ -258,7 +267,7 @@ const getWalletMethodsForChain = async ({
 			sensitiveMethods = ['transfer', 'signMessage', 'signer', 'estimateTransactionFee', 'signAndBroadcast', 'sign'];
 
 			const wrappedToolbox = wrapSensitiveMethods(toolbox, (originalMethod) => async (...args: any[]) => {
-				const password = await passwordRequest({title: "Polkadot wallet password for '" + originalMethod + "'..."});
+				const { password } = await passwordRequest({ title: "Polkadot wallet password for '" + originalMethod + "'..." }) as { password: string };
 				const phrase = await decryptFromKeystore(keystore, password);
 				const signer = await createKeyring(phrase, Network[chain].prefix);
 				toolbox = await getToolboxByChain(chain, { signer });
@@ -271,21 +280,42 @@ const getWalletMethodsForChain = async ({
 		}
 
 		case Chain.Radix: {
+
 			const { getRadixCoreApiClient, RadixToolbox, createPrivateKey, RadixMainnet } = await import("./legacyRadix.ts");
 
+			const getRadixSigner = async (phrase, index) => {
+				if(index === -1 || index === "-1"){
+					console.log("Connecting Radix the legacy way")
+					return await createPrivateKey(phrase);
+				}
+
+				console.log("Connecting Radix the new way", index, phrase, mnemonicToSeedSync(phrase).toString('hex'));
+				let seed = mnemonicToSeedSync(phrase);
+				const derivedKeys = deriveEd25519Path("m/44'/1022'/1'/525'/1460'/" + index + "'", seed.toString('hex'))
+				console.log("DerivedKeys", derivedKeys);
+				const privateKey = new PrivateKey.Ed25519(new Uint8Array(derivedKeys.key));
+				return privateKey;
+			}
+
+
+
+
 			const api = await getRadixCoreApiClient(RPCUrl.Radix, RadixMainnet);
-			const signer = await createPrivateKey(phrase);
+			const signer = await getRadixSigner(phrase, index);
 			toolbox = await RadixToolbox({ api, signer });
 
-			address = toolbox.getAddress();
+			address = await RadixEngineToolkit.Derive.virtualAccountAddressFromPublicKey(
+						signer.publicKey(),
+						NetworkId.Mainnet
+					);
 
 			// Specify sensitive methods for Radix
 			sensitiveMethods = ['transfer', 'signMessage', 'validateSignature','createPrivateKey'];
 
 			const wrappedToolbox = wrapSensitiveMethods(toolbox, (originalMethod) => async (...args: any[]) => {
-				const password = await passwordRequest();
+				const { password } = await passwordRequest({ title: "Enter your Radix wallet password for " + originalMethod + " method" }) as { password: string };
 				const phrase = await decryptFromKeystore(keystore, password);
-				const signer = await createPrivateKey(phrase);
+				const signer = await getRadixSigner(phrase, index);
 				const toolbox = await RadixToolbox({ api, signer });
 				return await toolbox[originalMethod](...args);
 			}, sensitiveMethods);
@@ -326,7 +356,7 @@ const getWalletMethodsForChain = async ({
 			sensitiveMethods = ['signMessage', 'signAndSendTransaction', 'signTransaction', 'signAllTransactions', 'transfer'];
 
 			const wrappedToolbox = wrapSensitiveMethods(toolbox, (originalMethod) => async (...args: any[]) => {
-				const password = await passwordRequest({title: "Enter your Solana wallet password for " + originalMethod + " method"});
+				const { password } = await passwordRequest({ title: "Enter your Solana wallet password for " + originalMethod + " method" }) as { password: string };
 				const phrase = await decryptFromKeystore(keystore, password);
 				const keypair = toolbox.createKeysForPath({ phrase, derivationPath });
 				args[0] = { ...args[0], from: address, signer: keypair };
@@ -365,7 +395,8 @@ function connectSecureKeystore({
 		setRequestClientConfig({ apiKey: thorswapApiKey });
 
 		const promises = chains.map(async (chain) => {
-			const index = typeof derivationPathMapOrIndex === "number" ? derivationPathMapOrIndex : 0;
+			const dIndex = typeof derivationPathMapOrIndex !== "object" ? derivationPathMapOrIndex : 0;
+			const index = typeof derivationPathMapOrIndex === "number" ? derivationPathMapOrIndex === -1? 0: derivationPathMapOrIndex : 0;
 			const derivationPathArray =
 				derivationPathMapOrIndex && typeof derivationPathMapOrIndex === "object"
 					? derivationPathMapOrIndex[chain]
@@ -399,7 +430,8 @@ function connectSecureKeystore({
 				blockchairApiKey,
 				stagenet,
 				passwordRequest: passwordRequestWrapper,
-				password
+				password,
+				index: dIndex as number,
 			});
 
 			addChain({

@@ -102,7 +102,7 @@ export function amountInBigInt(amount, decimals) {
 	//convert to bigint
 
 	const bigFloatWithNoDecimals = (amount * 10 ** decimals).toFixed(0);
-	
+	console.log('bigFloatWithNoDecimals', bigFloatWithNoDecimals);
 	//convert amount to bigint with decimals
 	const { bigIntValue, decimalMultiplier } = BigIntArithmetics.fromBigInt(
 		bigInt(bigFloatWithNoDecimals),
@@ -115,23 +115,72 @@ export function amountInBigInt(amount, decimals) {
 export async function getAssetValue(asset, value){
 
 	//value is float
-	console.log('value', value);
+	console.log('value', value, asset);
 	//if value in scientific notation, convert to float
 	if (value.toString().includes('e')) {
 		value = parseFloat(value);
 		console.log("value", value);
 	}
-	
+	let assetValue; 
+	if(asset.chain.toUpperCase() === 'XRD'){
 
-	let assetValue = await AssetValue.from({
-		asset: asset.identifier.toUpperCase().replace("0X", "0x"),
-		//convert amount to bigint with decimals
-		value: amountInBigInt(value, asset.decimals),
-		fromBaseDecimal: asset.decimals,
-		asyncTokenLookup: false,
+		
+		// // assetValue = await AssetValue.from({
+		// // 	asset: asset.identifier.toLowerCase(),
+		// // 	//convert amount to bigint with decimals
+		// // 	value: amountInBigInt(value, 18),
+		// // 	fromBaseDecimal: 18,
+		// // 	asyncTokenLookup: false,
+		// // });
+
+		//     // this.type = getAssetType(assetInfo);
+		// 	// 	this.tax = tax;
+		// 	// 	this.chain = assetInfo.chain;
+		// 	// 	this.ticker = assetInfo.ticker;
+		// 	// 	this.symbol = assetInfo.symbol;
+		// 	// 	this.address = assetInfo.address;
+		// 	// 	this.isSynthetic = assetInfo.isSynthetic;
+		// 	// 	this.isGasAsset = assetInfo.isGasAsset;
+		// 	// 	this.chainId = ChainToChainId[assetInfo.chain];
+
+		// assetValue = new AssetValue(
+		// 	 {value: amountInBigInt(value, 18), decimal: 18},
+		// 	 18,
+		// 	 0,
+		// 	 asset.chain,
+		// 	 asset.ticker,
+		// 	 asset.symbol,
+		// );
+
+		// assetValue.type = 'native';
+		// assetValue.tax = 0;
+		// assetValue.chain = asset.chain;
+		// assetValue.ticker = asset.ticker;
+		// assetValue.symbol = asset.symbol;
+		// assetValue.address = asset.address;
+		// assetValue.isSynthetic = false;
+		// assetValue.isGasAsset = true;
+		// assetValue.chainId = asset.chainId;
+		// assetValue.decimal = 18;
+		// assetValue.decimalMultiplier = 1000000000000000000n;
+		// assetValue.bigIntValue = amountInBigInt(value, 18);
+
+		// console.log('assetValue', assetValue);
+		asset.decimals = 18;
+
+	}
+	// else{
+
+		assetValue = await AssetValue.from({
+			asset:asset.identifier.toUpperCase().replace("0X", "0x"),
+			//convert amount to bigint with decimals
+			value: amountInBigInt(value, asset.decimals),
+			fromBaseDecimal: asset.decimals,
+			asyncTokenLookup: false,
 
 
-	});
+		});
+	// }
 
 	// assetValue: G;
 	// address: "0xaf88d065e77c8cc2239327c5edb3a432268e5831";
