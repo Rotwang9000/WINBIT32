@@ -601,6 +601,7 @@ export const useWindowSKClient = (key) => {
 				}
 
 				for (const chain of connectChains) {
+					console.log("chains",connectChains);
 				promises.push(skClient.connectSecureKeystore([chain], password, index).then(async () => {
 						console.log("Connected to chain", chain);
 						if(!result) return;
