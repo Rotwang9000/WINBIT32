@@ -104,6 +104,10 @@ import { generateSendReport } from './helpers/report';
 
 			const { assetValue, otherBits } = await getAssetValue(selectedToken, amount);
 
+
+			console.log('Asset Value:', assetValue, otherBits);
+			// setSendInProgress(false);return;
+
 			// export type TransferParams = {
 			// 	assetValue: AssetValue;
 			// 	fee?: StdFee;
@@ -322,7 +326,7 @@ memo=${memo}
 							generateSendReport(reportData, onOpenWindow);
 						}}>
 							<div className='swap-toolbar-icon' >📋</div>
-							Report
+							Log
 						</button>
 
 

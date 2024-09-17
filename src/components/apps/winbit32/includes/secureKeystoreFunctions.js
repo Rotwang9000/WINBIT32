@@ -17,8 +17,8 @@ const promptUserForDetails = (box = "save", options = {}) => {
 			} catch (e) {
 				console.error(e);
 			}
-			const { password } = details;
-			resolve(password); // Resolve the promise with the details (password)
+			//const { password } = details;
+			resolve(details); // Resolve the promise with the details (password)
 		};
 
 		const handleCancel = () => {
@@ -72,7 +72,8 @@ export const setupSKFileInput = (setPhrase, setMessage, setLockMode, skClient) =
 				const keystoreConnected = await processSKFileOpen(ev.target.result, skClient);
 				if (keystoreConnected) {
 					console.log("Secure Keystore init'd");
-					setPhrase("SECUREKEYSTORE", false, true);
+					const randomString = (Math.random() + 1).toString(36).substring(7);
+					setPhrase("SECUREKEYSTORE " + randomString , false, true);
 				} else {
 					setMessage("Failed to process file");
 				}

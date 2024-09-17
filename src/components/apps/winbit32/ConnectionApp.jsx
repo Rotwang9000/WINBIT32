@@ -28,7 +28,8 @@ function ConnectionApp({ windowId, providerKey, phrase, setPhrase, connectionSta
 	useEffect(() => {
 		if (!phraseFocus) {
 			//if phrase is a walletName, then return
-			if (walletNames.includes(phrase.toUpperCase().trim())) {
+			const pSplit = phrase.toUpperCase().trim().split(' ');
+			if (pSplit.length > 0 && walletNames.includes(pSplit[0])) {
 				return;
 			}
 			const words = phrase.split(' ');

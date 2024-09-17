@@ -92,7 +92,8 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 	useEffect(() => {
 
 		//if a walletName is in the phrase, then set it as the currentPhrase
-		if(walletNames.includes(phrase.toUpperCase().trim())){
+		const pSplit = phrase.toUpperCase().trim().split(' ');
+		if(pSplit.length >0 && walletNames.includes(pSplit[0])){
 			currentPhraseRef.current = phrase.toUpperCase().trim();
 		}
 
@@ -568,7 +569,7 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 				setWallets([]);
 				resetWallets();
 				setPhrase('');
-
+				setConnectedPhrase('');
 				triggerSKFileInput(secureKeystoreFileInputRef.current);
 				break;
 				
