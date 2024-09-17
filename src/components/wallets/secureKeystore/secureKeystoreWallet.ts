@@ -270,27 +270,27 @@ const getWalletMethodsForChain = async ({
 			return { address, walletMethods: wrappedToolbox };
 		}
 
-		// case Chain.Radix: {
-		// // 	const { getRadixCoreApiClient, RadixToolbox, createPrivateKey, RadixMainnet } = await import("@swapkit/toolbox-radix");
+		case Chain.Radix: {
+			const { getRadixCoreApiClient, RadixToolbox, createPrivateKey, RadixMainnet } = await import("./legacyRadix.ts");
 
-		// // 	const api = await getRadixCoreApiClient(RPCUrl.Radix, RadixMainnet);
-		// // 	const signer = await createPrivateKey(phrase);
-		// // 	toolbox = await RadixToolbox({ api, signer });
+			const api = await getRadixCoreApiClient(RPCUrl.Radix, RadixMainnet);
+			const signer = await createPrivateKey(phrase);
+			toolbox = await RadixToolbox({ api, signer });
 
-		// // 	address = toolbox.getAddress();
+			address = toolbox.getAddress();
 
-		// // 	// Specify sensitive methods for Radix
-		// // 	sensitiveMethods = ['transfer', 'signMessage'];
+			// Specify sensitive methods for Radix
+			sensitiveMethods = ['transfer', 'signMessage', 'validateSignature','createPrivateKey'];
 
-		// // 	const wrappedToolbox = wrapSensitiveMethods(toolbox, (originalMethod) => async (...args: any[]) => {
-		// // 		const password = await passwordRequest();
-		// // 		const phrase = await decryptFromKeystore(keystore, password);
-		// // 		const signer = await createPrivateKey(phrase);
-		// // 		const toolbox = await RadixToolbox({ api, signer });
-		// // 		return await toolbox[originalMethod](...args);
-		// // 	}, sensitiveMethods);
+			const wrappedToolbox = wrapSensitiveMethods(toolbox, (originalMethod) => async (...args: any[]) => {
+				const password = await passwordRequest();
+				const phrase = await decryptFromKeystore(keystore, password);
+				const signer = await createPrivateKey(phrase);
+				const toolbox = await RadixToolbox({ api, signer });
+				return await toolbox[originalMethod](...args);
+			}, sensitiveMethods);
 
-		// // 	return { address, walletMethods: wrappedToolbox };
+			return { address, walletMethods: wrappedToolbox };
 		// 	const { RadixEngineToolkit, PrivateKey, NetworkId } = await import(
 		// 		"@radixdlt/radix-engine-toolkit");
 
@@ -314,7 +314,7 @@ const getWalletMethodsForChain = async ({
 		// 	};
 
 
-		// }
+		}
 		case Chain.Solana: {
 			const { SOLToolbox } = await import("@swapkit/toolbox-solana");
 			toolbox = SOLToolbox({ rpcUrl });
