@@ -106,7 +106,7 @@ export const getQuotes = async (
 			const selectedRouteIndex = combinedRoutes.findIndex(
 				(route) => route.providers.join(',') === currentSelectedRoute
 			);	
-			if (!selectedRouteIndex){ 
+			if (!selectedRouteIndex || selectedRouteIndex === -1){ 
 				setSelectedRoute('optimal');
 			}
 

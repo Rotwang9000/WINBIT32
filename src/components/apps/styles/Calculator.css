@@ -37,3 +37,16 @@
 	border-radius: 10px;
 	box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 }
+
+
+.red-frame, .red-frame *{
+	border: 1px solid red!important;
+	background-color: #040000!important;
+	color: #ff0000!important;
+
+}
+
+.red-frame #root>div, .red-frame p, .red-frame b, .red-frame img{
+	background: none!important;
+	border: none!important;
+}

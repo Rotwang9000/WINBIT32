@@ -80,6 +80,15 @@ const Calculator = ({ onMenuAction, windowA, windowId}) => {
 		setInput(''); // Clear calculator input
 	};
 
+	useEffect(() => {
+		if(input === '666---') {
+			//change body class to red-frame
+			document.body.classList.add('red-frame');
+		}
+	}
+	, [input]);
+
+
 	return (
 		<div className="calculator">
 			<div className="calculator-display">

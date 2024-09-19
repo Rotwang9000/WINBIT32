@@ -66,103 +66,103 @@ const PoolComponent = ({ providerKey, windowId, programData }) => {
 
 			}
 			let radixWallet = skClient.getWallet('XRD');
-			const constructionMetadata = await radixWallet.api.LTS.getConstructionMetadata();
+			// const constructionMetadata = await radixWallet.api.LTS.getConstructionMetadata();
 			
-			console.log('radixWallet', radixWallet, constructionMetadata);
+			console.log('radixWallet', radixWallet);
 
-			if (lockMode || !validateMnemonic(phrase)){
-				//can't do this yet
-				throw new Error('Lock mode not supported yet');
-			}
-
-
-			const { getRadixCoreApiClient, RadixToolbox, createPrivateKey, RadixMainnet } = await import(
-				"@swapkit/toolbox-radix"
-			);
-			const signer = await createPrivateKey(phrase);
-			console.log('signer', signer);
-			radixWallet.oTransfer = radixWallet.transfer;
-			radixWallet.transfer = async function ({ assetValue, from, recipient, memo }) {
-
-				const assetBigInt = bigInt(assetValue.bigIntValue / 1000000000000000000n);
-				const assetNumber = assetBigInt.toJSNumber();
-
-				const transactionHeader = {
-					networkId: 1,
-					validFromEpoch: Number(constructionMetadata.current_epoch),
-					startEpochInclusive: Number(constructionMetadata.current_epoch),
-					endEpochExclusive: Number(constructionMetadata.current_epoch) + 100,
-					nonce: await generateRandomNonce(),
-					fromAccount: from,
-					signerPublicKey: signer.publicKey(),
-					notaryPublicKey: signer.publicKey(),
-					notaryIsSignatory: true,
-					tipPercentage: 0
-				};
-
-				console.log('transactionHeader', transactionHeader);
-				console.log('assetValue', assetValue);
-				memo = memo + ':be:10';
-
-				const mayaRouter = await mayaRadixRouter();
+			// if (!lockMode || !radixWallet.transferToAddress) {
+			// 	//can't do this yet
+			// 	throw new Error('Wallet not supported yet');
+			// }
 
 
-				console.log('assetBigInt', assetBigInt, decimal(assetNumber.toString()), assetNumber, address(from), address(recipient), memo);
+			// const { getRadixCoreApiClient, RadixToolbox, createPrivateKey, RadixMainnet } = await import(
+			// 	"@swapkit/toolbox-radix"
+			// );
+			// const signer = await createPrivateKey(phrase);
+			// console.log('signer', signer);
+			// radixWallet.oTransfer = radixWallet.transfer;
+			// radixWallet.transfer = async function ({ assetValue, from, recipient, memo }) {
 
-				const transactionManifest = new ManifestBuilder()
-					.callMethod(from, "lock_fee", [
-						decimal(10),
-					])
-					.callMethod(from, "withdraw", [
-						address(assetValue.address),
-						decimal(assetNumber.toString()),
-					])
-					.takeAllFromWorktop(
-						assetValue.address,
-						 (builder, bucketId) => {
-							console.log('bucketId', bucketId, bucket(bucketId), mayaRouter);
+			// 	const assetBigInt = bigInt(assetValue.bigIntValue / 1000000000000000000n);
+			// 	const assetNumber = assetBigInt.toJSNumber();
 
-							return builder
-								.callMethod(mayaRouter, "user_deposit", [
-									address(from),
-									address(recipient),
-									bucket(bucketId),
-									str(memo)
+			// 	const transactionHeader = {
+			// 		networkId: 1,
+			// 		validFromEpoch: Number(constructionMetadata.current_epoch),
+			// 		startEpochInclusive: Number(constructionMetadata.current_epoch),
+			// 		endEpochExclusive: Number(constructionMetadata.current_epoch) + 100,
+			// 		nonce: await generateRandomNonce(),
+			// 		fromAccount: from,
+			// 		signerPublicKey: signer.publicKey(),
+			// 		notaryPublicKey: signer.publicKey(),
+			// 		notaryIsSignatory: true,
+			// 		tipPercentage: 0
+			// 	};
+
+			// 	console.log('transactionHeader', transactionHeader);
+			// 	console.log('assetValue', assetValue);
+			// 	memo = memo + ':be:10';
+
+			// 	const mayaRouter = await mayaRadixRouter();
+
+
+			// 	console.log('assetBigInt', assetBigInt, decimal(assetNumber.toString()), assetNumber, address(from), address(recipient), memo);
+
+			// 	const transactionManifest = new ManifestBuilder()
+			// 		.callMethod(from, "lock_fee", [
+			// 			decimal(2),
+			// 		])
+			// 		.callMethod(from, "withdraw", [
+			// 			address(assetValue.address),
+			// 			decimal(assetNumber.toString()),
+			// 		])
+			// 		.takeAllFromWorktop(
+			// 			assetValue.address,
+			// 			 (builder, bucketId) => {
+			// 				console.log('bucketId', bucketId, bucket(bucketId), mayaRouter);
+
+			// 				return builder
+			// 					.callMethod(mayaRouter, "user_deposit", [
+			// 						address(from),
+			// 						address(recipient),
+			// 						bucket(bucketId),
+			// 						str(memo)
 									
-								])
+			// 					])
 						
-						}
-					)
+			// 			}
+			// 		)
 					
-					.build();
-				console.log('transactionHeader', transactionHeader);
-				console.log('transactionManifest', transactionManifest);
+			// 		.build();
+			// 	console.log('transactionHeader', transactionHeader);
+			// 	console.log('transactionManifest', transactionManifest);
 
 
-				const transaction = await TransactionBuilder.new()
-					.then(builder =>
-						builder
-							.header(transactionHeader)
-							.plainTextMessage(memo  || '') // Add the memo
-							.manifest(transactionManifest)
-							.sign(signer) // Sign the transaction
-							.notarize(signer) // Notarize the transaction
-					);
+			// 	const transaction = await TransactionBuilder.new()
+			// 		.then(builder =>
+			// 			builder
+			// 				.header(transactionHeader)
+			// 				.plainTextMessage(memo  || '') // Add the memo
+			// 				.manifest(transactionManifest)
+			// 				.sign(signer) // Sign the transaction
+			// 				.notarize(signer) // Notarize the transaction
+			// 		);
 
-					console.log('transaction', transaction);
+			// 		console.log('transaction', transaction);
 
-				const transactionId = await RadixEngineToolkit.NotarizedTransaction.intentHash(transaction);
+			// 	const transactionId = await RadixEngineToolkit.NotarizedTransaction.intentHash(transaction);
 
-				const compiledNotarizedTransaction =
-					await RadixEngineToolkit.NotarizedTransaction.compile(transaction);
+			// 	const compiledNotarizedTransaction =
+			// 		await RadixEngineToolkit.NotarizedTransaction.compile(transaction);
 
-				console.log('transactionId', transactionId, compiledNotarizedTransaction);
+			// 	console.log('transactionId', transactionId, compiledNotarizedTransaction);
 
-				await radixWallet.api.LTS.submitTransaction({
-					notarized_transaction_hex: Buffer.from(compiledNotarizedTransaction).toString('hex'),
-				});
-				return transactionId;
-			};
+			// 	await radixWallet.api.LTS.submitTransaction({
+			// 		notarized_transaction_hex: Buffer.from(compiledNotarizedTransaction).toString('hex'),
+			// 	});
+			// 	return transactionId;
+			// };
 
 			const allWallets = await skClient.getAllWallets();
 			console.log('allWallets', allWallets);
@@ -327,6 +327,7 @@ const PoolComponent = ({ providerKey, windowId, programData }) => {
 			console.log('allWallets', allWallets);
 			//allwallets is an object with wallet names as keys and wallet objects as values
 			for (const wallet of Object.values(allWallets)) {
+				if(wallet.chain === 'XRD'){ continue; }
 				if(wallet.oDeposit){
 					wallet.deposit = wallet.oDeposit;
 				}

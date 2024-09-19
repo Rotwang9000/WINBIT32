@@ -1,14 +1,16 @@
 
 
 .win95 .maxmin .button{
-	width: 13px;
-	height: 14px;
+	width: 20px;
+	height: 18px;
 	line-height: 14px;
 	font-size: 12px;
 	border: 2px outset #fff;
 	margin:1px;
 	box-shadow: 1px 1px 1px #000;
 	font-weight: 600;
+	overflow: hidden;
+	box-sizing: border-box;
 }
 
 .win95 .maxmin .button:hover{
@@ -18,7 +20,7 @@
 
 .win95 .titleclose{
 	margin-left:2px!important;
-	margin-right: 2px!important;
+	margin-right: 4px!important;
 }
 
 .win95 .title{

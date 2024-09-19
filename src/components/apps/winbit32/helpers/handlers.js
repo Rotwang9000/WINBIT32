@@ -356,6 +356,11 @@ export const handleSwap = async (
 
 	console.log("route.sellAmount", route.sellAmount);
 
+	if(route.sellAsset === 'XRD.XRD'){
+		route.sellAsset = route.sellAsset + '-resource_rdx1tknxxxxxxxxxradxrdxxxxxxxxx009923554798xxxxxxxxxradxrd';
+		//route.sellAmount = route.sellAmount / 1000000000000000000;
+	}
+
 	const swapParams = {
 		route: route,
 		streamSwap: route.streamingSwap ? true : false,
@@ -445,10 +450,8 @@ export const handleSwap = async (
 
 	const walletChain = ChainIdToChain[wallet.chainId];
 	try {
-		const exURL = skClient.getExplorerTxUrl({
-			chain: walletChain,
-			txHash: swapResponse,
-		});
+		const exURL = getTxnUrl(swapResponse, walletChain, skClient);
+			
 		setExplorerUrl(exURL);
 
 		//add explorer url to reportData.result
@@ -525,13 +528,16 @@ export const handleSwap = async (
 			feeOption: swapParams.feeOption,
 			recipient: swapParams.recipient,
 			pluginName: swapParams.pluginName,
+			
 		},
+		route: routeWithTransaction,
 	};
 	logObjectProperties(txDetailsToSend, "txDetailsToSend");
 	setStatusText("Transaction Sent");
 
 	// Send the transaction details
 	const txDetails = await getTxnDetails(txDetailsToSend).catch((error) => {
+
 		const txDetailsV2 = getTxnDetailsV2(swapResponse, route.sourceAddress)
 			.then((txDetailsV2) => {
 				console.log("txDetailsV2", txDetailsV2);
@@ -556,6 +562,11 @@ export const handleSwap = async (
 
 	if (txDetails?.done === true) {
 		setStatusText("Transaction Successfully Started");
+		setSwapInProgress(false);
+		setShowProgress(false);
+		return;
+	}else if(txDetails?.message.includes("Server Error")){
+		setStatusText("TX Started but Server Error Getting Progress: " + txDetails.message);
 		setSwapInProgress(false);
 		setShowProgress(false);
 		return;

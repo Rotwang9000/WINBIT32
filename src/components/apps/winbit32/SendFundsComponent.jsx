@@ -18,13 +18,12 @@ import { generateSendReport } from './helpers/report';
 
 
 
-	const SendFundsComponent = ({ providerKey, windowId, onOpenWindow }) => {
+const SendFundsComponent = ({ providerKey, windowId, onOpenWindow, metadata }) => {
 		var bigInt = require("big-integer");
-
 		const { skClient, wallets, tokens } = useWindowSKClient(providerKey);
 		const [recipientAddress, setRecipientAddress] = useIsolatedState(windowId, 'recipientAddress', '');
 		const [amount, setAmount] = useIsolatedState(windowId, 'amount', '');
-		const [selectedToken, setSelectedToken] = useIsolatedState(windowId, 'selectedToken', null);
+		const [selectedToken, setSelectedToken] = useIsolatedState(windowId, 'selectedToken', metadata.selectedToken || null);
 		const [memo, setMemo] = useIsolatedState(windowId, 'memo', '');
 		const [txUrl, setTxUrl] = useIsolatedState(windowId, 'txUrl', '');
 		const [error, setError] = useIsolatedState(windowId, 'error', '');
@@ -55,13 +54,20 @@ import { generateSendReport } from './helpers/report';
 		useEffect(() => {
 			//get balance and set maxamount
 			if (selectedToken) {
-				const wallet = wallets.find(w => w.chain === selectedToken.chain);
-				const balance = wallet?.balance?.find(b => b.isSynthetic !== true && b.chain + '.' + b.ticker.toUpperCase() === selectedToken.identifier.toUpperCase()) || wallet?.balance?.find(b => b.isSynthetic === true && b.symbol.toUpperCase() === selectedToken.identifier.toUpperCase());
+				const token = selectedToken;
+				const wallet = wallets.find(w => w?.chain === token?.chain);
+				const balance = wallet?.balance?.find(
+					b => b.isSynthetic !== true && (b.chain + '.' + b.ticker.toUpperCase() === token.identifier.toUpperCase() || b.chain + '.' + b.symbol.toUpperCase() === token.identifier.toUpperCase()))
+					|| wallet?.balance?.find(b => b.isSynthetic === true && b.symbol.toUpperCase() === token.identifier.toUpperCase());
+				if (token) {
+					console.log('Selected token:', token, 'wallet', wallet, 'Balance:', balance);
+				}
 				if (balance) {
-					console.log('Balance:', balance);
+					//const readableBalance = formatBigIntToSafeValue(bigInt(balance.bigIntValue), balance.decimal, balance.decimal);
 					const readableBalance = Number(balance.bigIntValue) / Number(balance.decimalMultiplier);
+					console.log('Readable balance:', readableBalance.toString(), Number(balance.bigIntValue) / Number(balance.decimalMultiplier), token.identifier);
 					setMaxAmount(readableBalance.toString());
-				}else{
+				} else {
 					setMaxAmount('0');
 				}
 			}
@@ -122,6 +128,9 @@ import { generateSendReport } from './helpers/report';
 		
 			let txData;
 			let fn = sendingWallet.transfer;
+			if(sendingWallet.chain === 'XRD'){
+				fn = sendingWallet.transferToAddress;
+			}
 
 			if(recipientAddress.toLowerCase() === 'deposit'){
 				fn = sendingWallet.deposit;
@@ -201,7 +210,7 @@ import { generateSendReport } from './helpers/report';
 amount=${amount}
 recipient=${recipientAddress}
 memo=${memo}
-; memo is only for THOR/Maya Chains
+; memo is only for THOR/Maya/Radix Chains
 `;
 
 				setIniData(data);
@@ -409,10 +418,10 @@ memo=${memo}
 						<label>Recipient Address</label>
 						<input type="text" value={recipientAddress} onChange={e => setRecipientAddress(e.target.value)} />
 					</div>
-					{(selectedToken?.chain === 'THOR'  || selectedToken?.chain === 'MAYA')
+					{(selectedToken?.chain === 'THOR' || selectedToken?.chain === 'MAYA' || selectedToken?.chain === 'XRD')
 						&& (
 						<div className="field-group">
-							<label>Memo (Optional, for Thor/Maya)</label>
+							<label>Memo (Optional, for Thor/Maya/Radix)</label>
 							<input type="text" value={memo} onChange={e => setMemo(e.target.value)} />
 						</div>
 					)}

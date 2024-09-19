@@ -20,11 +20,11 @@ import { generateSwapReport } from './helpers/report';
 
 
 
-const SwapComponent = ({ providerKey, windowId, programData, appData, onOpenWindow }) => {
+const SwapComponent = ({ providerKey, windowId, programData, appData, onOpenWindow, metadata }) => {
 	const { skClient, tokens, wallets, chainflipBroker } = useWindowSKClient(providerKey);
 	const { setPhrase } = programData;
 	const { license } = appData || {}
-	const [swapFrom, setSwapFrom] = useIsolatedState(windowId, 'swapFrom', null);
+	const [swapFrom, setSwapFrom] = useIsolatedState(windowId, 'swapFrom', metadata.swapFrom || null);
 	const [swapTo, setSwapTo] = useIsolatedState(windowId, 'swapTo', null);
 	const [amount, setAmount] = useIsolatedState(windowId, 'amount', 0);
 	const [destinationAddress, setDestinationAddress] = useIsolatedState(windowId, 'destinationAddress', '');
@@ -111,7 +111,7 @@ const SwapComponent = ({ providerKey, windowId, programData, appData, onOpenWind
 	const updateIniData = () => {
 		if (!textareaActive) {
 
-			const route = (routes && routes.length === 0 && selectedRoute && selectedRoute !== 'optimal') ? selectedRoute : 'optimal';
+			const route = (routes && routes.length === 0 && selectedRoute && selectedRoute !== 'optimal' && selectedRoute !== -1 ) ? selectedRoute : 'optimal';
 
 
 			let data = `token_from=${swapFrom?.identifier || ''}

@@ -185,20 +185,20 @@ export const checkTxnStatus = async (
 };
 
 
-export const getTxnUrl = (txnHash, chain, skClient) => {
+export const getTxnUrl = (txHash, chain, skClient) => {
 	try {
-		if(txnHash === null){
+		if(txHash === null){
 			return "";
 		}
-		return skClient.getExplorerTxUrl({chain, txnHash});
+		return skClient.getExplorerTxUrl({ chain, txHash });
 	} catch (error) {
-		console.log("error", error, txnHash, chain, skClient);
+		console.log("error", error, txHash, chain, skClient);
 		if (chain === "XRD" || chain === 'radix-mainnet') {
-			if (txnHash?.id)
-				return `https://dashboard.radixdlt.com/transaction/${txnHash?.id}`;
-			else return `https://dashboard.radixdlt.com/transaction/${txnHash}`;
+			if (txHash?.id)
+				return `https://dashboard.radixdlt.com/transaction/${txHash?.id}`;
+			else return `https://dashboard.radixdlt.com/transaction/${txHash}`;
 		} else {
-			return "https://www.mayascan.org/tx/" + txnHash;
+			return "https://www.mayascan.org/tx/" + txHash;
 		}
 	}
 }
