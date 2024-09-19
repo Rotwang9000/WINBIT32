@@ -75,6 +75,7 @@ const DialogBox = React.memo(({
 						<div className={'dialog-buttons ' + buttonClass}>
 							{buttons.length > 0 ? (
 								buttons.map((btn, idx) => (
+									btn &&
 									<button key={idx} onClick={btn.onClick}>
 										{btn.label}
 									</button>

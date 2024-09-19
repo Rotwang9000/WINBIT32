@@ -146,6 +146,7 @@ export const SKClientProviderManager = ({ children }) => {
 				rpcUrls: {
 					FLIP: "https://api-chainflip.dwellir.com/204dd906-d81d-45b4-8bfa-6f5cc7163dbc",
 					ETH: "https://mainnet.infura.io/v3/c3b4e673639742a89bbddcb49895d568",
+					AVAX: "https://avalanche-mainnet.infura.io/v3/c3b4e673639742a89bbddcb49895d568",
 					// XRD: "https://radix-mainnet.rpc.grove.city/v1/456359ff",
 					// Radix: "https://radix-mainnet.rpc.grove.city/v1/456359ff",
 				},
@@ -592,37 +593,49 @@ export const useWindowSKClient = (key) => {
 				return promises;
 			} else if (firstWord === "SECUREKEYSTORE") {
 				console.log("Connecting with SecureKeystore");
-				const { password, dIndex } = await skClient.promptForPassword({
-					extraContent: (
-						<div className="dialog-field">
-							<label>Derivation Index:</label>
-							<select name="dIndex">
-								<option value="-1">Legacy</option>
-								<option value="0" selected>
-									0
-								</option>
-								<option value="1">1</option>
-								<option value="2">2</option>
-								<option value="3">3</option>
-								<option value="4">4</option>
-								<option value="5">5</option>
-								<option value="6">6</option>
-								<option value="7">7</option>
-								<option value="8">8</option>
-								<option value="9">9</option>
-							</select>
-						</div>
-					),
-				});
+				const { password, dIndex, radixNetwork } =
+					await skClient.promptForPassword({
+						advancedContent: (
+							<>
+								<div className="dialog-field">
+									<label>Derivation Index:</label>
+									<select name="dIndex">
+										<option value="0" selected>
+											0
+										</option>
+										<option value="1">1</option>
+										<option value="2">2</option>
+										<option value="3">3</option>
+										<option value="4">4</option>
+										<option value="5">5</option>
+										<option value="6">6</option>
+										<option value="7">7</option>
+										<option value="8">8</option>
+										<option value="9">9</option>
+									</select>
+								</div>
+								<div className="dialog-field">
+									<label>Radix Network:</label>
+									<select name="radixNetwork">
+										<option value="legacy">Swapkit Legacy</option>
+										<option value="olympia">Olympia (Radix Legacy)</option>
+										<option value="mainnet" selected>
+											Mainnet (Babylon)
+										</option>
+									</select>
+								</div>
+							</>
+						),
+					});
 				if (!password) {
 					return;
 				}
+				console.log("chains", connectChains, dIndex, radixNetwork);
 
 				for (const chain of connectChains) {
-					console.log("chains", connectChains, dIndex);
 					promises.push(
 						skClient
-							.connectSecureKeystore([chain], password, dIndex)
+							.connectSecureKeystore([chain], password, dIndex, { radixNetwork })
 							.then(async () => {
 								console.log("Connected to chain", chain);
 								if (!result) return;

@@ -1,7 +1,6 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import DialogBox from './DialogBox';
 import './styles/Password.css';
-import { forEach } from 'mathjs';
 
 const Password = ({ onConfirm, onCancel, box, pinMode = false, options = {} }) => {
 	// const [password, setPassword] = useState('');
@@ -28,6 +27,8 @@ const Password = ({ onConfirm, onCancel, box, pinMode = false, options = {} }) =
 	const title = options.title || (pinMode ? 'Enter PIN' : 'Save As KeyStore...');
 
 	console.log('options', options);
+
+	const advancedContentRef = useRef();
 
 	return (
 		<DialogBox
@@ -59,12 +60,21 @@ const Password = ({ onConfirm, onCancel, box, pinMode = false, options = {} }) =
 						</div>
 					}
 					{options.extraContent && options.extraContent}
+					{options.advancedContent && <div style={{ display: 'none' }} ref={advancedContentRef}>{options.advancedContent}</div>}
 					</form>
 				</div>
 			}
 			buttons={[
 				{ label: 'OK', onClick: handleConfirm },
-				{ label: 'Cancel', onClick: onCancel }
+				//if advanced content is present, show the advanced button
+				options.advancedContent && { label: 'Advanced', onClick: () => {
+					//toggle the advanced content
+					const advancedContent = advancedContentRef.current;
+					advancedContent.style.display = advancedContent.style.display === 'none' ? 'block' : 'none';
+				}},
+
+				{ label: 'Cancel', onClick: onCancel },
+				
 			]}
 			onConfirm={handleConfirm}
 			onCancel={onCancel}

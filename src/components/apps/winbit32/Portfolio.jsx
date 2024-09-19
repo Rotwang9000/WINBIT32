@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { useWindowSKClient } from '../../contexts/SKClientProviderManager';
 import './styles/Wallet.css';
 import './styles/smart.css';
@@ -8,12 +8,44 @@ import { FaCopy } from 'react-icons/fa';
 import { toast } from 'react-hot-toast';
 import { getExplorerAddressUrl, formatNumber } from './helpers/transaction';
 
-const Portfolio = ({ providerKey }) => {
-	const { wallets } = useWindowSKClient(providerKey);
+const Portfolio = ({ providerKey, handleOpenArray, onOpenWindow }) => {
+	//const handleOpenWindow = handleOpenArray[0]; // const handleOpenWindow = (program, metadata, saveState = true) => { ... }; - metadata.phrase for winbit32.exe
+
+	const handleOpenWindow = useCallback((program, metadata, saveState = true) => {
+
+	
+
+		onOpenWindow(program, metadata, saveState);
+
+	}, [onOpenWindow]);
+
+
+	const { wallets, tokens } = useWindowSKClient(providerKey);
+
+	const identifierFromBalance = useCallback((balance) => {
+		return balance.chain + (balance.isSynthetic ? '/' : '.') + balance.ticker + (balance.address && !balance.isGasAsset ? '-' + balance.address.toUpperCase().replace('0X', '0x') : '');
+	}, []);
+
+	const getTokenfromBalanceToken = useCallback((balanceToken) => {
+
+		const tokenIdentifier = identifierFromBalance(balanceToken);
+		const token = tokens.find(token => token.identifier.toLowerCase() === tokenIdentifier.toLowerCase());
+		if (!token) {
+			console.log("Token not found for identifier: ", tokenIdentifier);
+			return;
+		}
+
+		token.identifier = token.identifier.replace('0X', '0x')
+
+		return token;
+	}, [identifierFromBalance, tokens]);
+
 
 	if (!wallets || wallets.length === 0) {
 		return <div>No wallets connected</div>;
 	}
+
+
 
 	const customStyles = {
 		header: {
@@ -81,6 +113,8 @@ const Portfolio = ({ providerKey }) => {
 				<tr key={index} style={{ marginBottom: '10px', padding: '10px', borderBottom: '1px solid grey' }}>
 					<td title={token.symbol} style={{maxWidth:'300px', overflow:'hidden', 'whiteSpace': 'nowrap', 'textOverflow': 'ellipsis'}}>	 {token.ticker}</td>
 					<td style={{ maxWidth: '300px', overflow: 'hidden', 'whiteSpace': 'nowrap', 'textOverflow': 'ellipsis' }}>{formatNumber(token.balance)}</td>
+					<td onClick={() => handleOpenWindow('send.exe', { selectedToken: getTokenfromBalanceToken(token.fullToken) })} style={{ cursor: 'pointer' }} title="Send this token to someone else">✉️</td>
+					<td onClick={() => handleOpenWindow('exchange.exe', { swapFrom: getTokenfromBalanceToken(token.fullToken) })} style={{ cursor: 'pointer' }} title="Transform this token into another">🔀</td>
 				</tr>
 			))}
 			</table>
@@ -112,7 +146,8 @@ const Portfolio = ({ providerKey }) => {
 		tokens: wallet.balance ? wallet.balance.map(token => ({
 			symbol: token.symbol,
 			ticker: token.ticker,
-			balance: Number(token.bigIntValue) / Number(token.decimalMultiplier)
+			balance: Number(token.bigIntValue) / Number(token.decimalMultiplier),
+			fullToken: token
 		})) : []
 	}));
 
