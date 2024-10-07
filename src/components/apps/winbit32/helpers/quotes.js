@@ -54,7 +54,7 @@ export const getQuotes = async (
 			affiliateFee: basisPoints,
 			affiliate: "be",
 			slippage: slippage,
-			providers: ["MAYACHAIN", "MAYACHAIN_STREAMING", "THORCHAIN", "THORCHAIN_STREAMING"],
+			//providers: ["MAYACHAIN", "MAYACHAIN_STREAMING", "THORCHAIN", "THORCHAIN_STREAMING", "CHAINFLIP"],
 		};
 
 		console.log("AssetValue", swapFrom.identifier, swapTo.identifier);

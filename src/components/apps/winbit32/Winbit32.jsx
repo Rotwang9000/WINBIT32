@@ -18,42 +18,74 @@ import {  networks } from 'bitcoinjs-lib';
 import { ECPairFactory, } from 'ecpair';
 import { fetchMNFTsForAccount } from './mnft/mnftfuncs';
 import { walletNames } from '../../win/includes/constants';
-import { sec } from 'mathjs';
 
-function generatePhrase(size = 12) {
-	const entropy = size === 12 ? 128 : 256;
-	return generateMnemonic(wordlist, entropy);
-}
 
 const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave, handleStateChange, metadata, hashPath, sendUpHash, appData, handleOpenArray, onOpenWindow }) => {
-	const [phrase, setPhrase] = useIsolatedState(windowId, 'phrase', metadata?.phrase || generatePhrase());
+
+
+	const [isRandomPhrase, setIsRandomPhrase] = useIsolatedState(windowId, 'isRandomPhrase', (metadata?.phrase === undefined));
+
+
+	const generatePhrase = useCallback((size = 12) => {
+		const entropy = size === 12 ? 128 : 256;
+		const phrase = generateMnemonic(wordlist, entropy);
+		setIsRandomPhrase(phrase);
+		return phrase;
+	}, [setIsRandomPhrase] );
+
+
+	const [phrase, setPhrase] = useIsolatedState(windowId, 'phrase', metadata?.phrase );
+
+
 	const [connectedPhrase, setConnectedPhrase] = useIsolatedState(windowId, 'connectedPhrase', '');
 	const [connectionStatus, setConnectionStatus] = useIsolatedState(windowId, 'connectionStatus', 'disconnected');
 	const [statusMessage, setStatusMessage] = useIsolatedState(windowId, 'statusMessage', 'Save this phrase, or paste your own to connect.');
 	const [phraseSaved, setPhraseSaved] = useIsolatedState(windowId, 'phraseSaved', false);
 	const [showProgress, setShowProgress] = useIsolatedState(windowId, 'showProgress', false);
 	const [progress, setProgress] = useIsolatedState(windowId, 'progress', 0);
+
 	const [windowMenu, setWindowMenu] = useIsolatedState(windowId, 'windowMenu', []);
 	const [showScanner, setShowScanner] = useIsolatedState(windowId, 'showScanner', false);
-	const [handleSubProgramClick, setHandleSubProgramClick] = useIsolatedState(windowId, 'handleSubProgramClick', null);
-	const [programData, setProgramData] = useIsolatedState(windowId, 'programData', { phrase, statusMessage, setPhrase, setStatusMessage });
+
+	// const [handleSubProgramClick, setHandleSubProgramClick] = useIsolatedState(windowId, 'handleSubProgramClick', null);
 	const [lockMode, setLockMode] = useIsolatedState(windowId, 'lockMode', false);
 
-	const { setLicense } = appData;
+	const { setLicense, embedMode } = appData;
 	const { skClient, setWallets, wallets, connectChains, disconnect, addWallet, resetWallets, connect } = useWindowSKClient(windowName);
+
 
 	const currentRef = useRef(phrase);
 	const connectedRef = useRef(connectedPhrase);
 	const currentWalletsRef = useRef(wallets);
 	const fileInputRef = useRef(null);
 	const secureKeystoreFileInputRef = useRef(null);
-	const handleSubProgramClickRef = useRef(handleSubProgramClick);
+	const handleSubProgramClickRef = useRef(null);
+	const connectionAppRef = useRef(null);
+
+	const [programData, setProgramData] = useIsolatedState(windowId, 'programData', { phrase, statusMessage, setPhrase, setStatusMessage, connectionAppRef, embedMode });
+
+	useEffect(() => {
+		if(!phrase){
+			setPhrase(generatePhrase());
+		}
+	},[]);
+
+
+	useEffect(() => {
+		if(phrase !== isRandomPhrase){
+			setIsRandomPhrase(false);
+		}
+	}, [isRandomPhrase, phrase, setIsRandomPhrase]);
+
+
 
 	useEffect(() => {
 		if (connectedRef.current !== connectedPhrase) {
 			connectedRef.current = connectedPhrase;
 		}
 	}, [connectedPhrase]);
+
+
 
 	useEffect(() => {
 		fileInputRef.current = setupFileInput(setPhrase, setStatusMessage, setLockMode);	
@@ -65,6 +97,8 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 
 	}, [setPhrase, setStatusMessage, setLockMode]);	
 
+
+
 	useEffect(() => {
 		secureKeystoreFileInputRef.current = setupSKFileInput(setPhrase, setStatusMessage, setLockMode, skClient);
 		return () => {
@@ -75,6 +109,8 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 	}, [setPhrase, setStatusMessage, setLockMode, skClient, connectChains]);
 
 
+
+
 	const handleOpenFile = useCallback(() => {
 		triggerFileInput(fileInputRef.current);
 	}, []);
@@ -83,13 +119,19 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 
 	useEffect(() => {
 		if(currentRef.current !== phrase) currentRef.current = phrase;
-		setProgramData({ phrase, statusMessage, setPhrase, setStatusMessage, lockMode, setLockMode });
-	}, [phrase, setPhrase, setProgramData, setStatusMessage, statusMessage, lockMode, setLockMode]);
+		setProgramData({ phrase, statusMessage, setPhrase, setStatusMessage, lockMode, setLockMode, connectionAppRef, embedMode });
+	}, [phrase, setPhrase, setProgramData, setStatusMessage, statusMessage, lockMode, setLockMode, connectionAppRef, embedMode]);
+
+
 
 	const currentPhraseRef = useIsolatedRef(windowId, 'phrase', '');
 	currentPhraseRef.current = phrase;
 
+
+
+
 	useEffect(() => {
+		if(!phrase) return;
 
 		//if a walletName is in the phrase, then set it as the currentPhrase
 		const pSplit = phrase.toUpperCase().trim().split(' ');
@@ -113,6 +155,8 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 				.join(' ').replace(/  +/g, ' ');
 		}
 	}, [phrase]);
+
+
 
 	const checkValidPhrase = useCallback(async (chkPhrase) => {
 		let words = chkPhrase.trim().split(' ');
@@ -163,9 +207,10 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 				//try decoding chkPrivateKey as HEX for EVM
 				chkPrivateKeyBuffer = Buffer.from(chkPrivateKey, 'hex');
 				if (chkPrivateKeyBuffer.length === 32) {
-					const entropy = chkPrivateKeyBuffer.toString('hex');
+					//convert to uint8array
+					const entropy = new Uint8Array(chkPrivateKeyBuffer);
 					try{
-						phrase = entropyToMnemonic(entropy);
+						phrase = entropyToMnemonic(entropy, wordlist);
 					
 					if(phrase){
 						console.log('Valid private key for EVM');
@@ -175,7 +220,7 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 							console.log('Invalid private key for EVM');
 						}
 					} catch (e) {
-						console.log('Invalid private key for EVM', e);
+						console.log('Invalid private key for EVM', e, chkPhrase);
 					}
 				}
 				//Try decoding as a private key for BTC
@@ -195,11 +240,16 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 						}
 						const keyPair = ECPair.fromPrivateKey(chkPrivateKeyBuffer, { network: 	networks.bitcoin });
 						//get phrase
-						phrase = keyPair.toWIF();
+						const phraseFromWIF = keyPair.toWIF();
+						if(phraseFromWIF){
+							phrase = phraseFromWIF;
+							console.log('Valid private key for BTC');
+						}
 
 						isValid = true;
 					} catch (e) {
 						console.log('Invalid private key for BTC', e);
+
 					}
 				}
 
@@ -210,7 +260,10 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 
 				//Try decoding as a private key for DOT
 
-
+				if(!isValid){
+					console.log('Invalid private key');
+					return false;
+				}
 
 
 				
@@ -264,11 +317,11 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 			});
 
 		}
-		//export const createKeyring = async (phrase: string, networkPrefix: number) => {
-		// if (wallet.createKeyring) {
-		// 	wallet.keyRing = await wallet.createKeyring(phrase, wallet.network.prefix);
-		// 	wallet.cfKeyRing = await createKeyring(phrase, 2112);
-		// }
+		// export const createKeyring = async (phrase: string, networkPrefix: number) => {
+		if (wallet.createKeyring) {
+			wallet.keyRing = await wallet.createKeyring(phrase, wallet.network.prefix);
+			wallet.cfKeyRing = await createKeyring(phrase, 2112);
+		}
 		//console.log('Connect Result', wallet);
 
 		addWallet(wallet);
@@ -282,7 +335,7 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 		resetWallets();
 		currentWalletsRef.current = [];
 		//remove chainflip from connectChains
-		const walletChains = connectChains.filter(chain => chain !== Chain.ChainFlip);
+		const walletChains = connectChains;//.filter(chain => chain !== Chain.ChainFlip);
 
 		for (let i = 0; i < walletChains.length; i++) {
 			const walletPromise = skClient.getWalletWithBalance(walletChains[i]).then(async (result) => {
@@ -393,7 +446,8 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 				console.log('Connected successfully', wallets);
 				setPhraseSaved(false);
 				setConnectionStatus('connected');
-				setStatusMessage('Connected successfully.');
+				
+				setStatusMessage('Connected successfully' + ((isRandomPhrase)? ' using a random phrase. Save it before you use it, or lose your funds.': '.'));
 				setTimeout(() => {
 					console.log('Connected successfully, hiding progress', wallets);
 					setShowProgress(false);
@@ -463,16 +517,33 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 		{ label: 'XDEFI', action: 'xdefi' },
 		{ label: 'WalletConnect (EVM Only)', action: 'walletconnect' },
 		{ label: 'Phrase', action: 'phrase' },
-		{ label: 'WinBit TSS', action: 'winbittss' },
-		{ label: 'Winbit Disconnect', action: 'winbitoffline' },
+		{ label: 'Read 2D ("QR") Barcode...', action: 'readQR' },
+		{ label: 'Keystore', action: 'openSecureKeystore' },
+		{ label: 'WinBit TSSique', action: 'winbittss' },
+		// { label: 'Winbit Disconnect', action: 'winbitoffline' },
 	]
 	, []);
 
 
+	const openProgram = useCallback((program, programData) => {
+
+		if(!handleSubProgramClickRef.current){
+			console.log('No handleSubProgramClickRef defined');
+			return;
+		}
+
+		handleSubProgramClickRef.current(program, programData);
+
+	}, []);
+
+
 
 	const menu = useMemo(() =>
-	{ if(lockMode){
-		return [
+	{ 
+		const { embedMode } = appData;
+		let menu;
+		if(lockMode){
+		menu = [
 			{
 				label: 'File',
 				submenu: [
@@ -489,12 +560,6 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 				],
 			},
 			{
-				label: '2D Barcode',
-				submenu: [
-					{ label: 'Read Private Key...', action: 'readQR' },
-				],
-			},
-			{
 				label: 'Wallets',
 				submenu: walletMenu
 			},
@@ -507,14 +572,14 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 
 
 	}else{
-		return	[
+		menu =	[
 		{
 			label: 'File',
 			submenu: [
 				{ label: (connectionStatus === 'connecting' ? 'Connecting...' : connectionStatus === 'connected' ? 'Refresh' : 'Connect'), action: 'connect' },
 				{ label: 'Open...', action: 'open' },
 				{ label: 'Open Keystore Securely...', action: 'openSecureKeystore' },
-
+				{ label: 'View key as "QR" Code...', action: 'viewQR' },
 				{ label: 'Save as text', action: 'save' },
 				{ label: 'Save as Keystore', action: 'saveKeystore' },
 				{ label: 'Exit', action: 'exit' },
@@ -526,15 +591,7 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 				{ label: 'Copy', action: 'copy' },
 				{ label: 'Paste', action: 'paste' },
 			],
-		},
-		{
-			label: '2D Barcode',
-			submenu: [
-				{ label: 'Read Private Key...', action: 'readQR' },
-				{ label: 'View Private Key...', action: 'viewQR' }
-			],
-		},
-		
+		},	
 		{
 			label: 'Wallets',
 			submenu: walletMenu
@@ -545,11 +602,33 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 		}
 		];
 	}
-	}, [connectionStatus, windowMenu, lockMode, walletMenu]);
+
+	if (embedMode) {
+		//add the toolbar as "Tools" menu from subprograms if in embedMode and subprogramclick as action
+		const subPrograms = windowA.programs;
+		if (subPrograms && subPrograms.length > 0) {
+			const tools = subPrograms.map((subProgram, index) => {
+				return { label: subProgram.title, action: () => openProgram(subProgram, programData) };
+			});
+			menu.push({ label: 'Tools', submenu: tools });
+		}
+
+	}
+
+	return menu;
+
+	}, [appData, lockMode, connectionStatus, walletMenu, windowMenu, openProgram]);
 
 
 	const handleMenuClick = useCallback((action) => {
 		const currentInput = currentRef.current;
+
+		//if action is a function, call it
+		if (typeof action === 'function') {
+			action();
+			return;
+		}
+
 
 		switch (action) {
 			case 'exit':
@@ -636,39 +715,63 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 				console.log(`Unknown action: ${action}`);
 				break;
 		}
-	}, [handleConnect, handleOpenFile, handleSubProgramClick, setPhrase, setPhraseSaved, setShowScanner, showScanner, windowA, setLockMode]);
+	}, [windowA, handleConnect, handleOpenFile, setConnectionStatus, setStatusMessage, setShowProgress, skClient, setWallets, resetWallets, setPhrase, setConnectedPhrase, setPhraseSaved, setLockMode, generatePhrase]);
+//}, [handleConnect, handleOpenFile, handleSubProgramClick, setPhrase, setPhraseSaved, setShowScanner, showScanner, windowA, setLockMode]);
 
 	useEffect(() => {
 		if (onMenuAction) {
 			onMenuAction(menu, windowA, handleMenuClick);
 		}
-	}, [onMenuAction, menu, windowA, handleMenuClick, handleSubProgramClick]);
+	}, [onMenuAction, menu, windowA, handleMenuClick]);
 
 	const handleSetSubProgramClick = useCallback((handle) => {
-		// console.log('handleSetSubProgramClick', handle, handleSubProgramClick);
+		if(!handle) return;
+
+		//console.log('handleSetSubProgramClick', handle, 'hspc', handleSubProgramClick);
 
 		handleSubProgramClickRef.current = handle;
 
-		//check if actually changed
-		if (handleSubProgramClick === handle) {
-			return;
-		}
-		if( (() => handle) === handleSubProgramClick) {
-			return;
-		} 
+		// //check if actually changed
+		// if (handleSubProgramClick === handle) {
+		// 	return;
+		// }
+		// if( (() => handle) === handleSubProgramClick) {
+		// 	return;
+		// } 
 
-		if( typeof handle === 'function' && typeof handleSubProgramClick === 'function' && handle.toString() === handleSubProgramClick.toString()) {
-			return;
-		}
+		// if( typeof handle === 'function' && typeof handleSubProgramClick === 'function' && handle.toString() === handleSubProgramClick.toString()) {
+		// 	return;
+		// }
 
-		setHandleSubProgramClick(() => handle);
-	}, [handleSubProgramClick, setHandleSubProgramClick]);
+		// setHandleSubProgramClick(() => handle);
+	}, [handleSubProgramClickRef]);
 
 
 
 	// useEffect(() => {	
 	// 	handleSubProgramClickRef.current = handleSubProgramClick;
 	// }, [handleSubProgramClick]);
+
+	connectionAppRef.current = <ConnectionApp
+		windowId={windowId}
+		providerKey={windowName}
+		phrase={phrase}
+		setPhrase={setPhrase}
+		connectionStatus={connectionStatus}
+		setConnectionStatus={setConnectionStatus}
+		statusMessage={statusMessage}
+		setStatusMessage={setStatusMessage}
+		showProgress={showProgress}
+		setShowProgress={setShowProgress}
+		progress={progress}
+		setProgress={setProgress}
+		phraseSaved={phraseSaved}
+		setPhraseSaved={setPhraseSaved}
+		handleConnect={handleConnect}
+		programData={programData}
+		appData={appData}
+	/>
+
 
 	return (
 		<WindowContainer
@@ -690,24 +793,7 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 			handleOpenArray={handleOpenArray}
 			onOpenWindow={onOpenWindow}
 		>
-			<ConnectionApp
-				windowId={windowId}
-				providerKey={windowName}
-				phrase={phrase}
-				setPhrase={setPhrase}
-				connectionStatus={connectionStatus}
-				setConnectionStatus={setConnectionStatus}
-				statusMessage={statusMessage}
-				setStatusMessage={setStatusMessage}
-				showProgress={showProgress}
-				setShowProgress={setShowProgress}
-				progress={progress}
-				setProgress={setProgress}
-				phraseSaved={phraseSaved}
-				setPhraseSaved={setPhraseSaved}
-				handleConnect={handleConnect}
-				programData={programData}	
-			/>
+			{connectionAppRef.current}
 
 		</WindowContainer>
 	);

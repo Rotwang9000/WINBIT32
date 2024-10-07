@@ -9,9 +9,10 @@ import '../styles/SendFundsComponent.css';
 import { useWindowSKClient } from '../../../contexts/SKClientProviderManager';
 import { useIsolatedState } from '../../../win/includes/customHooks';
 import { getAssetValue } from '../helpers/quote';
+import { getTokenFromIdentifier } from '../includes/tokenUtils';
 
-const NFTPurchasingComponent = ({ providerKey, windowId, hashPath, sendUpHash, page = 'normal' }) => {
-	const { skClient, wallets } = useWindowSKClient(providerKey);
+const NFTPurchasingComponent = ({ providerKey, windowId, hashPath, sendUpHash, page = 'normal', onOpenWindow }) => {
+	const { skClient, wallets, tokens } = useWindowSKClient(providerKey);
 	const [selectedId, setSelectedId] = useIsolatedState(windowId, 'selectedId', '');
 	const [collectionInfo, setCollectionInfo] = useIsolatedState(windowId, 'collectionInfo', null);
 	const [collections, setCollections] = useIsolatedState(windowId, 'collections', []);
@@ -45,11 +46,10 @@ const NFTPurchasingComponent = ({ providerKey, windowId, hashPath, sendUpHash, p
 				const data = await response.json();
 				setCollections(data.collections);
 				let dc = 'PXM';
+				let s = 1
 				if(page === 'license'){
 					dc = 'WB32';
-				}
-				let s = 1
-				if(hashPath && hashPath.length > 0) {
+				}else if(hashPath && hashPath.length > 0) {
 					dc = hashPath[0];
 					if(hashPath.length > 1) {
 						s = parseInt(hashPath[1]);
@@ -430,6 +430,11 @@ const NFTPurchasingComponent = ({ providerKey, windowId, hashPath, sendUpHash, p
 						View TX
 					</button>
 				)}
+
+				<button className='swap-toolbar-button' onClick={() => onOpenWindow('exchange.exe', { swapTo: getTokenFromIdentifier(tokens,'MAYA.CACAO') })}>
+					<div className='swap-toolbar-icon'>🌱</div>
+					$CACAO
+				</button>
 			</div>
 
 			<div className='card-bar'>

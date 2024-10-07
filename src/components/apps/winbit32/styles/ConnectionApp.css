@@ -101,6 +101,7 @@ textarea {
 	display: flex;
 	justify-content: space-between;
 	flex-direction: row;
+	padding-left: 3px;
 }
 
 @media screen and (max-width: 600px) {
@@ -113,4 +114,32 @@ textarea {
 	.connection-app #phrase{
 		height: 20px;
 	}
+}
+
+.connection-app.embeded{
+	padding: 0;
+}
+
+.embeded .status-row{
+	display: flex;
+	flex-direction: row;
+	flex-wrap: wrap;
+	border: none;
+}
+
+.embeded .status-row>div{
+	flex: 1 0 0;
+	border: 2px inset #ccc;
+}
+
+.embeded .status-row>div:last-of-type{
+	flex-grow: 0;
+	padding-left:3px;
+	padding-top: 2px;
+	padding-bottom: 2px;
+	padding-right:3px;
+}
+
+.embeded .progress-bar-container{
+	height: 20px!important;
 }

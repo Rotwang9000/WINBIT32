@@ -17,7 +17,27 @@ export const fetchCategories = async () => {
 	return data;
 };
 
+export const getTokenFromIdentifier = (tokens, identifier) => {
 
+		if(!tokens){
+			console.log("Tokens not found");
+			return;
+		}
+
+		const token = tokens.find(
+			(token) => token.identifier.toLowerCase() === identifier.toLowerCase()
+		);
+		if(!token){
+			console.log("Token not found for identifier: ", identifier);
+			return;
+		}
+
+		token.identifier = token.identifier.replace('0X', '0x')
+
+		console.log("Token found for identifier: ", identifier, token);	
+
+		return token;
+};
 
 export const fetchTokensByCategory = async (category) => {
 	const response = await fetch(
@@ -55,6 +75,7 @@ export const chainImages = {
 	BNB: "https://static.thorswap.net/token-list/images/bnb.bnb.png",
 	GAIA: "https://static.thorswap.net/token-list/images/gaia.atom.png",
 	XRD: "https://storage.googleapis.com/token-list-swapkit-dev/images/xrd.xrd.png",
+	SOL: "https://static.thorswap.net/token-list/images/sol.sol.png",
 };
 
 export 	const fetchTokenPrices = async (swapFrom, swapTo) => {
@@ -91,6 +112,46 @@ export 	const fetchTokenPrices = async (swapFrom, swapTo) => {
 			toPrice
 		);
 		return { fromPrice, toPrice };
+	} catch (error) {
+		console.error("Error fetching token prices:", error);
+		return { fromPrice: 0, toPrice: 0 };
+	}
+};
+
+
+export const fetchMultipleTokenPrices = async (tokens) => {
+	try {
+
+		const tokenIdentifiers = tokens.map((token) => { return {identifier: token.toLowerCase()};});
+
+
+		const response = await fetch("https://api.swapkit.dev/price", {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json",
+			},
+			body: JSON.stringify({
+				tokens: 
+					tokenIdentifiers
+				,
+				metadata: true,
+			}),
+		});
+
+		const data = await response.json();
+
+		const tokenUSDPrices = data.map((item) => {
+			return {
+				identifier: item.identifier,
+				price_usd: item.price_usd,
+				time: Date.now()
+			};
+		});
+
+		console.log("Token prices:", tokenUSDPrices);
+
+		return tokenUSDPrices;
+	
 	} catch (error) {
 		console.error("Error fetching token prices:", error);
 		return { fromPrice: 0, toPrice: 0 };

@@ -53,3 +53,9 @@
   margin: 5px;
   width: 200px;
 } 
+
+
+.toastText{
+  display: flex;
+  margin-top: 10px;
+}

@@ -11,21 +11,16 @@ import {
 import { walletNames } from '../../win/includes/constants';
 
 
-// Function to generate a random phrase
-function generatePhrase(size = 12) {
-	const entropy = size === 12 ? 128 : 256;
-	return generateMnemonic(wordlist, entropy);
-}
-
-
 function ConnectionApp({ windowId, providerKey, phrase, setPhrase, connectionStatus, setConnectionStatus, statusMessage, 
-						setStatusMessage, showProgress, setShowProgress, progress, setProgress, handleConnect,
+						setStatusMessage, showProgress, setShowProgress, progress, setProgress, handleConnect, appData,
 						phraseSaved, setPhraseSaved, programData}) {
 
 	const [phraseFocus, setPhraseFocus] = useIsolatedState(windowId, 'phraseFocus', false);
 
+	const { embedMode } = appData || {};
 	//on phrase blur then remove all invalid words
 	useEffect(() => {
+		if(!phrase) return; 
 		if (!phraseFocus) {
 			//if phrase is a walletName, then return
 			const pSplit = phrase.toUpperCase().trim().split(' ');
@@ -107,9 +102,9 @@ function ConnectionApp({ windowId, providerKey, phrase, setPhrase, connectionSta
 
 
 	return (
-		<div className="connection-app">
+		<div className={"connection-app" + (embedMode? ' embeded':'')}>
 			<div className="content">
-				{ programData && !programData.lockMode && 
+				{ programData && !programData.lockMode && !embedMode &&
 				<div className="row">
 					<textarea
 						id="phrase"
@@ -157,7 +152,7 @@ function ConnectionApp({ windowId, providerKey, phrase, setPhrase, connectionSta
 				}	
 				<div className="status-row">
 					<div className="status-message">
-						<div>{statusMessage}</div>
+						<div style={{display: 'flex',alignItems: 'center'}}>{statusMessage}</div>
 						{!phraseSaved && !programData.lockMode && <div style={{ color: 'red' }} onClick={() => setPhraseSaved(true)}>Phrase not saved or copied <span style={{cursor: 'pointer'}}>❌</span></div>}
 			
 					</div>
@@ -165,6 +160,20 @@ function ConnectionApp({ windowId, providerKey, phrase, setPhrase, connectionSta
 						{width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }
 					}>					
 					{showProgress && <ProgressBar percent={progress} progressID={windowId} showPopup={true}/>}
+					{!showProgress && embedMode &&
+							<div
+								onClick={() => {
+									console.log('button clicked');
+									if (connectionStatus !== 'refreshing') {
+										setConnectionStatus('refreshing');
+										setStatusMessage('Refreshing Wallets...');
+										handleConnect(true);
+									}
+								}
+								}
+								className="traffic-light" style={{ backgroundColor: trafficLightColor(), color: 'white', marginLeft:0 }}> </div>
+					
+					}
 					</div>
 
 				</div>

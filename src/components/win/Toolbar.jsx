@@ -1,4 +1,5 @@
 import React from 'react';
+import _ from 'lodash';
 
 const Toolbar = ({ subPrograms, onSubProgramClick, programData }) => {
 
@@ -16,7 +17,8 @@ const Toolbar = ({ subPrograms, onSubProgramClick, programData }) => {
 					 onClick={
 						() => {
 							console.log('Toolbar click', program, programData);
-							program.programData = programData;
+							// const clonedProgram = _.cloneDeep(program);
+							// clonedProgram.programData = programData;
 							onSubProgramClick(program, programData);
 						}
 					}

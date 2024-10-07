@@ -78,13 +78,15 @@ const ProgramManager = ({ params, programs, onOpenWindow, onMenuAction, windowA,
 			))}
 		</div>
 		{showAboutDialog &&
-				<DialogBox title="About Winbit32" icon="info" buttons={[{ label: 'OK', onClick: ()=>setShowAboutDialog(false) }]} onConfirm={() => {
+				<DialogBox title="About Winbit32" buttons={[{ label: 'OK', onClick: ()=>setShowAboutDialog(false) }]} onConfirm={() => {
 			setShowAboutDialog(false);
 		}} onCancel={() => {}} onClose={() => {}} showMinMax={false}>
 			<div style={{ textAlign: 'center', marginBottom: '10px', display: 'flex', flexDirection: 'column' }}>
-					<div>Winbit32.com version {require('../../../package.json').version || "0.0.0"}</div>
+						<img src="/sheildlogobsml.png" alt="Winbit32" style={{marginLeft: '50px', marginRight: '50px', marginTop: '20px' }} />
+					<div style={{ fontSize: '1.5em', fontWeight: 'bold' }}>Winbit32</div>
+					<div>version {require('../../../package.json').version || "0.0.0"}</div>
 				<div>
-						<a href="https://x.com/WinBit32" target="_blank" rel="noreferrer">X</a></div>
+						<a href="https://x.com/WinBit32" target="_blank" rel="noreferrer">Goto X Profile</a></div>
 						</div>
 		</DialogBox>
 		}

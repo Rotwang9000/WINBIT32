@@ -2,19 +2,25 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { entropyToMnemonic, mnemonicToEntropy } from '@scure/bip39';
 import { wordlist } from '@scure/bip39/wordlists/english';
 import './styles/ConnectionApp.css';
-import { useIsolatedState } from '../../win/includes/customHooks';
+import { useIsolatedRef, useIsolatedState } from '../../win/includes/customHooks';
 import { calculateChecksum, getValidChecksumWords } from './includes/phrase';
+import { playDTMF, getDTMF, dtmfStopListening, dtmfReceiver } from './includes/dtmf';
+import { set } from 'lodash';
 
 
 
-function ConnectionApp({ windowId, phrase, setPhrase, statusMessage, setStatusMessage, programData }) {
+function ConnectionApp({ windowId, phrase, setPhrase, statusMessage, setStatusMessage }) {
 	const [phraseFocus, setPhraseFocus] = useIsolatedState(windowId, 'phraseFocus', false);
 	const [suggestions, setSuggestions] = useState([]);
 	const [currentWordIndex, setCurrentWordIndex] = useState(null);
 	const [highlightedSuggestionIndex, setHighlightedSuggestionIndex] = useState(-1);
+	const [showHexKeyInputDiv, setShowHexKeyInputDiv] = useState(false);
+	const [hexPrivateKey, setHexPrivateKey] = useState('');
+	const [dtmfListen, setDtmfListen] = useIsolatedState(windowId, 'dtmfListen', false);
 
 	const textareaRef = useRef(null);
 	const suggestionsRef = useRef(null);
+	const receiverRef = useIsolatedRef(windowId, 'receiverRef', null);
 
 	useEffect(() => {
 		//if textarea is focused, do not remove invalid words
@@ -32,6 +38,43 @@ function ConnectionApp({ windowId, phrase, setPhrase, statusMessage, setStatusMe
 		}
 	}, [phraseFocus]);
 
+
+	useEffect(() => {
+		if(!dtmfListen && receiverRef.current){
+			dtmfStopListening(receiverRef.current);
+		}
+	}, [dtmfListen]);
+
+	useEffect(() => {
+		let _receiver;
+		if(dtmfListen){
+			_receiver = dtmfReceiver();
+			receiverRef.current = _receiver;
+			console.log('start listening', _receiver);
+			// getDTMF(setHexPrivateKey, _receiver);
+
+			_receiver.start((detectedSequence, error) => {
+				if (error) {
+					console.error('DTMF detection error:', error);
+				} else {
+					console.log('Detected DTMF sequence:', detectedSequence);
+					// Handle the detected sequence as needed
+					setHexPrivateKey(detectedSequence);
+					setDtmfListen(false);
+				}
+			});
+
+		}
+		return () => {
+			console.log('cleanup', _receiver);
+			if(_receiver){
+				dtmfStopListening(_receiver);
+			}
+		};
+	}, [dtmfListen]);
+
+
+
 	const handleInputChange = (e) => {
 
 		// console.log('handleInputChange', e.target.value);
@@ -42,6 +85,29 @@ function ConnectionApp({ windowId, phrase, setPhrase, statusMessage, setStatusMe
 		getSuggestions(value);
 	
 	};
+
+	//when private key changes, if it is valid then get the phrase. If not the same as current phrase then set it
+	useEffect(() => {
+		if(phraseFocus) return;
+		const value = hexPrivateKey;
+		const entropy = Buffer.from(value, 'hex');
+		try{
+			const newPhrase = entropyToMnemonic(entropy, wordlist);
+			if (newPhrase && newPhrase !== phrase) {
+				setPhrase(newPhrase);
+			}
+		}catch(e){	
+			//do nothing
+		}
+		
+	}, [hexPrivateKey]);
+
+	useEffect(() => {
+		console.log('showHexKeyInputDiv', showHexKeyInputDiv, receiverRef.current);
+		if(!showHexKeyInputDiv && receiverRef.current){
+			setDtmfListen(false);
+		}
+	}, [showHexKeyInputDiv]);
 
 
 	const getSuggestions = (phrase) => {
@@ -126,9 +192,21 @@ function ConnectionApp({ windowId, phrase, setPhrase, statusMessage, setStatusMe
 		setHighlightedSuggestionIndex(-1);
 	};
 
-	const entropyUnint8Array = mnemonicToEntropy(phrase, wordlist);
-	const hexPrivateKey = Buffer.from(entropyUnint8Array).toString('hex');
-	console.log('hexPrivateKey', hexPrivateKey);
+	useEffect(() => {
+		try{
+			const entropyUnint8Array = mnemonicToEntropy(phrase, wordlist);
+			const _hexPrivateKey = Buffer.from(entropyUnint8Array).toString('hex');
+			if(_hexPrivateKey !== hexPrivateKey){
+				setHexPrivateKey(_hexPrivateKey);
+			}
+
+		}catch(e){
+			//do nothing
+		}
+	},	[phrase]);
+
+	// console.log('hexPrivateKey', hexPrivateKey);
+	const hexKeyInputDiv = useRef(null);
 
 	return (
 		<div className="connection-app">
@@ -141,7 +219,7 @@ function ConnectionApp({ windowId, phrase, setPhrase, statusMessage, setStatusMe
 						placeholder="Enter your phrase here..."
 						onClick={() => setStatusMessage('')}
 						onChange={handleInputChange}
-						onFocus={() => setPhraseFocus(true)}
+						onFocus={() => { setPhraseFocus(true); setShowHexKeyInputDiv(false)} } 
 						onBlur={() => setPhraseFocus(false)}
 						onKeyDown={handleKeyDown}
 						ref={textareaRef}
@@ -160,11 +238,24 @@ function ConnectionApp({ windowId, phrase, setPhrase, statusMessage, setStatusMe
 							))}
 						</div>
 					)}
+
 				</div>
 				<div className="status-row">
 					<div className="status-message">
 						<div>{statusMessage}</div>
-						<div>{hexPrivateKey.toString()}</div>
+						<div onClick={() => setShowHexKeyInputDiv(true)} style={{cursor: 'pointer', 'display': 'flex'}} className="hex-key-input-div">
+							{!showHexKeyInputDiv && (<div title="Click to edit key">{hexPrivateKey.toString() || <span>Click to enter private key</span>}</div>)}
+							<div ref={hexKeyInputDiv} style={{display: showHexKeyInputDiv ? 'flex' : 'none'}}>
+								<input type="text" value={hexPrivateKey} onChange={(e) => setHexPrivateKey(e.target.value)} style={{ width: '246px', maxWidth: '100%' }} />
+								<button onClick={() => setDtmfListen(!dtmfListen)}>{dtmfListen ? 
+								<>🔴</>
+								:<>🎤</>
+								 }</button>
+
+							</div>
+							<button onClick={() => playDTMF(hexPrivateKey)}>☎</button>
+							
+							</div>
 					</div>
 				</div>
 			</div>

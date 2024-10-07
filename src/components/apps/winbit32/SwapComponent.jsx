@@ -16,16 +16,19 @@ import DialogBox from '../../win/DialogBox';
 import { amountInBigNumber } from './helpers/quote';
 import { fetchTokenPrices } from './includes/tokenUtils';
 import { generateSwapReport } from './helpers/report';
+import { copyToClipboard, qrToast } from '../../win/includes/utils';
+import { FaCopy, FaQrcode } from 'react-icons/fa';
 
 
 
 
-const SwapComponent = ({ providerKey, windowId, programData, appData, onOpenWindow, metadata }) => {
+const SwapComponent = ({ providerKey, windowId, programData, appData, onOpenWindow, metadata, hashPath, sendUpHash }) => {
 	const { skClient, tokens, wallets, chainflipBroker } = useWindowSKClient(providerKey);
 	const { setPhrase } = programData;
-	const { license } = appData || {}
+	const { license, embedMode } = appData || {}
 	const [swapFrom, setSwapFrom] = useIsolatedState(windowId, 'swapFrom', metadata.swapFrom || null);
-	const [swapTo, setSwapTo] = useIsolatedState(windowId, 'swapTo', null);
+	const [swapFromAddress, setSwapFromAddress] = useIsolatedState(windowId, 'swapFromAddress', '');
+	const [swapTo, setSwapTo] = useIsolatedState(windowId, 'swapTo', metadata.swapTo || null);
 	const [amount, setAmount] = useIsolatedState(windowId, 'amount', 0);
 	const [destinationAddress, setDestinationAddress] = useIsolatedState(windowId, 'destinationAddress', '');
 	const [iniData, setIniData] = useIsolatedState(windowId, 'iniData', '');
@@ -45,7 +48,7 @@ const SwapComponent = ({ providerKey, windowId, programData, appData, onOpenWind
 	const [txnStatus, setTxnStatus] = useIsolatedState(windowId, 'txnStatus', '');
 	const currentTxnStatus = useRef(txnStatus);
 	const [statusText, setStatusText] = useIsolatedState(windowId, 'statusText', '');
-	const [quoteStatus, setQuoteStatus] = useIsolatedState(windowId, 'quoteStatus', (license? '0.16% Affiliate fee':'Aff. fee 0.32% (0.16% for synths)'));
+	const [quoteStatus, setQuoteStatus] = useIsolatedState(windowId, 'quoteStatus', (license ? '0.16% Affiliate fee' : 'Aff. fee 0.32% (0.16% for synths)'));
 	const [quoteId, setQuoteId] = useIsolatedState(windowId, 'quoteId', '');
 	const [maxAmount, setMaxAmount] = useIsolatedState(windowId, 'maxAmount', '0');
 	const [txnTimer, setTxnTimer] = useIsolatedState(windowId, 'txnTimer', null);
@@ -84,7 +87,7 @@ const SwapComponent = ({ providerKey, windowId, programData, appData, onOpenWind
 	}, []);
 
 	const doGetQuotes = useCallback((force = false) => {
-		if(swapInProgress && !force) return;
+		if (swapInProgress && !force) return;
 		getQuotes(swapFrom,
 			swapTo,
 			amount,
@@ -101,9 +104,9 @@ const SwapComponent = ({ providerKey, windowId, programData, appData, onOpenWind
 			wallets,
 			selectedRoute,
 			license,
-			(txnStatus === '')? setReportData: () => {},
+			(txnStatus === '') ? setReportData : () => { },
 			iniData
-			);
+		);
 	}, [swapInProgress, swapFrom, swapTo, amount, destinationAddress, slippage, setStatusText, setQuoteStatus, setRoutes, setQuoteId, tokens, setDestinationAddress, setSelectedRoute, wallets]);
 
 
@@ -111,8 +114,9 @@ const SwapComponent = ({ providerKey, windowId, programData, appData, onOpenWind
 	const updateIniData = () => {
 		if (!textareaActive) {
 
-			const route = (routes && routes.length === 0 && selectedRoute && selectedRoute !== 'optimal' && selectedRoute !== -1 ) ? selectedRoute : 'optimal';
+			const route = (routes && routes.length !== 0 && selectedRoute && selectedRoute !== 'optimal' && selectedRoute !== -1) ? selectedRoute : 'optimal';
 
+			console.log('Selected route:', route, selectedRoute, routes);
 
 			let data = `token_from=${swapFrom?.identifier || ''}
 token_to=${swapTo?.identifier || ''}
@@ -123,9 +127,9 @@ fee_option=${FeeOption[selectedRoute] || 'Average'}
 slippage=${slippage}
 `;
 
-			if (manualStreamingSet){
-					data +=
-`swap_interval=${streamingInterval}
+			if (manualStreamingSet || isStreamingSwap) {
+				data +=
+					`swap_interval=${streamingInterval}
 swap_count=${streamingNumSwaps}
 `;
 			}
@@ -135,9 +139,25 @@ swap_count=${streamingNumSwaps}
 	};
 
 	useEffect(() => {
-		// Update the INI data whenever state changes
+		// Update the INI data whenever state changes#
+		if (!tokens || tokens.length === 0) return;
 		updateIniData();
-	}, [swapFrom, swapTo, amount, destinationAddress, selectedRoute, textareaActive, slippage]);
+	}, [swapFrom, swapTo, amount, destinationAddress, selectedRoute, textareaActive, slippage, tokens]);
+
+
+	useEffect(() => {
+		if (iniData) {
+			//convert to query string style and sendUpHash
+			const lines = iniData.split('\n');
+			let query = '';
+			lines.forEach(line => {
+				const [key, value] = line.split('=');
+				if (!key || !value) return;
+				query += key + '=' + encodeURIComponent(value) + '&';
+			});
+			sendUpHash([query], windowId);
+		}
+	}, [iniData, sendUpHash, windowId]);
 
 
 	useEffect(() => {
@@ -159,7 +179,7 @@ swap_count=${streamingNumSwaps}
 		if (swapFrom && swapTo && amount && thisDestinationAddress) {
 
 			setQuoteStatus('Requote Required');
-		
+
 
 			timer = setTimeout(() => {
 				doGetQuotes();
@@ -173,23 +193,24 @@ swap_count=${streamingNumSwaps}
 	}, [swapFrom, swapTo, amount, destinationAddress, slippage, doGetQuotes]);
 
 	useEffect(() => {
-		if (txnHash !== '') checkTxnStatus(txnHash, txnHash + '', 0, swapInProgress, txnStatus, setStatusText, setSwapInProgress, setShowProgress, setProgress, setTxnStatus, setTxnTimer,  txnTimerRef);
+		if (txnHash !== '') checkTxnStatus(txnHash, txnHash + '', 0, swapInProgress, txnStatus, setStatusText, setSwapInProgress, setShowProgress, setProgress, setTxnStatus, setTxnTimer, txnTimerRef);
 	}, [txnHash]);
 
 
 	useEffect(() => {
 		const token = swapFrom;
 		const wallet = wallets.find(w => w?.chain === token?.chain);
+		setSwapFromAddress(wallet?.address || '');
 		const balance = wallet?.balance?.find(
-			b => b.isSynthetic !== true && (b.chain + '.' + b.ticker.toUpperCase() === token.identifier.toUpperCase() || b.chain + '.' + b.symbol.toUpperCase() === token.identifier.toUpperCase() ))
-				|| wallet?.balance?.find(b => b.isSynthetic === true && b.symbol.toUpperCase() === token.identifier.toUpperCase());
-		if(token){
-			console.log('Selected token:', token, 'wallet',wallet, 'Balance:', balance);
+			b => b.isSynthetic !== true && (b.chain + '.' + b.ticker.toUpperCase() === token.identifier.toUpperCase() || b.chain + '.' + b.symbol.toUpperCase() === token.identifier.toUpperCase()))
+			|| wallet?.balance?.find(b => b.isSynthetic === true && b.symbol.toUpperCase() === token.identifier.toUpperCase());
+		if (token) {
+			console.log('Selected token:', token, 'wallet', wallet, 'Balance:', balance);
 		}
 		if (balance) {
 			//const readableBalance = formatBigIntToSafeValue(bigInt(balance.bigIntValue), balance.decimal, balance.decimal);
 			const readableBalance = Number(balance.bigIntValue) / Number(balance.decimalMultiplier);
-			console.log('Readable balance:', readableBalance.toString(),Number(balance.bigIntValue) / Number(balance.decimalMultiplier), token.identifier);
+			console.log('Readable balance:', readableBalance.toString(), Number(balance.bigIntValue) / Number(balance.decimalMultiplier), token.identifier);
 			setMaxAmount(readableBalance.toString());
 		} else {
 			setMaxAmount('0');
@@ -234,7 +255,13 @@ swap_count=${streamingNumSwaps}
 
 	const handleMenuClick = useCallback((action) => {
 		const currentText = currentIniData.current;
-		console.log('currentText:', currentText);	
+		console.log('currentText:', currentText);
+
+		//if action is a function, call it
+		if (typeof action === 'function') {
+			action();
+			return;
+		}
 
 		switch (action) {
 			case 'open':
@@ -251,7 +278,10 @@ swap_count=${streamingNumSwaps}
 			case 'paste':
 				navigator.clipboard.readText().then((clipboardText) => {
 					setIniData(clipboardText); // Paste from clipboard
-					delayedParseIniData(clipboardText, setIniData, setSwapFrom, setSwapTo, setAmount, setDestinationAddress, setFeeOption, setSlippage, setSelectedRoute, routes, tokens);
+					delayedParseIniData(clipboardText, setIniData, setSwapFrom, setSwapTo, setAmount, setDestinationAddress, setFeeOption, setSlippage, setSelectedRoute, setRoutes, routes, tokens,
+						setManualStreamingSet,
+						setStreamingInterval,
+						setStreamingNumSwaps);
 				});
 				break;
 
@@ -261,6 +291,36 @@ swap_count=${streamingNumSwaps}
 		}
 	}, [currentIniData]);
 	// console.log("skclient var", skClient);
+
+
+
+	useEffect(() => {
+		if (hashPath && hashPath.length > 0 && tokens && tokens.length > 0) {
+			setTextareaActive(true);
+
+			const parts = hashPath[0].split('&');
+			let data = [];
+			parts.forEach(part => {
+				const line = part.split('=');
+				const key = line[0];
+				if (!key) return;
+				const val = decodeURIComponent(line[1]);
+				data.push(`${key}=${val}`);
+			});
+			delayedParseIniData(data.join('\n'), setIniData, setSwapFrom, setSwapTo, setAmount, setDestinationAddress, setFeeOption, setSlippage, setSelectedRoute, setRoutes, routes, tokens,
+				setManualStreamingSet,
+				setStreamingInterval,
+				setStreamingNumSwaps);
+
+			setTimeout(() => {
+				setTextareaActive(false);
+			}, 1000);
+
+			//parseIniData(data.join('\n'));
+		}
+	}, [tokens]);
+
+
 
 	const menu = React.useMemo(() => [
 		{
@@ -400,9 +460,9 @@ swap_count=${streamingNumSwaps}
 					false,
 					''
 				);
-				
+
 				setProgress(13 + (i * 7));
-				if(r.length === 0) {
+				if (r.length === 0) {
 					continue;
 				}
 
@@ -419,13 +479,13 @@ swap_count=${streamingNumSwaps}
 				let diff = outputValue.minus(outputAmountBigInt);
 				let diffUSD = outputValueUSD.minus(outputAmountUSD);
 				console.log('Diff:', diff.toString());
-				if (outputType !== 'minimum') { 
-					diff = diff.abs(); 
+				if (outputType !== 'minimum') {
+					diff = diff.abs();
 					diffUSD = diffUSD.abs();
 				}
 				const diffPercent = diff.dividedBy(outputAmountBigInt).times(100);
 				console.log('Diff percent:', diffPercent.toString());
-				if(diff.isGreaterThanOrEqualTo(0)) {
+				if (diff.isGreaterThanOrEqualTo(0)) {
 					outputs.push({ guessInputAmount, outputValue, diff, diffPercent, optimalRoute });
 				}
 
@@ -443,17 +503,17 @@ swap_count=${streamingNumSwaps}
 
 
 			if (!bestInputAmount || !bestRoute) {
-					if(outputs.length === 0) {
-						throw new Error('No suitable outputs found.');
-					}
+				if (outputs.length === 0) {
+					throw new Error('No suitable outputs found.');
+				}
 
-					const optimalRoute = outputs.reduce((a, b) => {
-						const aVal = a.diff.abs();
-						const bVal = b.diff.abs();
-						return aVal.isLessThanOrEqualTo(bVal) ? a : b;
-					});
-					bestInputAmount = optimalRoute.guessInputAmount;
-					bestRoute = optimalRoute.optimalRoute;	
+				const optimalRoute = outputs.reduce((a, b) => {
+					const aVal = a.diff.abs();
+					const bVal = b.diff.abs();
+					return aVal.isLessThanOrEqualTo(bVal) ? a : b;
+				});
+				bestInputAmount = optimalRoute.guessInputAmount;
+				bestRoute = optimalRoute.optimalRoute;
 			}
 
 
@@ -468,7 +528,7 @@ swap_count=${streamingNumSwaps}
 			}
 		} catch (error) {
 			setStatusText(`Error calculating best input amount: ${error.message}`);
-		
+
 		} finally {
 			setSwapInProgress(false);
 			setProgress(100);
@@ -483,25 +543,25 @@ swap_count=${streamingNumSwaps}
 
 			if (r) {
 				const parts = r.memo?.split(":");
-				
+
 				if (parts && parts.length > 3) {
 					const splitP3 = parts[3].split("/");
 					if (splitP3.length > 1) {
 						setIsStreamingSwap(true);
-						if(!manualStreamingSet) {
+						if (!manualStreamingSet) {
 							setStreamingInterval(parseInt(splitP3[1]));
 							setStreamingNumSwaps(parseInt(splitP3[2]));
 						}
-					}else{
+					} else {
 						setIsStreamingSwap(false);
 					}
-				}else{
+				} else {
 					setIsStreamingSwap(false);
 				}
 			}
 		}
 
-	,[selectedRoute, routes, setStreamingInterval, setStreamingNumSwaps, setIsStreamingSwap]);
+		, [selectedRoute, routes, setStreamingInterval, setStreamingNumSwaps, setIsStreamingSwap]);
 
 	return (
 		<>
@@ -535,29 +595,29 @@ swap_count=${streamingNumSwaps}
 					streamingNumSwaps,
 					setReportData,
 					iniData
-					)}>
+				)}>
 					<div className='swap-toolbar-icon'>🔄</div>
 					Execute
 				</button>
 				{swapFrom && swapFrom.identifier?.toLowerCase().includes('-0x') &&
 					<button className='swap-toolbar-button' onClick={() => {
-					handleApprove(swapFrom,
-						amount,
-						skClient,
-						wallets,
-						setStatusText,
-						setSwapInProgress,
-						setShowProgress,
-						setProgress,
-						setExplorerUrl,
-						routes,
-						selectedRoute,
-						chainflipBroker
-					);
-				}}>
+						handleApprove(swapFrom,
+							amount,
+							skClient,
+							wallets,
+							setStatusText,
+							setSwapInProgress,
+							setShowProgress,
+							setProgress,
+							setExplorerUrl,
+							routes,
+							selectedRoute,
+							chainflipBroker
+						);
+					}}>
 						<div className='swap-toolbar-icon'>✅</div>
-					Approve
-				</button>
+						Approve
+					</button>
 				}
 
 
@@ -589,8 +649,8 @@ swap_count=${streamingNumSwaps}
 						<div className='swap-toolbar-icon'>🎯</div>
 						Target
 					</button>
-					
-					}
+
+				}
 
 
 				{explorerUrl ?
@@ -609,9 +669,9 @@ swap_count=${streamingNumSwaps}
 						<div className='swap-toolbar-icon' >📋</div>
 						Log
 					</button>
-				
-				
-				
+
+
+
 				}
 			</div>
 			{(statusText && statusText !== '') &&
@@ -710,33 +770,49 @@ swap_count=${streamingNumSwaps}
 						)}
 					</div>
 					{!swapInProgress && (
+						(!embedMode) ?
+							(usersDestinationAddress !== destinationAddress) && (
+								<div className="field-group">
+									<label style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
+										To: 									<button onClick={() => setDestinationAddress(usersDestinationAddress)} title='Use Wallet Address' style={{ marginLeft: '5px', padding: '6px', fontSize: '10px', display: 'block', border: '1px solid black', minWidth: 'fit-content' }} >
+											Self
+										</button></label>
+									<input type="text" value={destinationAddress} onChange={e => setDestinationAddress(e.target.value)} style={usersDestinationAddress && usersDestinationAddress !== destinationAddress ? { color: 'blue' } : {}} placeholder='Enter Destination Address' />
 
-						(usersDestinationAddress !== destinationAddress) && (
-							<div className="field-group">
-								<label style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
-									Destination Address				{!swapInProgress && usersDestinationAddress && usersDestinationAddress !== destinationAddress ? (
-										<button onClick={() => setDestinationAddress(usersDestinationAddress)} title='Use Wallet Address' style={{ marginLeft: '5px', padding: '6px', fontSize: '10px', display: 'block', border: '1px solid black', minWidth: 'fit-content' }} >
-											Own
-										</button>
+								</div>
+							) :
 
-									) : ''}</label>
-								<input type="text" value={destinationAddress} onChange={e => setDestinationAddress(e.target.value)} style={usersDestinationAddress && usersDestinationAddress !== destinationAddress ? { color: 'blue' } : {}} />
+							<div className='infobox tofrom'>
+								<div><span><button onClick={() => copyToClipboard(swapFromAddress)}> <FaCopy /></button> <button onClick={() => qrToast(swapFromAddress)} ><FaQrcode /></button> From:</span><span title={swapFromAddress} > <span className="selectable">{swapFromAddress}</span></span></div>
+								<div><span><button onClick={() => copyToClipboard(destinationAddress)}><FaCopy /></button> <button onClick={() => qrToast(swapFromAddress)} ><FaQrcode /></button>To:</span><span style={{ flex: '0 0 0' }}>  {!swapInProgress && usersDestinationAddress && usersDestinationAddress !== destinationAddress ? (
+									<button onClick={() => setDestinationAddress(usersDestinationAddress)} title='Use Wallet Address' style={{ marginLeft: '5px', padding: '6px', fontSize: '10px', display: 'block', border: '1px solid black', minWidth: 'fit-content' }} >
+										Self
+									</button>
 
+								) : ''}</span><span title={destinationAddress}> <span onClick={() => setDestinationAddress('')}>
+									{(!swapInProgress && (usersDestinationAddress !== destinationAddress)) ?
+										<input type="text" value={destinationAddress} onChange={e => setDestinationAddress(e.target.value)} style={usersDestinationAddress && usersDestinationAddress !== destinationAddress ? { color: 'blue' } : {}} placeholder='Enter Destination Address' />
+										:
+										destinationAddress
+									}
+
+								</span> </span> </div>
 							</div>
-						))}
+					)}
+
 					{isStreamingSwap && (
 						<>
-						<div className="field-group streaming-group">
-							<label>Streaming</label>
-							<div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+							<div className="field-group streaming-group">
+								<label>Streaming</label>
+								<div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
 									<div>
 										<span>Block Interval (~6s):</span><input type="number" value={streamingInterval} onChange={e => setStreamingInterval(e.target.value)} disabled={swapInProgress} /></div>
-									<div><span>Number of swaps:</span><input type="number" value={streamingNumSwaps}  disabled={swapInProgress} 
-									//max 20
+									<div><span>Number of swaps:</span><input type="number" value={streamingNumSwaps} disabled={swapInProgress}
+										//max 20
 										onChange={e => {
 											setStreamingNumSwaps(e.target.value);
 											setManualStreamingSet(true);
-											}
+										}
 										}
 									/></div>
 									<div><span>Max Slippage %</span><input type="number" value={slippage} onChange={e => {
@@ -744,30 +820,30 @@ swap_count=${streamingNumSwaps}
 										setManualStreamingSet(true);
 									}}
 										disabled={swapInProgress} /></div>
+								</div>
 							</div>
-						</div>
-						<div className="infobox">
+							<div className="infobox">
 
-							{streamingNumSwaps * streamingInterval > 14400? 
-							<div><span>Warning:</span><span>Maximum Time Exceeded, Swap will fail.</span> </div> :
+								{streamingNumSwaps * streamingInterval > 14400 ?
+									<div><span>Warning:</span><span>Maximum Time Exceeded, Swap will fail.</span> </div> :
 
-							streamingNumSwaps > 0 && <div><span>Swapping Duration Estimate:</span><span>{secsToDisplay(streamingInterval * streamingNumSwaps * 6)}</span></div>
-							}
-							<div><span>Swaps</span><span>{streamingNumSwaps === 0 ? 'Automatic' : (amount / streamingNumSwaps) + ' ' + swapFrom.ticker + ' per Swap.'}</span> </div>
-								
-						
-							<div>
-								<span>Information:</span>
-								<span>
-									<a href="https://docs.mayaprotocol.com/mayachain-dev-docs/introduction/swapping-guide/streaming-swaps" target="_blank">Maya</a> - 
-									<a href="https://dev.thorchain.org/swap-guide/streaming-swaps.html" target="_blank" >Thorchain</a>
-								</span>
+									streamingNumSwaps > 0 && <div><span>Swapping Duration Estimate:</span><span>{secsToDisplay(streamingInterval * streamingNumSwaps * 6)}</span></div>
+								}
+								<div><span>Swaps</span><span>{streamingNumSwaps === 0 ? 'Automatic' : (amount / streamingNumSwaps) + ' ' + swapFrom.ticker + ' per Swap.'}</span> </div>
+
+
+								<div>
+									<span>Information:</span>
+									<span>
+										<a href="https://docs.mayaprotocol.com/mayachain-dev-docs/introduction/swapping-guide/streaming-swaps" target="_blank">Maya</a> -
+										<a href="https://dev.thorchain.org/swap-guide/streaming-swaps.html" target="_blank" >Thorchain</a>
+									</span>
+								</div>
 							</div>
-						</div>
 						</>
-					)}	
-					
-					
+					)}
+
+
 					<div className="field-group flex-wrap route-selection-group">
 						<label>Route Selection</label>
 						{!swapInProgress ? (
@@ -776,9 +852,9 @@ swap_count=${streamingNumSwaps}
 								<select onChange={handleRouteSelection} value={selectedRoute}>
 									<option value="optimal">Optimal Route</option>
 									{routes && routes.map((route, index) => (
-										<option key={route.providers.join(', ')} value={route.providers.join(', ')}>
+										<option key={route.providers.join(', ')} value={route.providers.join(', ')} disabled={route.disabled === true}>
 											{route.providers.join(', ')} - {
-												(route.estimatedTime === null || route.estimatedTime === undefined) ?
+												(route.disabled === true) ? 'Unavailable' : (route.estimatedTime === null || route.estimatedTime === undefined) ?
 													((route.timeEstimates) ? //add up all the values in the timeEstimates object
 														Object.values(route.timeEstimates).reduce((a, b) => a + b, 0) / 6000
 														: 0)
@@ -789,12 +865,14 @@ swap_count=${streamingNumSwaps}
 											} mins ~{parseFloat(parseFloat(route.expectedOutputMaxSlippage || route.expectedBuyAmount).toPrecision(5))} {swapTo?.ticker}
 										</option>
 									))}
+									{selectedRoute && selectedRoute !== 'optimal' && selectedRoute !== -1 &&
+										(!routes || routes.length === 0 || !routes.find(route => route.providers.join(', ') === selectedRoute)) && <option value={selectedRoute} disabled>{selectedRoute} <i>(Unavailable)</i></option>}
 								</select></div>
 
 							</>
 
 						) : (
-								<span>{selectedRoute}</span>
+							<span>{selectedRoute}</span>
 						)}
 					</div>
 					{quoteStatus && !swapInProgress &&
@@ -820,7 +898,7 @@ swap_count=${streamingNumSwaps}
 					/>
 					<MenuBar menu={menu} windowId={windowId} onMenuClick={handleMenuClick} />
 					<textarea value={iniData}
-						onChange={e => delayedParseIniData(e.target.value, setIniData, setSwapFrom, setSwapTo, setAmount, setDestinationAddress, setFeeOption, setSlippage, setSelectedRoute, routes, tokens, setManualStreamingSet, setStreamingInterval, setStreamingNumSwaps)} 
+						onChange={e => delayedParseIniData(e.target.value, setIniData, setSwapFrom, setSwapTo, setAmount, setDestinationAddress, setFeeOption, setSlippage, setSelectedRoute, setRoutes, routes, tokens, setManualStreamingSet, setStreamingInterval, setStreamingNumSwaps)}
 						style={{ width: '100%', height: '150px', boxSizing: 'border-box', 'border': 'none' }}
 						onFocus={handleTextareaFocus}
 						onBlur={handleTextareaBlur}
@@ -838,7 +916,7 @@ swap_count=${streamingNumSwaps}
 								reader.onload = (ev) => {
 									console.log('File loaded:', ev.target.result);
 									setIniData(ev.target.result);
-									delayedParseIniData(ev.target.result, setIniData, setSwapFrom, setSwapTo, setAmount, setDestinationAddress, setFeeOption, setSlippage, setSelectedRoute, routes, tokens, setManualStreamingSet, setStreamingInterval, setStreamingNumSwaps);
+									delayedParseIniData(ev.target.result, setIniData, setSwapFrom, setSwapTo, setAmount, setDestinationAddress, setFeeOption, setSlippage, setSelectedRoute, setRoutes, routes, tokens, setManualStreamingSet, setStreamingInterval, setStreamingNumSwaps);
 								};
 								reader.readAsText(file);
 							}

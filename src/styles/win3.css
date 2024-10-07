@@ -632,6 +632,16 @@ input{
 	box-shadow: 0 0 0 1px #000;
 }
 
+@media screen and (max-width: 600px) {
+	
+	.dialog-box .icon {
+		display: none;
+	}
+	.dialog-box .content .message {
+		margin: 0;
+	}
+	
+}
 
 .no-icon{
 
@@ -734,3 +744,46 @@ input{
 			display: block;
 			width:auto;
 		} */
+
+		.selectable{
+			user-select:all;
+			cursor: text;
+			
+		}
+
+
+		.share-dialog{
+			display: flex;
+			flex-direction: column;
+			align-items: left;
+			justify-content: justify;
+			padding: 20px;
+			position: relative;
+			box-sizing: border-box;
+		}
+
+		.share-dialog>div>span{
+			padding-bottom: 10px;
+			display: flex;
+			flex: 0 0 75px;	
+		}
+
+		.share-dialog>div{
+			padding-bottom: 10px;
+			display: flex;
+			flex: 1 1 0;
+		}
+
+		.share-dialog>div>div{
+			display: flex;
+			flex-direction: column;
+			flex: 1 1 0;
+		}
+
+		.share-dialog .share-url{
+			white-space: nowrap;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			flex: 1 1 0;
+			max-width: 300px;
+		}

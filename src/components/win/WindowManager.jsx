@@ -13,7 +13,8 @@ import './styles/scrollbar.css';
 
 import { createNewWindow, convertObjectFunctions } from './includes/WindowManagerFunctions';
 
-const WindowManager = ({ programs, windowName, windowId, handleOpenFunction, setStateAndSave, providerKey, setWindowMenu, programData, setProgramData, handleOpenArray, handleExit, appData = {}, hashPath = [], sendUpHash = () => {} }) => {
+const WindowManager = ({ programs, windowName, windowId, handleOpenFunction, setStateAndSave, providerKey, setWindowMenu, programData, 
+	setProgramData, handleOpenArray, handleExit, appData = {}, hashPath = [], sendUpHash = () => {}, inContainer }) => {
 
 	const updatedState = {
 		windowName,
@@ -22,6 +23,8 @@ const WindowManager = ({ programs, windowName, windowId, handleOpenFunction, set
 
 	const [state, dispatch, getState] = useIsolatedReducer(windowName, 'windowManagerState', reducer, updatedState);
 	const { windows, minimizedWindows, contextMenuVisible, contextMenuPosition, highestZIndex, windowHistory, programList, closedWindows } = state;
+
+	const { embedMode } = appData;
 
 	const contextWindowId = useIsolatedRef(windowName, 'contextWindowId', null);
 	const defaultProgramsInitialized = useIsolatedRef(windowName, 'defaultProgramsInitialized', false);
@@ -47,7 +50,7 @@ const WindowManager = ({ programs, windowName, windowId, handleOpenFunction, set
 	}, [windows, windowName, setWindowContent, dispatch]);
 
 	const handleOpenWindow = useCallback((program, metadata, saveState = true) => {
-		console.log("handleOpenWindow called with program:", program, metadata, programs);
+		// console.log("handleOpenWindow called with program:", program, metadata, programs);
 		if (!program) {
 			console.error("handleOpenWindow: program is undefined or null");
 			return;
@@ -87,19 +90,22 @@ const WindowManager = ({ programs, windowName, windowId, handleOpenFunction, set
 		dispatch({ type: 'MINIMIZE_WINDOW', payload: window });
 	}, [dispatch]);
 
-	const restoreWindow = useCallback((window) => {
-		dispatch({ type: 'RESTORE_WINDOW', payload: window });
-	}, [dispatch]);
-
-	const maximizeWindow = useCallback((window) => {
-		dispatch({ type: 'MAXIMIZE_WINDOW', payload: window });
-	}, [dispatch]);
-
 	const bringToFront = useCallback((windowId) => {
 		console.log('bringToFront called with windowID:', windowId);
 		downstreamHashes.current[windowId] = [];
 		dispatch(HandleFunctions.bringToFront(windowId));
 	}, [dispatch]);
+
+	const restoreWindow = useCallback((window) => {
+		dispatch({ type: 'RESTORE_WINDOW', payload: window });
+		bringToFront(window.windowId);
+	}, [dispatch, bringToFront]);
+
+	const maximizeWindow = useCallback((window) => {
+		dispatch({ type: 'MAXIMIZE_WINDOW', payload: window });
+	}, [dispatch]);
+
+
 
 	const openWindowByProgName = useCallback((progName) => {
 		createNewWindow(programs, windowName, handleOpenArray, programData, highestZIndexRef, (newIndex) => dispatch({ type: 'SET_HIGHEST_Z_INDEX', payload: newIndex }), dispatch, closeWindow, progName);
@@ -156,15 +162,23 @@ const WindowManager = ({ programs, windowName, windowId, handleOpenFunction, set
 	}), [handleOpenWindow, dispatch]);
 
 	useEffect(() => {
+		programs.forEach(program => convertObjectFunctions(program, functionMap));
+
 		if (handleOpenFunction) {
 			handleOpenFunction(handleOpenWindow);
 		}
 		if (handleOpenArray) {
-			handleOpenArray.push(handleOpenWindow);
+			handleOpenArray.push( handleOpenWindow );
 		}
+		return () => {
+			if (handleOpenArray) {
+				handleOpenArray.splice(handleOpenArray.indexOf(handleOpenWindow), 1);
+			}
 
-		programs.forEach(program => convertObjectFunctions(program, functionMap));
-	}, [handleOpenFunction, handleOpenWindow, programs, functionMap, handleOpenArray, windowName, dispatch, state]);
+		};
+		
+
+	}, [handleOpenFunction, handleOpenWindow, programs, functionMap, handleOpenArray, windowName, dispatch]);
 
 	useEffect(() => {
 		const initialize = async () => {
@@ -189,23 +203,19 @@ const WindowManager = ({ programs, windowName, windowId, handleOpenFunction, set
 				dispatch({ type: 'SET_PROGRAM_LIST', payload: mappedPrograms });
 				dispatch({ type: 'SET_PROGRAMS', payload: programs });
 
-				defaultProgramsInitialized.current = true;
 				const defaultPrograms = programs.filter(program => program.defaultOpen);
 				defaultPrograms.forEach(program => handleOpenWindow(program, {}, false));
 				console.log('Default programs initialized:', defaultPrograms);
 
-				if (windowName === 'desktop') {
-					const hash = window.location.hash.replace("#", "");
-					if (hash) {
-						console.log('Hash:', hash);
-						hashPathRef.current = hash.split('/');
-					}
-				}
+
 				if(hashPathRef.current.length){
 					//Pop the first element from the array and open the window
 					const progName = hashPathRef.current.shift();
 					openWindowByProgName(progName);
 				}
+
+				defaultProgramsInitialized.current = true;
+
 			}
 		};
 
@@ -219,6 +229,16 @@ const WindowManager = ({ programs, windowName, windowId, handleOpenFunction, set
 		// }
 	}, [windowName, programs, handleOpenWindow, handleHashChange, handleStateChange, functionMap, openWindowByProgName]);
 
+
+	// useEffect(() => {
+	// 	if(hashPath && hashPath.length && defaultProgramsInitialized.current){
+	// 		//Pop the first element from the array and open the window
+	// 		const progName = hashPath.shift();
+	// 		openWindowByProgName(progName);
+	// 		hashPathRef.current = hashPath;
+	// 	}
+	// }, [hashPath, openWindowByProgName]);	
+
 	// console.log(`Setting hash to ${newHash}`);
 	// if (window.location.hash !== newHash) {
 	// 	window.history.replaceState(null, null, newHash);
@@ -231,7 +251,7 @@ const WindowManager = ({ programs, windowName, windowId, handleOpenFunction, set
 		const frontWindow = getCurrentFrontWindow;
 
 		if (frontWindow ){
-			console.log('frontWindow:', frontWindow.id, _windowId, windowId);
+			//console.log('frontWindow:', frontWindow.id, _windowId, windowId);
 			downstreamHashes.current[_windowId] = hash.slice();
 			const _hash = hash.slice();
 			//console.log('frontWindow...', frontWindow);
@@ -271,11 +291,32 @@ const WindowManager = ({ programs, windowName, windowId, handleOpenFunction, set
 					}
 					const _windowId = windowName + '_' + window.windowId;
 
+					let title = window.title;
+					if(embedMode){
+						
+						if (window.embededTitle){
+							title = window.embededTitle;
+						}
+						//if downstreamHashes.current[window.windowId] is array, copy and pop the end off
+
+						if (downstreamHashes.current[window.windowId] && downstreamHashes.current[window.windowId].length){
+							const frontChildWindow = downstreamHashes.current[window.windowId].slice().pop();
+							
+							console.log('frontWindow:', frontChildWindow,);
+							if (frontChildWindow){
+								//remove the .exe and capitalise first letter
+								title = title + ' - ' + frontChildWindow.charAt(0).toUpperCase() + frontChildWindow.slice(1).replace('.exe', '')
+							}
+						}
+					}
+
 					return (
 						<WindowBorder
+							{...window}
+
 							key={_windowId}
 							windowId={_windowId}
-							title={window.title}
+							title={title}
 							onMinimize={() => minimizeWindow(window)}
 							onMaximize={(isMaximized) => {
 								if (isMaximized) {
@@ -289,11 +330,11 @@ const WindowManager = ({ programs, windowName, windowId, handleOpenFunction, set
 							onContextMenu={(position) => handleContextMenu(position, window.windowId)}
 							minimised={window.minimized}
 							maximised={window.maximized}
+							inContainer={inContainer}
 							initialPosition={window.initialPosition}
 							zIndex={window.zIndex}
 							appData={appData}
 							isActiveWindow={getCurrentFrontWindow.id === window.id}
-							{...window}
 						>
 							{window.menu && (
 								<MenuBar

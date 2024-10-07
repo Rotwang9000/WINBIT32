@@ -38,7 +38,7 @@ const Password = ({ onConfirm, onCancel, box, pinMode = false, options = {} }) =
 					<form name="passwordForm" ref={formRef}>
 					<div style={{ textAlign: 'center', marginBottom: '10px' }} className="dialog-field">
 						<img src='/images/safe.png' alt='key' style={{ width: '64px', height: '64px', marginRight: '10px' }} />
-						{pinMode ? <p>Enter a 6-digit PIN:</p> : (box === 'save' ? <p>Enter a password to encrypt the key phrase and save it as a KeyStore file:</p> : <p>Enter the password to decrypt the KeyStore file:</p>)}
+						{pinMode ? <p style={{width:'220px' }}> Enter a 6-digit PIN:</p> : (box === 'save' ? <p>Enter a password to encrypt the key phrase and save it as a KeyStore file:</p> : <p>Enter the password to decrypt the KeyStore file:</p>)}
 					</div>
 					<div className="dialog-field">
 						<label>{pinMode ? 'PIN' : 'Password'}:</label>

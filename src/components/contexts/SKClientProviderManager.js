@@ -52,10 +52,10 @@ const initialState = {
 		Chain.Maya,
 		Chain.Kujira,
 		Chain.Arbitrum,
-		Chain.Radix
+		Chain.Radix,
 		// Chain.Base,
-
-		// Chain.Chainflip
+		Chain.Solana,
+		Chain.Chainflip
 	],
 	providers: [],
 	tokens: [],
@@ -147,6 +147,8 @@ export const SKClientProviderManager = ({ children }) => {
 					FLIP: "https://api-chainflip.dwellir.com/204dd906-d81d-45b4-8bfa-6f5cc7163dbc",
 					ETH: "https://mainnet.infura.io/v3/c3b4e673639742a89bbddcb49895d568",
 					AVAX: "https://avalanche-mainnet.infura.io/v3/c3b4e673639742a89bbddcb49895d568",
+					DOT: "https://rpc.polkadot.io",
+					
 					// XRD: "https://radix-mainnet.rpc.grove.city/v1/456359ff",
 					// Radix: "https://radix-mainnet.rpc.grove.city/v1/456359ff",
 				},
@@ -222,8 +224,8 @@ export const SKClientProviderManager = ({ children }) => {
 				const keyRing = chain.cfKeyRing;
 
 				const chainflipToolbox = await ChainflipToolbox({
-					providerUrl: "wss://mainnet-archive.chainflip.io",
-						//"wss://api-chainflip.dwellir.com/204dd906-d81d-45b4-8bfa-6f5cc7163dbc",
+					providerUrl: "wss://api-chainflip.dwellir.com/204dd906-d81d-45b4-8bfa-6f5cc7163dbc",
+						
 					signer: keyRing,
 					generic: false,
 				});
@@ -542,6 +544,7 @@ export const useWindowSKClient = (key) => {
 					Chain.Polygon,
 					Chain.Solana,
 					Chain.THORChain,
+					Chain.Chainflip,
 					// Chain.Base,
 				];
 				setChains(chains);
@@ -651,19 +654,32 @@ export const useWindowSKClient = (key) => {
 				}
 				return promises;
 			}
+			//connect with phrase
+			skClient.setEncryptedKeystore(null);
+
+			// Set the password request function
+			skClient.setPasswordRequestFunction(() =>
+				null
+			);
+
+
 
 			for (const chain of connectChains) {
-			 promises.push(skClient.connectKeystore([chain], phrase.trim(), index).then(async () => {
-					console.log("Connected to chain", chain);
-					if(!result) return;
-					const wallet = await skClient.getWalletWithBalance(chain);
-					if(wallet){
-						callback(wallet, chain);
-					}
-
-				}).catch( (e) => {
-					console.log("Error connecting to chain", chain, e);
-				}));
+			 promises.push(
+					skClient
+						.connectSecureKeystore([chain], phrase.trim(), index)
+						.then(async () => {
+							console.log("Connected to chain", chain);
+							if (!result) return;
+							const wallet = await skClient.getWalletWithBalance(chain);
+							if (wallet) {
+								callback(wallet, chain);
+							}
+						})
+						.catch((e) => {
+							console.log("Error connecting to chain", chain, e);
+						})
+				);
 			}
 			return promises;
 		},
