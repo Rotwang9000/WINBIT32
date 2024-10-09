@@ -18,17 +18,25 @@ import {  networks } from 'bitcoinjs-lib';
 import { ECPairFactory, } from 'ecpair';
 import { fetchMNFTsForAccount } from './mnft/mnftfuncs';
 import { walletNames } from '../../win/includes/constants';
+import DialogBox from '../../win/DialogBox';
 
 
 const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave, handleStateChange, metadata, hashPath, sendUpHash, appData, handleOpenArray, onOpenWindow }) => {
 
 
 	const [isRandomPhrase, setIsRandomPhrase] = useIsolatedState(windowId, 'isRandomPhrase', (metadata?.phrase === undefined));
+	const [showWarningDialog, setShowWarningDialog] = useIsolatedState(windowId, 'showWarningDialog', null);
+	const { setLicense, embedMode } = appData;
 
 
 	const generatePhrase = useCallback((size = 12) => {
 		const entropy = size === 12 ? 128 : 256;
 		const phrase = generateMnemonic(wordlist, entropy);
+		if(showWarningDialog === null && embedMode){
+			//we set to false and will display on first click anywhere
+			setShowWarningDialog('clickshow');
+
+		}
 		setIsRandomPhrase(phrase);
 		return phrase;
 	}, [setIsRandomPhrase] );
@@ -39,7 +47,7 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 
 	const [connectedPhrase, setConnectedPhrase] = useIsolatedState(windowId, 'connectedPhrase', '');
 	const [connectionStatus, setConnectionStatus] = useIsolatedState(windowId, 'connectionStatus', 'disconnected');
-	const [statusMessage, setStatusMessage] = useIsolatedState(windowId, 'statusMessage', 'Save this phrase, or paste your own to connect.');
+	const [statusMessage, setStatusMessage] = useIsolatedState(windowId, 'statusMessage', 'Save this phrase, or use your own.');
 	const [phraseSaved, setPhraseSaved] = useIsolatedState(windowId, 'phraseSaved', false);
 	const [showProgress, setShowProgress] = useIsolatedState(windowId, 'showProgress', false);
 	const [progress, setProgress] = useIsolatedState(windowId, 'progress', 0);
@@ -50,7 +58,6 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 	// const [handleSubProgramClick, setHandleSubProgramClick] = useIsolatedState(windowId, 'handleSubProgramClick', null);
 	const [lockMode, setLockMode] = useIsolatedState(windowId, 'lockMode', false);
 
-	const { setLicense, embedMode } = appData;
 	const { skClient, setWallets, wallets, connectChains, disconnect, addWallet, resetWallets, connect } = useWindowSKClient(windowName);
 
 
@@ -61,6 +68,8 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 	const secureKeystoreFileInputRef = useRef(null);
 	const handleSubProgramClickRef = useRef(null);
 	const connectionAppRef = useRef(null);
+	const phraseTextRef = useRef(null);
+
 
 	const [programData, setProgramData] = useIsolatedState(windowId, 'programData', { phrase, statusMessage, setPhrase, setStatusMessage, connectionAppRef, embedMode });
 
@@ -75,7 +84,7 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 		if(phrase !== isRandomPhrase){
 			setIsRandomPhrase(false);
 		}
-	}, [isRandomPhrase, phrase, setIsRandomPhrase]);
+	}, [ phrase ]);
 
 
 
@@ -275,7 +284,7 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 				return false;
 			}
 		}
-		
+		setPhrase(chkPhrase);
 		return true;
 	}, [currentPhraseRef]);
 
@@ -447,7 +456,7 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 				setPhraseSaved(false);
 				setConnectionStatus('connected');
 				
-				setStatusMessage('Connected successfully' + ((isRandomPhrase)? ' using a random phrase. Save it before you use it, or lose your funds.': '.'));
+				setStatusMessage('Connected successfully' + ((isRandomPhrase !== false)? ' using a random phrase. Save it before you use it, or lose your funds.': '.'));
 				setTimeout(() => {
 					console.log('Connected successfully, hiding progress', wallets);
 					setShowProgress(false);
@@ -771,6 +780,101 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 		programData={programData}
 		appData={appData}
 	/>
+
+	if(embedMode){
+		//if showWarningDialog is false, then set an event to show it on a click anywhere
+		if(showWarningDialog === 'clickshow'){
+			setShowWarningDialog(false);
+			setTimeout(() => {
+			document.addEventListener('click', () => {
+				console.log('click anywhere');
+				setShowWarningDialog(true);
+			}, { once: true });
+			}, 2000);
+
+		}else if(showWarningDialog === true){
+			const buttons = [
+				{ label: 'Copy Key Phrase to Clipboard', onclick: () => { handleMenuClick ('copy'); setShowWarningDialog(false); } },
+				{ label: 'Save as Keystore', onclick: () => { handleMenuClick ('saveKeystore'); setShowWarningDialog(false); } },
+				{ label: 'Use Your Own Account', onclick: () => { setShowWarningDialog('wallets'); } },
+			]
+			
+
+
+			connectionAppRef.current = <>
+				<DialogBox
+					title="Warning"
+					icon="warning"
+					buttons={buttons}
+					onClose={() => setShowWarningDialog(false)}
+					buttonClass="dialog-buttons-column"
+					dialogClass="dialog-box-embed-warning"
+				>
+				<div className="warning-dialog">
+				<p><b>Connecting to a blank account.</b><br />
+				This is a decentralised service and so if you lose your key, you lose your funds with no help possible.<br />
+				</p>
+				</div>
+				</DialogBox>
+			{connectionAppRef.current}
+			</>
+		}else if(showWarningDialog === 'wallets'){
+			//show the wallet menu as buttons in a dialog
+			const buttons = walletMenu.map((item) => {
+				if(item.action === 'phrase') return { label: item.label, onclick: () => { setShowWarningDialog('phrase'); } };
+				return { label: item.label, onclick: () => { handleMenuClick(item.action); setShowWarningDialog(false); } };
+			});
+			buttons.push({ label: 'Cancel', onclick: () => { setShowWarningDialog(true); } });
+			connectionAppRef.current = <>
+				<DialogBox
+					title="Select Wallet"
+					icon="wallet"
+					buttons={buttons}
+					onClose={() => setShowWarningDialog(false)}
+					dialogClass="dialog-box-embed-warning"
+					buttonClass="dialog-buttons-column"
+				>
+				<div className="warning-dialog">
+				<p><b>Select a wallet to connect to.</b><br />
+				</p>
+				</div>
+				</DialogBox>
+			{connectionAppRef.current}
+			</>
+		}else if(showWarningDialog === 'phrase'){
+			//prompt for a phrase
+			const buttons = [
+				{ label: 'Connect', onclick: async () => { 
+					const p = phraseTextRef.current.value.trim();
+					const r = await checkValidPhrase(p);
+					if (r === true || r === 2) {
+						setShowWarningDialog(false);
+					// } else {
+					// 	setStatusMessage('Invalid phrase');
+					}
+				 } },
+				{ label: 'Cancel', onclick: () => { setShowWarningDialog(true); } },
+			];
+
+			connectionAppRef.current = <>
+				<DialogBox
+					title="Enter Key Phrase or Private Key"
+					icon="key"
+					buttons={buttons}
+					onClose={() => setShowWarningDialog(false)}
+					dialogClass="dialog-box-embed-warning"
+					buttonClass="dialog-buttons-column"
+				>
+				<div className="warning-dialog">
+				<p><b>Enter your Secret Key Phrase or Private Key:</b><br />
+				</p>
+				<textarea ref={phraseTextRef} className="dialog-textarea" />
+				</div>
+				</DialogBox>
+			{connectionAppRef.current}
+			</>
+		}
+	}
 
 
 	return (

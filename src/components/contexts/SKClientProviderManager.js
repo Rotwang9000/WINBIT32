@@ -658,8 +658,8 @@ export const useWindowSKClient = (key) => {
 			skClient.setEncryptedKeystore(null);
 
 			// Set the password request function
-			skClient.setPasswordRequestFunction(() =>
-				null
+			skClient.setPasswordRequestFunction((password) =>
+				{return password;}
 			);
 
 

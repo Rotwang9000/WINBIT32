@@ -9,7 +9,7 @@ import { SKClientProviderManager } from "./components/contexts/SKClientProviderM
 import { Toaster } from "react-hot-toast";
 import { StateSetterProvider } from "./components/contexts/SetterContext";
 import "./styles/win95.css";
-import { has } from "lodash";
+import { has, pad } from "lodash";
 import { hash } from "@radixdlt/radix-engine-toolkit";
 import { embed } from "bitcoinjs-lib/src/payments";
 
@@ -83,6 +83,11 @@ const App = () => {
 				const option = hashParts[0].replace("~", "");
 				//split by =
 				const optionParts = option.split("=");
+				if(optionParts[1] !== "true" && optionParts[1] !== "false"){
+					//base64 decode
+					optionParts[1] = atob(optionParts[1]);
+				}
+					
 				setAppDataKey(optionParts[0], optionParts[1]);
 				hashParts.shift();
 				window.history.replaceState(null, null, `#${hashParts.join("/")}`);
@@ -184,10 +189,17 @@ const App = () => {
 				)}
 				<Toaster
 					position="bottom-right"
+					containerStyle={{
+						zIndex: 999000000000000000,
+					}}
+
 					toastOptions={{
 						// Define default options
 						className: "toast",
 						duration: 3000,
+						style: {
+							paddingTop: "20px",
+						},
 					}}
 				/>
 			</StateSetterProvider>

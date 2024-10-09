@@ -334,21 +334,46 @@ memo=${memo}
 		}, [selectedToken, amount, recipientAddress, memo, textareaActive]);
 
 
-		useEffect(() => {
-			if(hashPath && hashPath.length > 0){
-				const parts = hashPath[0].split('&');
-				let data = [];
-				parts.forEach(part => {
-					const line = part.split('=');
-					const key = line[0];
-					if(!key) return;
-					const val = decodeURIComponent(line[1]);
-					data.push(`${key}=${val}`);
-				});
-				delayedParseIniData(data.join('\n'));
-				//parseIniData(data.join('\n'));
-			}
-		}, []);
+		// useEffect(() => {
+		// 	if(hashPath && hashPath.length > 0){
+		// 		const parts = hashPath[0].split('&');
+		// 		let data = [];
+		// 		parts.forEach(part => {
+		// 			const line = part.split('=');
+		// 			const key = line[0];
+		// 			if(!key) return;
+		// 			const val = decodeURIComponent(line[1]);
+		// 			data.push(`${key}=${val}`);
+		// 		});
+		// 		delayedParseIniData(data.join('\n'));
+		// 		//parseIniData(data.join('\n'));
+		// 	}
+		// }, []);
+
+
+	useEffect(() => {
+		if (hashPath && hashPath.length > 0 && tokens && tokens.length > 0) {
+			setTextareaActive(true);
+
+			const parts = hashPath[0].split('&');
+			let data = [];
+			parts.forEach(part => {
+				const line = part.split('=');
+				const key = line[0];
+				if (!key) return;
+				const val = decodeURIComponent(line[1]);
+				data.push(`${key}=${val}`);
+			});
+			delayedParseIniData(data.join('\n'));
+
+
+			setTimeout(() => {
+				setTextareaActive(false);
+			}, 1000);
+
+			//parseIniData(data.join('\n'));
+		}
+	}, [tokens]);
 
 
 

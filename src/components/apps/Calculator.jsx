@@ -3,7 +3,7 @@ import './styles/Calculator.css';
 import { evaluate } from 'mathjs';
 import { useIsolatedState, useIsolatedRef, useArrayState } from '../win/includes/customHooks';
 
-const Calculator = ({ onMenuAction, windowA, windowId}) => {
+const Calculator = ({ onMenuAction, windowA, windowId, appData}) => {
 	const [input, setInput] = useIsolatedState(windowId, 'input', ''); // Calculator input
 	const { array: history, appendItem: appendHistory } = useArrayState(windowId, 'history');
 
@@ -84,6 +84,9 @@ const Calculator = ({ onMenuAction, windowA, windowId}) => {
 		if(input === '666---') {
 			//change body class to red-frame
 			document.body.classList.add('red-frame');
+		}
+		else if(input === '689---'){
+			appData.setAppDataKey('embedMode', true);
 		}
 	}
 	, [input]);

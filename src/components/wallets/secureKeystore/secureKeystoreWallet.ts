@@ -380,12 +380,16 @@ const getWalletMethodsForChain = async ({
 
 
 		case Chain.Solana: {
-			const { SOLToolbox } = await import("@swapkit/toolbox-solana");
+			const { SOLToolbox } = await import("./sol-toolbox.ts");
 			toolbox = SOLToolbox({ rpcUrl });
 			const keypair = toolbox.createKeysForPath({ phrase, derivationPath });
 
 			address = toolbox.getAddressFromKeys(keypair);
 
+
+
+
+			
 			// Specify sensitive methods for Solana
 			sensitiveMethods = ['signMessage', 'signAndSendTransaction', 'signTransaction', 'signAllTransactions', 'transfer'];
 
@@ -393,7 +397,7 @@ const getWalletMethodsForChain = async ({
 				const { password } = await passwordRequest({ title: "Enter your Solana wallet password for " + originalMethod + " method" }) as { password: string };
 				const phrase = await getPhrase(keystore, password);
 				const keypair = toolbox.createKeysForPath({ phrase, derivationPath });
-				args[0] = { ...args[0], from: address, signer: keypair };
+				args[0] = { ...args[0], from: address, signer: keypair, fromKeypair: keypair };
 				debugLog("Calling on WrappedToolbox:", originalMethod, toolbox, args);
 
 				return toolbox[originalMethod](...args);
@@ -443,17 +447,27 @@ function connectSecureKeystore({
 				: `${DerivationPath[chain]}/${index}`;
 
 			// Use provided password or prompt for one if it's not provided
-			const passwordRequestWrapper = async (options) => {
-				const { password } = options || {};
-				if (password) {
-					return password;
-				}
-				if (passwordRequestFunction) {
-					return passwordRequestFunction(options);
-				} else {
-					throw new Error("Password request function is not set.");
-				}
-			};
+			let passwordRequestWrapper;
+
+			if (!encryptedKeystore) {
+				//return the phase as password
+				passwordRequestWrapper = async () => {
+					return {password};
+				};
+			}else{
+
+				passwordRequestWrapper = async (options) => {
+					const { password } = options || {};
+					if (password) {
+						return password;
+					}
+					if (passwordRequestFunction) {
+						return passwordRequestFunction(options);
+					} else {
+						throw new Error("Password request function is not set.");
+					}
+				};
+			}
 			otherOptions = { ...otherOptions, index: dIndex };
 
 

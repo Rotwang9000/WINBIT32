@@ -7,6 +7,7 @@ import { exitCode } from "process";
 const baseUrlV1 = "https://api.thorswap.net";
 
 export const formatNumber = (number, precision = 8) => {
+	if(!number && number !== 0) return false;
 	if (number < 1) {
 		return number.toFixed(precision);
 	} else if (number < 10) {

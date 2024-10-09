@@ -125,7 +125,7 @@ const TitleBar = ({
 							}
 						}
 					>
-							{!embedMode ? '🔗' : '⧉'}
+							{!embedMode ? '⛓' : '⧉'}
 					</div>}
 					{(!embedable || !embedMode) && 
 					<>
@@ -193,7 +193,7 @@ const TitleBar = ({
 					<div>
 				{shareOptions.map((option, index) => (
 					option &&
-					<div key={index}>
+					<div key={index} className="share-option">
 						<input type="checkbox" checked={option?.checked} onChange={(e) => {
 							const newOptions = [...shareOptions];
 							
@@ -201,7 +201,7 @@ const TitleBar = ({
 							setShareOptions(newOptions);
 							console.log('shareOptions', shareOptions);
 						}} />
-						{option.key} {option.value && <>: {option.value}</>}
+						{option.key} {option.value && <small>{option.value}</small>}
 					</div>
 				))}
 				</div>

@@ -278,7 +278,7 @@ const WindowManager = ({ programs, windowName, windowId, handleOpenFunction, set
 			sendUpHash(hashes, windowId);	
 		}
 	}
-	, [getCurrentFrontWindow]);
+	, [getCurrentFrontWindow, sendUpHash, windowId]);
 
 
 

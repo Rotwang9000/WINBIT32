@@ -116,6 +116,11 @@ const Portfolio = ({ providerKey, handleOpenArray, onOpenWindow, windowId }) => 
 		}
 
 		const walletTotals = wallets.map(wallet => {
+
+			if(usdPrices.length === 0){
+				return { totalUSD: false, chain: wallet.chain };
+			}
+
 			const totalUSD = wallet.balance.reduce((total, balance) => {
 				const token = getTokenfromBalanceToken(balance);
 				if(!token){
@@ -140,7 +145,7 @@ const Portfolio = ({ providerKey, handleOpenArray, onOpenWindow, windowId }) => 
 		console.log('Setting wallet totals: ', walletTotals);
 		setWalletTotals(walletTotals);
 
-	}, [usdPrices]);
+	}, [usdPrices, wallets]);
 
 		
 
@@ -164,7 +169,7 @@ const Portfolio = ({ providerKey, handleOpenArray, onOpenWindow, windowId }) => 
 			ticker: wallet.balance?.find(b => b.isGasAsset)?.ticker || wallet.balance[0]?.ticker,
 			balance: wallet.balance.find(b => b.isGasAsset)?.bigIntValue ? Number(wallet.balance.find(b => b.isGasAsset).bigIntValue) / Number(wallet.balance.find(b => b.isGasAsset).decimalMultiplier) : Number(wallet.balance[0].bigIntValue) / Number(wallet.balance[0].decimalMultiplier),
 			link: getExplorerAddressUrl(wallet.chain, wallet.address).replace('https://dashboard.radixdlt.com/address/', 'https://dashboard.radixdlt.com/account/'),
-			totalUSD: walletTotals.find(total => total.chain === wallet.chain)? '$'+formatNumber(walletTotals.find(total => total.chain === wallet.chain)?.totalUSD,2) : '-',
+			totalUSD: walletTotals.find(total => total.chain === wallet.chain)? '$'+(formatNumber(walletTotals.find(total => total.chain === wallet.chain)?.totalUSD,2) || '--') : '-',
 			totalUSDSort: walletTotals.find(total => total.chain === wallet.chain) ? walletTotals.find(total => total.chain === wallet.chain)?.totalUSD : Number(wallet.balance[0].bigIntValue) / 10 ** 36,
 			tokens: wallet.balance ? wallet.balance.map(token => ({
 				symbol: token.symbol,
@@ -245,9 +250,9 @@ const Portfolio = ({ providerKey, handleOpenArray, onOpenWindow, windowId }) => 
 				</div>
 			)
 		},
-		{ name: 'Balance', selector: row => row.totalUSD, right: true, hide: 'sm', sortable: true, sortField: row => row.totalUSDSort },
+		{ name: 'Balance', selector: row => row.totalUSD, right: true, hide: 'sm', sortable: true},
 		
-		{ name: 'Explorer', selector: row => (<a href={row.link} target="_blank" rel="noreferrer">⛓</a>), right: true, width: '50px'}
+		{ name: 'Explorer', selector: row => row.link, cell: row => (<a href={row.link} target="_blank" rel="noreferrer">⛓</a>), right: true, width: '50px'}
 
 	];
 
@@ -264,9 +269,9 @@ const Portfolio = ({ providerKey, handleOpenArray, onOpenWindow, windowId }) => 
 				expandableRowsComponent={ExpandedComponent}
 				height="100%"
 				width="100%"
-				sortFunction={(a, b) => a.totalUSDSort - b.totalUSDSort}
 				responsive
 				striped
+				defaultSortFieldId={1}
 			/>
 		</div>
 	);
