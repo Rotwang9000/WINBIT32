@@ -2,18 +2,19 @@ import React from 'react';
 import TitleBar from './TitleBar';
 import MenuBar from './MenuBar';
 
-const Window = ({ title, onMinimize, onMaximize, onClose, onContextMenu,  maximised, children, onClick,appData,  ...rest }) => {
+const Window = ({ title, onMinimize, onMaximize, onClose, onContextMenu,  maximised, children, onClick,appData, embeded, ...rest }) => {
 
 	let maximisedClass = '';
 	if(maximised) {
 		maximisedClass = 'maximised';
 	}
 
-	const {license} = appData;
+	const {license, embedMode} = appData;
 
 	return (
 		<div className={"window " + maximisedClass + (license? ' win95':'') } 	{...rest}> 
-			{/* Pass props to TitleBar, especially if they're required */}
+			{/* Pass props to TitleBar, especially if they're required */
+			!embeded &&
 			<TitleBar
 				title={title}
 				onContextMenu={onContextMenu}
@@ -23,8 +24,10 @@ const Window = ({ title, onMinimize, onMaximize, onClose, onContextMenu,  maximi
 				isMaximized={maximised}
 				onClick={onClick}
 				appData={appData}
+				embedMode={embedMode}
+				embedable={rest.embedable}
 				{...rest} />
-			
+			}
 			{children} {/* Any additional content */}
 		</div>
 	);

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import QRpop from "./qrpop";
 import DOSPrompt from "./components/win/DOSPrompt";
 import WelcomeWarning from "./components/WelcomeWarning";
@@ -9,6 +9,9 @@ import { SKClientProviderManager } from "./components/contexts/SKClientProviderM
 import { Toaster } from "react-hot-toast";
 import { StateSetterProvider } from "./components/contexts/SetterContext";
 import "./styles/win95.css";
+import { has, pad } from "lodash";
+import { hash } from "@radixdlt/radix-engine-toolkit";
+import { embed } from "bitcoinjs-lib/src/payments";
 
 const programs = getPrograms();
 
@@ -28,6 +31,10 @@ const App = () => {
 	const [loaded, setLoaded] = useState(false);
 	const [license, setLicense] = useState(false);
 	const [appData, setAppData] = useState({});
+	const hashPathRef = useRef(null);
+
+
+					// }
 
 	const handleExit = () => {
 		setShowDOSPrompt(true);
@@ -63,10 +70,35 @@ const App = () => {
 	// 	return newKey;
 	// };
 	useEffect(() => {
+		// if (windowName === "desktop") {
+
+		//get hash, split by /, if the first one begins ~ then set option with it then remove it
+		const hash = window.location.hash;
+		if(!hash){
+			hashPathRef.current = [];
+		}else{
+			const hashParts = hash.replace("#", "").split("/");
+			console.log("Hash Parts:", hashParts);
+			if (hashParts[0].startsWith("~")) {
+				const option = hashParts[0].replace("~", "");
+				//split by =
+				const optionParts = option.split("=");
+				const validOptions = ["embedMode"];
+				if(optionParts[1] !== "true" && optionParts[1] !== "false"){
+					//base64 decode
+					optionParts[1] = atob(optionParts[1]);
+				}
+				if(validOptions.includes(optionParts[0])){
+					setAppDataKey(optionParts[0], optionParts[1]);
+				}
+				hashParts.shift();
+				window.history.replaceState(null, null, `#${hashParts.join("/")}`);
+			}
+			hashPathRef.current = hashParts;
+		}
 		setTimeout(() => {
 			setLoaded(true);
 		}, 1500);
-
 	}, []);
 
 
@@ -100,26 +132,19 @@ const App = () => {
 	, [setAppData, license]);
 
 
+	const { embedMode } = appData || {};
 
 
 	return (
 		<SKClientProviderManager>
 			<StateSetterProvider>
-				<Toaster
-					position="bottom-right"
-					toastOptions={{
-						// Define default options
-						className: "toast",
-						duration: 3000,
-					}}
-				/>
 				{showQRPop && (
 					<QRpop onQRRead={handleQRRead} closeQrPop={toggleQRPop} />
 				)}
 				{showDOSPrompt ? (
 					<DOSPrompt />
 				) : (
-					<>
+					<>{hashPathRef.current !== null && (
 						<div
 							style={loaded ? { zIndex: 999 } : { zIndex: 0 }}
 							className="full-desktop"
@@ -134,11 +159,14 @@ const App = () => {
 									handleExit={handleExit}
 									sendUpHash={sendUpHash}
 									windowId={"desktop"}
+									hashPath={hashPathRef.current}
 									appData={appData}
 								/>
 							</WindowDataProvider>
 						</div>
+					)}
 						{loaded ? (
+							!embedMode &&
 							<>
 								<WelcomeWarning onExit={handleExit} />
 							</>
@@ -161,6 +189,21 @@ const App = () => {
 						)}
 					</>
 				)}
+				<Toaster
+					position="bottom-right"
+					containerStyle={{
+						zIndex: 999000000000000000,
+					}}
+
+					toastOptions={{
+						// Define default options
+						className: "toast",
+						duration: 3000,
+						style: {
+							paddingTop: "20px",
+						},
+					}}
+				/>
 			</StateSetterProvider>
 		</SKClientProviderManager>
 	);

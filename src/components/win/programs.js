@@ -134,7 +134,7 @@ export const getPrograms = () => {
 				},
 				{
 					progID: 2,
-					title: "Open		...",
+					title: "Open...",
 					icon: "💰",
 					progName: "winbit32.exe",
 					openLevel: -1,
@@ -146,6 +146,8 @@ export const getPrograms = () => {
 		{
 			progID: 7,
 			title: "Money Manager",
+			embededTitle: "WINBIT32.COM",
+			embedable: true,
 			icon: "💰",
 			progName: "winbit32.exe",
 			component: Winbit32,
@@ -170,8 +172,8 @@ export const getPrograms = () => {
 					initialPosition: {
 						x: "auto",
 						y: 0,
-						width: 375,
-						height: 650,
+						width: 400,
+						height: 675,
 						smHeight: 350,
 					},
 				},
@@ -282,7 +284,7 @@ export const getPrograms = () => {
 				},
 				{
 					progID: 8,
-					title: "Winbit TSS",
+					title: "Winbit TSSique",
 					icon: "🔐",
 					hideInToolbar: true,
 					progName: "tss.exe", // Added name for "Paintbrush"

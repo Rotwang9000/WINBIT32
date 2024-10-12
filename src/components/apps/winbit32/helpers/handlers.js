@@ -50,45 +50,45 @@ export const handleApprove = async (
 
 	const dotWallet = wallets.find((wallet) => wallet.chain === "DOT");
 
-// 	if("CHAINFLIP" === route.providers[0]){
+	if("CHAINFLIP" === route.providers[0]){
 		
 
-// 		const {broker, toolbox} = await chainflipBroker(dotWallet);
-// 		console.log("broker", broker);
-// 		console.log("toolbox", toolbox);
+		const {broker, toolbox} = await chainflipBroker(dotWallet);
+		console.log("broker", broker);
+		console.log("toolbox", toolbox);
 
-// // 		const requestSwapDepositAddress =
-// //   (toolbox: Awaited<ReturnType<typeof ChainflipToolbox>>) =>
-// //   async ({
-// //     route,
-// //     sellAsset,
-// //     buyAsset,
-// //     recipient: _recipient,
-// //     brokerCommissionBPS = 0,
-// //     ccmMetadata,
-// //     maxBoostFeeBps,
-// //   }: RequestSwapDepositAddressParams) => {
+// 		const requestSwapDepositAddress =
+//   (toolbox: Awaited<ReturnType<typeof ChainflipToolbox>>) =>
+//   async ({
+//     route,
+//     sellAsset,
+//     buyAsset,
+//     recipient: _recipient,
+//     brokerCommissionBPS = 0,
+//     ccmMetadata,
+//     maxBoostFeeBps,
+//   }: RequestSwapDepositAddressParams) => {
 
 
-// 		const targetAddress = await broker.requestSwapDepositAddress({
-// 			route: route,
-// 			sellAsset: swapFrom,
-// 			buyAsset: swapFrom,
-// 			recipient: wallet.address,
-// 			brokerCommissionBPS: 9
-// 		}).catch((error) => {
-// 			console.log("error", error);
-// 			setStatusText("Error getting target address " + error.message);
-// 			setSwapInProgress(false);
-// 			setShowProgress(false);
-// 			return null;
-// 		});
+		const targetAddress = await broker.requestSwapDepositAddress({
+			route: route,
+			sellAsset: swapFrom,
+			buyAsset: swapFrom,
+			recipient: wallet.address,
+			brokerCommissionBPS: 9
+		}).catch((error) => {
+			console.log("error", error);
+			setStatusText("Error getting target address " + error.message);
+			setSwapInProgress(false);
+			setShowProgress(false);
+			return null;
+		});
 
-// 		console.log("targetAddress", targetAddress);
-// 		setStatusText("Approving...");
-// 		setProgress(13);
-// 		return;
-// 	}
+		console.log("targetAddress", targetAddress);
+		setStatusText("Approving...");
+		setProgress(13);
+		return;
+	}
 
 
 
@@ -183,10 +183,8 @@ export const handleSwap = async (
 	setExplorerUrl,
 	setTxnStatus,
 	setTxnTimer,
-	setQuoteId,
 	tokens,
 	swapInProgress,
-	quoteId,
 	feeOption,
 	currentTxnStatus,
 	chainflipBroker,
@@ -206,6 +204,7 @@ export const handleSwap = async (
 		!destinationAddress ||
 		!routes ||
 		routes.length === 0
+
 	) {
 		setStatusText("Missing required fields or quote");
 		setSwapInProgress(false);
@@ -231,7 +230,7 @@ export const handleSwap = async (
 		selectedRoute === "optimal" && routes.length > 0
 			? routes.find(({ optimal }) => optimal) || routes[0]
 			: routes.find((route) => route.providers.join(", ") === selectedRoute);
-	if (!route) {
+	if (!route || route.disabled) {
 		setStatusText("No route selected");
 		setSwapInProgress(false);
 		setShowProgress(false);
@@ -385,6 +384,7 @@ export const handleSwap = async (
 			assetValue: assetValue,
 			from: wallet.address,
 			recipient: cfAddress.depositAddress,
+			isPDA: true
 		};
 		setProgress(13);
 		console.log("Sending funds:", txData, wallet);
@@ -523,7 +523,7 @@ export const handleSwap = async (
 	const txDetailsToSend = {
 		txn: {
 			hash: swapResponse,
-			quoteId: quoteId,
+			quoteId: route.quoteId,
 			route: routeWithTransaction,
 			feeOption: swapParams.feeOption,
 			recipient: swapParams.recipient,
@@ -625,6 +625,7 @@ export const delayedParseIniData = (
 	setFeeOption,
 	setSlippage,
 	setSelectedRoute,
+	setRoutes,
 	routes,
 	tokens,
 	setManualStreamingSet, setStreamingInterval, setStreamingNumSwaps
@@ -640,6 +641,7 @@ export const delayedParseIniData = (
 			setFeeOption,
 			setSlippage,
 			setSelectedRoute,
+			setRoutes,
 			routes,
 			tokens,
 			setManualStreamingSet,
@@ -658,6 +660,7 @@ const parseIniData = (
 	setFeeOption,
 	setSlippage,
 	setSelectedRoute,
+	setRoutes,
 	routes,
 	tokens,
 	setManualStreamingSet,
@@ -678,6 +681,8 @@ const parseIniData = (
 				if (fromToken) {
 					fromToken.identifier = fromToken.identifier.replace("0X", "0x");
 					setSwapFrom(fromToken);
+				}else{
+					console.log("Token not found", value.trim().toLowerCase());
 				}
 				break;
 			case "token_to":
@@ -688,6 +693,8 @@ const parseIniData = (
 				if (toToken) {
 					toToken.identifier = toToken.identifier.replace("0X", "0x");
 					setSwapTo(toToken);
+				}else{
+					console.log("Token not found", value.trim().toLowerCase());
 				}
 				break;
 			case "amount":
@@ -703,14 +710,32 @@ const parseIniData = (
 				setSlippage(parseFloat(value.trim()));
 				break;
 			case "route":
-				if (routes && routes.length > 0) {
-					setSelectedRoute(
-						routes.findIndex(
+				if(!value.trim() || value.trim() === "optimal"){
+					console.log("Setting optimal route", value.trim());
+					setSelectedRoute("optimal");	
+				}else{
+					let sr = '';
+					if (routes && routes.length > 0) {
+						const route = routes.find(
 							(route) => route.providers.join(", ") === value.trim()
-						)
+						);
+						if (route) {
+							sr = route.providers.join(", ");
+						}
+					}
+					if (!sr) 
+						{
+							//add the route to the list
+							sr = value.trim();
+							routes.push({providers: value.trim().split(","), optimal: false, disabled: true, });
+							console.log("Adding route", sr, value.trim(), routes);
+							setRoutes([...routes]);
+						}
+
+					console.log("Setting route", sr, value.trim(), routes);
+					setSelectedRoute(
+						sr
 					);
-				} else {
-					setSelectedRoute("optimal");
 				}
 				break;
 			case "swap_count":

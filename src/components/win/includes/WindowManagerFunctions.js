@@ -23,6 +23,7 @@ export function createNewWindow(
 ) {
 	if (typeof program === "string") {
 		const progString = program.toLowerCase();
+		console.log(progString, programs);
 		program = programs.find((p) => p.progName.toLowerCase() === progString);
 		if (!program) {
 			program = programs.find(
@@ -88,6 +89,7 @@ export function createNewWindow(
 		zIndex: newZIndex,
 		windowId: windowId,
 		metadata: metadata,
+		programData: programData || metadata,
 		close: () => closeWindow({ windowId: windowId }),
 		...deepCopy,
 	};

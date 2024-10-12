@@ -19,11 +19,15 @@ const WindowBorder = React.memo(({
 	appData,
 	icon,
 	isActiveWindow,
-	children
+	children,
+	embedable,
+	inContainer,
+	metadata
 }) => {
+
 	const { getWindowContent } = useWindowData();
 	const content = getWindowContent(windowId);
-	const { license } = appData;
+	const { license, embedMode } = appData;
 
 	const windowIcon = icon || content?.icon || '🖼️';
 		
@@ -38,9 +42,18 @@ const WindowBorder = React.memo(({
 		e.stopPropagation();
 	}, []);
 
+	if(embedMode && inContainer) {
+		if(isActiveWindow) {
+			maximised = true;
+		}else{
+			minimised = true;
+		}
+
+	}
 	if (minimised) {
 		return null;
 	}
+
 
 	if (maximised) {
 		return (
@@ -57,6 +70,9 @@ const WindowBorder = React.memo(({
 						appData={appData}
 						icon={windowIcon}
 						isActiveWindow={isActiveWindow}
+						embedable={embedable}
+						embeded={embedMode && inContainer}
+						metadata={metadata}
 					>
 						{children} {/* Additional content */}
 					</Window>

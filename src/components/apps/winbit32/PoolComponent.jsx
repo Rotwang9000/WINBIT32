@@ -4,7 +4,7 @@ import TokenChooserDialog from './TokenChooserDialog';
 import { useIsolatedState } from '../../win/includes/customHooks';
 import ProgressBar from '../../win/ProgressBar';
 import './styles/SwapComponent.css';
-import { getAssetValue } from './helpers/quote';
+import { getAssetValue, assetToFloat } from './helpers/quote';
 import { fetchTokenPrices } from './includes/tokenUtils';
 import { TransactionBuilder, RadixEngineToolkit, generateRandomNonce, ManifestBuilder, decimal, address, bucket, str  } from '@radixdlt/radix-engine-toolkit';
 import bigInt from 'big-integer';
@@ -12,8 +12,13 @@ import { Chain } from '@swapkit/sdk';
 import { getMemoForDeposit } from '@swapkit/helpers';
 import { mayaRadixRouter } from './helpers/maya'
 import { getTxnUrl } from './helpers/transaction'
-import { validateMnemonic } from '@scure/bip39'
-
+import DataTable, { defaultThemes } from 'react-data-table-component';
+import {
+	AssetValue,
+	BaseDecimal,
+	RequestClient,
+	SwapKitNumber,
+} from "@swapkit/helpers";
 
 
 const PoolComponent = ({ providerKey, windowId, programData }) => {
@@ -33,6 +38,354 @@ const PoolComponent = ({ providerKey, windowId, programData }) => {
 	const [txnStatus, setTxnStatus] = useIsolatedState(windowId, 'txnStatus', '');
 	const [liquidityMode, setLiquidityMode] = useIsolatedState(windowId, 'liquidityMode', 'sym'); // 'sym' or 'asym'
 	const [swapInProgress, setSwapInProgress] = useIsolatedState(windowId, 'swapInProgress', false);
+	const [positions, setPositions] = useIsolatedState(windowId, 'positions', []);
+
+
+	useEffect(() => {
+		if(progress === 100){
+			setTimeout(() => {
+				setShowProgress(false);
+			}, 2000);
+		}
+	}, [progress, setShowProgress]);
+
+
+	const setTableData = useCallback(async () => {
+
+		//Maya: https://midgard.mayachain.info/v2/member/maya1wjr2az7ccjvyvuuw3mp9j60vx0rcazyzya9vxw
+		// {
+		// 	"pools": [
+		// 		{
+		// 			"assetAdded": "0",
+		// 			"assetAddress": "",
+		// 			"assetDeposit": "0",
+		// 			"assetPending": "0",
+		// 			"assetWithdrawn": "0",
+		// 			"cacaoDeposit": "0",
+		// 			"dateFirstAdded": "1700127309",
+		// 			"dateLastAdded": "1700127309",
+		// 			"liquidityUnits": "712235670339",
+		// 			"pool": "KUJI.KUJI",
+		// 			"runeAdded": "15735511766258",
+		// 			"runeAddress": "maya1wjr2az7ccjvyvuuw3mp9j60vx0rcazyzya9vxw",
+		// 			"runePending": "0",
+		// 			"runeWithdrawn": "7921625219793"
+		// 		},
+		// 		{
+		// 			"assetAdded": "80372983",
+		// 			"assetAddress": "thor1wjr2az7ccjvyvuuw3mp9j60vx0rcazyzy2mqs7",
+		// 			"assetDeposit": "80372983",
+		// 			"assetPending": "0",
+		// 			"assetWithdrawn": "0",
+		// 			"cacaoDeposit": "50000000000",
+		// 			"dateFirstAdded": "1724767492",
+		// 			"dateLastAdded": "1724767492",
+		// 			"liquidityUnits": "67715762408",
+		// 			"pool": "THOR.RUNE",
+		// 			"runeAdded": "50000000000",
+		// 			"runeAddress": "maya1wjr2az7ccjvyvuuw3mp9j60vx0rcazyzya9vxw",
+		// 			"runePending": "0",
+		// 			"runeWithdrawn": "0"
+		// 		},
+		// 		{
+		// 			"assetAdded": "38261700000",
+		// 			"assetAddress": "account_rdx12ysqum0lh326w2armfett3zqqyaxythuz8du5yvqz2z5p02c8nngz8",
+		// 			"assetDeposit": "38261700000",
+		// 			"assetPending": "0",
+		// 			"assetWithdrawn": "0",
+		// 			"cacaoDeposit": "139860000000",
+		// 			"dateFirstAdded": "1726759882",
+		// 			"dateLastAdded": "1726759882",
+		// 			"liquidityUnits": "11256345339",
+		// 			"pool": "XRD.XRD",
+		// 			"runeAdded": "139860000000",
+		// 			"runeAddress": "maya1wjr2az7ccjvyvuuw3mp9j60vx0rcazyzya9vxw",
+		// 			"runePending": "0",
+		// 			"runeWithdrawn": "0"
+		// 		}
+		// 	]
+		// }
+
+
+
+
+		//Thor: https://mu.thorswap.net/fullmember?address=0xfa9836AAD0E7EC4B22EeeAdb14b860Ce23ECCa3b,0xfa9836AAD0E7EC4B22EeeAdb14b860Ce23ECCa3b,ltc1qldzqzvkjpr34apsjunal2rz00pt7a3j5u86fta,0xfa9836AAD0E7EC4B22EeeAdb14b860Ce23ECCa3b,qqegmhe2j3fg2yn2ynr2jdlz6v3fsgamk5vztgtqrq,0xfa9836AAD0E7EC4B22EeeAdb14b860Ce23ECCa3b,kujira1mxxzxwx2tjxka66urvng8rfh25munacgfm8sj2,account_rdx169agd2rahzxn2kc6y2se8gqxe74pkjypnnjxr7yrrj5a4eyclsevy7,0xfa9836AAD0E7EC4B22EeeAdb14b860Ce23ECCa3b,0xfa9836AAD0E7EC4B22EeeAdb14b860Ce23ECCa3b,14DzBiE4ZPgbqsye5j7QiNEwTxLvPPjvgxkXuhYMSq8HmDZE,bc1qpxkvdnrlrhdfk2v7z63kp740z6c3emjhx9e3vr,DJ1D4qF2gG15MaGUVRawBs687B8U2F6zuN,maya1wr4r0hw7apejj76xlxfxaw86r2v7r0ehlrwv76,thor1wr4r0hw7apejj76xlxfxaw86r2v7r0ehl5sqg2,4rcXk5WjaHzvKA2ixoNfTmqxb6ZGkX6GWVhLDyDGVLtD,cosmos1mxxzxwx2tjxka66urvng8rfh25munacgcn9glq,cFM6U1j8NeCVukWPrhip36ry2oE9QrEHoMgrYoHq1mhaTkgvt
+
+		// [
+		// 	{
+		// 		"assetAdded": "0",
+		// 		"assetAddress": "",
+		// 		"assetPending": "0",
+		// 		"assetWithdrawn": "0",
+		// 		"dateFirstAdded": "1712235217",
+		// 		"dateLastAdded": "1712235217",
+		// 		"pool": "ETH.FLIP-0X826180541412D574CF1336D22C0C0A287822678A",
+		// 		"poolAssetDepth": "157083428688",
+		// 		"poolRuneDepth": "71841564807",
+		// 		"poolUnits": "88610322889",
+		// 		"runeAdded": "3960000000",
+		// 		"runeAddress": "thor1wr4r0hw7apejj76xlxfxaw86r2v7r0ehl5sqg2",
+		// 		"runePending": "0",
+		// 		"runeWithdrawn": "0",
+		// 		"sharedUnits": "2313981629"
+		// 	}
+		// ]
+
+
+		// const fetch = require("fetch-retry")(global.fetch);
+
+		// const apiUrl = "https://mayanode.mayachain.info/mayachain"; // Adjust this URL as needed
+		// //convert number strings to numbers
+		// const mayaQuoteParams = {
+		// 	from_asset: quoteParams.sellAsset,
+		// 	to_asset: quoteParams.buyAsset,
+		// 	amount: quoteParams.sellAmount,
+		// 	destination: quoteParams.destinationAddress,
+		// 	affiliate_bps: quoteParams.affiliateFee,
+		// 	affiliate: quoteParams.affiliate,
+		// };
+
+		// const response = await fetch(`${apiUrl}/quote/swap` + new URLSearchParams(mayaQuoteParams), {
+		// 	method: "GET",
+		// 	retries: 5,
+		// 	retryDelay: function (attempt, error, response) {
+		// 		const delay = Math.pow(2, attempt) * 1000; // 1000, 2000, 4000
+		// 		console.log(`Retrying in ${delay}ms`, error, response);
+		// 		return delay;
+		// 	},
+		// 	retryOn: [504],
+		// });
+
+		// if (!response.ok) {
+		// 	throw new Error("Failed to fetch quote");
+		// }
+
+		// export async function getLiquidityPositions(addresses: string[]) {
+		// 	const rawLiquidityPositions = await getLiquidityPositionsRaw(addresses);
+
+		// 	return rawLiquidityPositions.map((rawPosition) => ({
+		// 		assetRegisteredAddress: rawPosition.assetAddress,
+		// 		asset: AssetValue.from({
+		// 			asset: rawPosition.pool,
+		// 			value: rawPosition.assetAdded,
+		// 			fromBaseDecimal: BaseDecimal.THOR,
+		// 		}),
+		// 		assetPending: AssetValue.from({
+		// 			asset: rawPosition.pool,
+		// 			value: rawPosition.assetPending,
+		// 			fromBaseDecimal: BaseDecimal.THOR,
+		// 		}),
+		// 		assetWithdrawn: AssetValue.from({
+		// 			asset: rawPosition.pool,
+		// 			value: rawPosition.assetWithdrawn,
+		// 			fromBaseDecimal: BaseDecimal.THOR,
+		// 		}),
+		// 		runeRegisteredAddress: rawPosition.runeAddress,
+		// 		rune: AssetValue.from({
+		// 			asset: "THOR.RUNE",
+		// 			value: rawPosition.runeAdded,
+		// 			fromBaseDecimal: BaseDecimal.THOR,
+		// 		}),
+		// 		runePending: AssetValue.from({
+		// 			asset: "THOR.RUNE",
+		// 			value: rawPosition.runePending,
+		// 			fromBaseDecimal: BaseDecimal.THOR,
+		// 		}),
+		// 		runeWithdrawn: AssetValue.from({
+		// 			asset: "THOR.RUNE",
+		// 			value: rawPosition.runeWithdrawn,
+		// 			fromBaseDecimal: BaseDecimal.THOR,
+		// 		}),
+		// 		poolShare: new SwapKitNumber(rawPosition.sharedUnits).div(rawPosition.poolUnits),
+		// 		dateLastAdded: rawPosition.dateLastAdded,
+		// 		dateFirstAdded: rawPosition.dateFirstAdded,
+		// 	}));
+		// }
+
+
+
+		// const body = await response.json();
+		//get all addresses from wallets
+		const addresses = Object.values(wallets).map(w => w.address);
+		const mayaAddress = addresses.find(a => a.startsWith('maya'));
+		
+		const fetch = require("fetch-retry")(global.fetch);
+		let fetchURLs = [];
+		//fetch both maya and thorchain pools using fetch
+		fetchURLs.push(`https://mu.thorswap.net/fullmember?address=${addresses.join(',')}`);
+		if(mayaAddress){
+			fetchURLs.push(`https://midgard.mayachain.info/v2/member/${mayaAddress}`);
+		}
+
+		const responses = await Promise.all(fetchURLs.map(url => fetch(url, {
+			method: "GET",
+			retries: 5,
+			headers: {
+				"Content-Type": "application/json",
+			},
+			retryDelay: function (attempt, error, response) {
+				const delay = Math.pow(2, attempt) * 1000; // 1000, 2000, 4000
+				console.log(`Retrying in ${delay}ms`, error, response);
+				return delay;
+			}
+		})));
+
+		//filter out non 200 responses
+		const validResponses = responses.filter(r => r.ok);
+
+		const bodies = await Promise.all(validResponses.map(r => r.json()));
+
+		console.log('bodies', bodies);
+		let positions = [];
+		// convert to some common format
+		for (const body of bodies) {
+			if(!body){ continue; }
+			if(body.pools){ //maya
+				for (const pool of body.pools) {
+					//Get proper data: https://mayanode.mayachain.info/mayachain/pool/KUJI.KUJI/liquidity_provider/maya1wjr2az7ccjvyvuuw3mp9j60vx0rcazyzya9vxw
+					const mayaPoolURL = `https://mayanode.mayachain.info/mayachain/pool/${pool.pool}/liquidity_provider/${pool.runeAddress}`;
+					const mayaPoolResponse = await fetch(mayaPoolURL, {
+						method: "GET",
+						retries: 5,
+						headers: {
+							"Content-Type": "application/json",
+						},
+						retryDelay: function (attempt, error, response) {
+							const delay = Math.pow(2, attempt) * 1000; // 1000, 2000, 4000
+							console.log(`Retrying in ${delay}ms`, error, response);
+							return delay;
+						}
+					});
+					const mayaPoolBody = await mayaPoolResponse.json();
+					console.log('mayaPoolBody', mayaPoolBody);
+					// {
+					// 	"asset": "KUJI.KUJI",
+					// 		"cacao_address": "maya1wjr2az7ccjvyvuuw3mp9j60vx0rcazyzya9vxw",
+					// 			"last_add_height": 3722586,
+					// 				"last_withdraw_height": 6888996,
+					// 					"units": "712235670339",
+					// 						"pending_cacao": "0",
+					// 							"pending_asset": "0",
+					// 								"cacao_deposit_value": "1278296254580",
+					// 									"asset_deposit_value": "2539558057",
+					// 										"withdraw_counter": "0",
+					// 											"bonded_nodes": null,
+					// 												"cacao_redeem_value": "516799902207",
+					// 													"asset_redeem_value": "7423811202",
+					// 														"luvi_deposit_value": "0",
+					// 															"luvi_redeem_value": "8696629",
+					// 																"luvi_growth_pct": "0.000000000000000000"
+					// }
+
+
+					const position = {
+						chain: 'maya',
+						pool: pool.pool,
+						assetAdded: pool.assetAdded,
+						assetAddress: pool.assetAddress,
+						assetPending: pool.assetPending,
+						assetWithdrawn: pool.assetWithdrawn,
+						dateFirstAdded: pool.dateFirstAdded,
+						dateLastAdded: pool.dateLastAdded,
+						liquidityUnits: pool.liquidityUnits,
+						runeAdded: pool.runeAdded,
+						runeAddress: pool.runeAddress,
+						runePending: pool.runePending,
+						runeWithdrawn: pool.runeWithdrawn,
+						runeDeposit: pool.cacaoDeposit,
+						asset: AssetValue.from({
+							asset: pool.pool,
+							value: mayaPoolBody.asset_redeem_value,
+							fromBaseDecimal: BaseDecimal.MAYA,
+						}),
+						base: AssetValue.from({
+							asset: "MAYA.CACAO",
+							value: (mayaPoolBody.cacao_redeem_value/100).toString().split('.')[0],
+							fromBaseDecimal: BaseDecimal.MAYA,
+							
+						}),
+					};
+					positions.push(position);
+				}
+			}else if(body.length){ //thorchain
+				for (const pool of body) {
+
+					//https://thornode.thorswap.net/thorchain/pool/ETH.FLIP-0X826180541412D574CF1336D22C0C0A287822678A/liquidity_provider/thor1wr4r0hw7apejj76xlxfxaw86r2v7r0ehl5sqg2
+
+					const thorPoolURL = `https://thornode.thorswap.net/thorchain/pool/${pool.pool}/liquidity_provider/${pool.runeAddress}`;
+					const thorPoolResponse = await fetch(thorPoolURL, {
+						method: "GET",
+						retries: 5,
+						headers: {
+							"Content-Type": "application/json",
+						},
+						retryDelay: function (attempt, error, response) {
+							const delay = Math.pow(2, attempt) * 1000; // 1000, 2000, 4000
+							console.log(`Retrying in ${delay}ms`, error, response);
+							return delay;
+						}
+					});
+					const thorPoolBody = await thorPoolResponse.json();
+					console.log('thorPoolBody', thorPoolBody);
+
+
+
+					const position = {
+						chain: 'thorchain',
+						pool: pool.pool,
+						asset: AssetValue.from({
+									asset: pool.pool,
+									value: thorPoolBody.asset_redeem_value,
+									fromBaseDecimal: BaseDecimal.THOR,
+								}),
+						base: AssetValue.from({
+									asset: "THOR.RUNE",
+									value: thorPoolBody.rune_redeem_value,
+									fromBaseDecimal: BaseDecimal.THOR,
+								}),
+						assetAdded: pool.assetAdded,
+						assetAddress: pool.assetAddress,
+						assetPending: pool.assetPending,
+						assetWithdrawn: pool.assetWithdrawn,
+						dateFirstAdded: pool.dateFirstAdded,
+						dateLastAdded: pool.dateLastAdded,
+						poolAssetDepth: pool.poolAssetDepth,
+						poolRuneDepth: pool.poolRuneDepth,
+						liquidityUnits: pool.poolUnits,
+						runeAdded: pool.runeAdded,
+						runeAddress: pool.runeAddress,
+						runePending: pool.runePending,
+						runeWithdrawn: pool.runeWithdrawn,
+						sharedUnits: pool.sharedUnits,
+					};
+					positions.push(position);
+				}
+			}
+
+		}
+		console.log('positions', positions);
+
+		setPositions(positions);
+
+
+
+
+
+	}, [setPositions, wallets]);
+
+
+	useEffect(() => {
+
+		const timeout = setTimeout(() => {
+			setTableData();
+		}, 5000);
+
+		return () => {
+			clearTimeout(timeout);
+		};
+	}, [setTableData]);
+
+
 
 	const openTokenDialog = (setter, toFrom) => {
 		setCurrentTokenSetter(() => setter);
@@ -374,6 +727,60 @@ const PoolComponent = ({ providerKey, windowId, programData }) => {
 		}
 	};
 
+
+	const handleWithdrawLiquidity = async (position, percent) => {
+		if (swapInProgress) return;
+
+		setSwapInProgress(true);
+		setShowProgress(true);
+		setProgress(0);
+		try {
+			setTxnUrls([]);
+			const baseAsset = position.base;
+			const assetValue = position.asset;
+
+			const from = wallets.find(w => w.chain === baseAsset.chain).address;
+			const to = wallets.find(w => w.chain === assetValue.chain).address;
+
+			const liquidityParams = {
+				assetValue, 
+				percent, 
+				from, 
+				to 
+			};
+
+			const pluginName = baseAsset.chain.toLowerCase() === 'maya' ? 'mayachain' : 'thorchain';
+
+			console.log('liquidityParams', liquidityParams, pluginName);
+			setProgress(13);
+			skClient[pluginName].withdraw(liquidityParams).then((txn) => {
+				setStatusText('Liquidity withdrawn successfully');
+
+				setTxnUrls([getTxnUrl(txn, baseAsset.chain, skClient)]);
+				setProgress(100);
+
+
+
+			}
+			).catch((error) => {
+				console.error('Error withdrawing liquidity:', error);
+				setStatusText(`Error: ${error.message}`);
+			}).finally(() => {
+				setSwapInProgress(false);
+				setShowProgress(false);
+			});
+		} catch (error) {
+			console.error('Error withdrawing liquidity:', error);
+			setStatusText(`Error: ${error.message}`);
+			setSwapInProgress(false);
+			setShowProgress(false);
+		}
+	};
+
+			
+
+
+
 	const tokenChooserDialog = useMemo(() => {
 		if (isTokenDialogOpen) {
 			return (
@@ -417,8 +824,74 @@ const PoolComponent = ({ providerKey, windowId, programData }) => {
 
 	};
 
+
+
+	const customStyles = {
+		header: {
+			style: {
+				minHeight: '56px',
+			},
+		},
+		headRow: {
+			style: {
+				borderTopStyle: 'solid',
+				borderTopWidth: '1px',
+				borderTopColor: defaultThemes.default.divider.default,
+			},
+		},
+		cells: {
+			style: {
+				'&:not(:last-of-type)': {
+					borderRightStyle: 'solid',
+					borderRightWidth: '1px',
+					borderRightColor: defaultThemes.default.divider.default,
+				},
+			},
+		},
+	};
+
+
+
+
+
+	const ExpandedComponent = ({ data }) => (
+		<div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', 'alignItems': 'center' }}>
+			{//form with button to remove liquidity with % slider
+			}
+			<div style={{ display: 'flex', flexDirection: 'row', 'alignItems': 'center', 'justifyContent': 'center', paddingTop: '30px', paddingBottom:'30px' }}>
+				<button onClick={() => handleWithdrawLiquidity(data, 100)} disabled={swapInProgress}>Withdraw All</button>
+				<button onClick={() => handleWithdrawLiquidity(data, 50)}  disabled={swapInProgress}>Withdraw 50%</button>
+				<button onClick={() => handleWithdrawLiquidity(data, 25)}  disabled={swapInProgress}>Withdraw 25%</button>
+				<button onClick={() => handleWithdrawLiquidity(data, 10)} disabled={swapInProgress}>Withdraw 10%</button>
+			</div>
+			{/* table with all the other data
+			<div style={{ display: 'flex', flexDirection: 'column', 'alignItems': 'center' }}>
+				<div>Asset: {data.asset.ticker}</div>
+				<div>Asset Amount: {assetToFloat(data.asset)}</div>
+				<div>Base: {data.base.ticker}</div>
+				<div>Base Amount: {assetToFloat(data.base)}</div>
+				<div>Pool: {data.pool}</div>
+				<div>Added: {data.dateFirstAdded}</div>
+				<div>Last Added: {data.dateLastAdded}</div>
+				<div>Units: {data.liquidityUnits}</div>
+				<div>Shared Units: {data.sharedUnits}</div>
+				</div> */}
+
+
+
+		</div>
+	);
+
+	const columns = [
+
+		{ name: 'Asset', selector: row => row.asset.ticker,  sortable: true },
+		{ name: 'Asset Amount', selector: row => row.asset.bigIntValue,sortable: true, cell: row => <div>{assetToFloat(row.asset)}</div> },
+		{ name: 'Base', selector: row => row.base.ticker, sortable: true },
+		{ name: 'Base Amount', selector: row => row.base.bigIntValue, sortable: true, cell: row => <div>{assetToFloat(row.base)}</div> },
+	];
+
 	return (
-		<div className="swap-component">
+		<div className="swap-component" style={{display:'flex', flexDirection:'column'}}>
 			<div className="swap-toolbar">
 				<button className="swap-toolbar-button" onClick={handleAddLiquidity}>
 					<div className="swap-toolbar-icon">➕</div>
@@ -447,7 +920,7 @@ const PoolComponent = ({ providerKey, windowId, programData }) => {
 								</div>
 			}
 
-			<div className="field-group token-select-group">
+			<div className="field-group token-select-group" style={{flexGrow:0,paddingTop:'10px',paddingBottom:'10px'}}>
 				<div className="token-select radio-select">
 					<label><input
 						type="radio"
@@ -488,15 +961,31 @@ const PoolComponent = ({ providerKey, windowId, programData }) => {
 				</div>
 			</div>
 
-			<div className="field-group amt-box">
+			<div className="field-group amt-box" style={{ flexGrow: 0, paddingTop: '10px', paddingBottom: '10px' }}>
 				<label>Base Asset Amount</label>
 				<input type="number" value={baseAmount} onChange={e => setBaseAmount(e.target.value)} disabled={swapInProgress} />
 				<label>Asset Amount</label>
 				<input type="number" value={assetAmount} onChange={e => setAssetAmount(e.target.value)} disabled={swapInProgress} />
 			</div>
-						<div className="optimal-route" style={{width:'75%', margin:'auto', marginTop: '20px'}}>
-			<div className="infobox">To view your pots, save your account as a keystore (File Menu) and connect at <a target="_blank" href="https://app.eldorado.market/earn#">Eldorado</a><br />Affiliate Fee 0.1%</div>
-</div>
+				<div style={{ maxWidth: '100%', flexGrow: 1 }}>
+					<DataTable
+						data={positions}
+						columns={columns}
+						dense
+						customStyles={customStyles}
+						expandOnRowClicked
+						expandableRows
+						expandableRowsComponent={ExpandedComponent}
+						height="100%"
+						width="100%"
+						responsive
+						striped
+						defaultSortFieldId={1}
+					/>
+				</div>
+
+			<div className="infobox" style={{textAlign:"right", borderStyle:'inset'}}>Affiliate Fee 0.1%</div>
+
 			{tokenChooserDialog}
 		</div>
 	);

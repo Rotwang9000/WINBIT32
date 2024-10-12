@@ -42,8 +42,10 @@ export const minimizeWindow = (dispatch) => (window) => {
 	dispatch({ type: "MINIMIZE_WINDOW", payload: window });
 };
 
-export const restoreWindow = (dispatch) => (window) => {
+export const restoreWindow = (dispatch, getState) => (window) => {
 	dispatch({ type: "RESTORE_WINDOW", payload: window });
+
+	//bringToFront(window.windowId)(dispatch, getState);
 };
 
 export const maximizeWindow = (dispatch) => (window) => {

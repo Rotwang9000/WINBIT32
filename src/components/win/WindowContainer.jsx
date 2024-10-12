@@ -24,16 +24,16 @@ const WindowContainer = ({
 	...rest
 }) => {
 	const [currentSubWindows, setCurrentSubWindows] = useIsolatedState(windowId, 'subWindows', initialSubWindows);
-	const [handleSubProgramClick, setHandleSubProgramClick] = useIsolatedState(windowId, 'handleSubProgramClick', () => { });
+	// const [handleSubProgramClick, setHandleSubProgramClick] = useIsolatedState(windowId, 'handleSubProgramClick', () => { });
 
-	const handleSubProgramClickRef = useRef(handleSubProgramClick);
+	const handleSubProgramClickRef = useRef(null);
 
-	useEffect(() => {
-		handleSubProgramClickRef.current = handleSubProgramClick;
-	}, [handleSubProgramClick]);
+	// useEffect(() => {
+	// 	handleSubProgramClickRef.current = handleSubProgramClick;
+	// }, [handleSubProgramClick]);
 
 	const handleSetSubProgramClick = useCallback((handle) => {
-
+		
 		handleSubProgramClickRef.current = handle;
 		onSubProgramClick(handleSubProgramClickRef.current);
 
@@ -43,24 +43,27 @@ const WindowContainer = ({
 		//do a deep check and see if has really changed
 		// if (handle === handleSubProgramClick) return;
 
-		if(((typeof handleSubProgramClick === 'function') && (typeof handle === 'function')) && (handleSubProgramClick.toString() === handle.toString())) return;
+		// if(((typeof handleSubProgramClick === 'function') && (typeof handle === 'function')) && (handleSubProgramClick.toString() === handle.toString())) return;
 		
-
-		setHandleSubProgramClick(handle, true);
+		// console.log(handle);
+		//setHandleSubProgramClick(handle, true);
 	
-	}, [handleSubProgramClick, onSubProgramClick, setHandleSubProgramClick]);
+	}, [onSubProgramClick]);
 
 	useEffect(() => {
 		setCurrentSubWindows(initialSubWindows);
 	}, [initialSubWindows, setCurrentSubWindows]);
 
+	const { embedMode } = appData || {};
 
 	return (
 		<div className="window-container">
+			{!embedMode &&
 			<div className="control-area">
 				<Toolbar subPrograms={subPrograms} onSubProgramClick={handleSubProgramClickRef.current} programData={programData} />
 				{children}
 			</div>
+			}
 			<div className={`desk-style sub-window-area-${windowId}`}>
 				<WindowManager
 					programs={currentSubWindows}
@@ -78,8 +81,10 @@ const WindowContainer = ({
 					sendUpHash={sendUpHash}
 					windowId={windowId}
 					appData={appData}
+					inContainer={true}
 				/>
 			</div>
+			{embedMode && children}
 		</div>
 	);
 };

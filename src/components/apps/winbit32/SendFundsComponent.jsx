@@ -18,7 +18,7 @@ import { generateSendReport } from './helpers/report';
 
 
 
-const SendFundsComponent = ({ providerKey, windowId, onOpenWindow, metadata }) => {
+const SendFundsComponent = ({ providerKey, windowId, onOpenWindow, metadata, hashPath, sendUpHash }) => {
 		var bigInt = require("big-integer");
 		const { skClient, wallets, tokens } = useWindowSKClient(providerKey);
 		const [recipientAddress, setRecipientAddress] = useIsolatedState(windowId, 'recipientAddress', '');
@@ -149,6 +149,11 @@ const SendFundsComponent = ({ providerKey, windowId, onOpenWindow, metadata }) =
 				memo,
 				recipient: recipientAddress,
 				};
+
+				if(sendingWallet.chain === 'SOL'){
+					txData.isPDA = true;
+				}
+
 			}
 			
 			setProgress(13);
@@ -216,6 +221,20 @@ memo=${memo}
 				setIniData(data);
 			}
 		};
+
+		useEffect(() => {
+			if(iniData){
+				//convert to query string style and sendUpHash
+				const lines = iniData.split('\n');
+				let query = '';
+				lines.forEach(line => {
+					const [key, value] = line.split('=');
+					if (!key || !value) return;
+					query += key + '=' + encodeURIComponent(value) + '&';
+				});
+				sendUpHash([query], windowId);
+			}
+		}, [iniData, sendUpHash, windowId]);
 
 		const delayedParseIniData = (_iniData) => {
 			setIniData(_iniData);
@@ -313,6 +332,50 @@ memo=${memo}
 		useEffect(() => {
 			updateIniData();
 		}, [selectedToken, amount, recipientAddress, memo, textareaActive]);
+
+
+		// useEffect(() => {
+		// 	if(hashPath && hashPath.length > 0){
+		// 		const parts = hashPath[0].split('&');
+		// 		let data = [];
+		// 		parts.forEach(part => {
+		// 			const line = part.split('=');
+		// 			const key = line[0];
+		// 			if(!key) return;
+		// 			const val = decodeURIComponent(line[1]);
+		// 			data.push(`${key}=${val}`);
+		// 		});
+		// 		delayedParseIniData(data.join('\n'));
+		// 		//parseIniData(data.join('\n'));
+		// 	}
+		// }, []);
+
+
+	useEffect(() => {
+		if (hashPath && hashPath.length > 0 && tokens && tokens.length > 0) {
+			setTextareaActive(true);
+
+			const parts = hashPath[0].split('&');
+			let data = [];
+			parts.forEach(part => {
+				const line = part.split('=');
+				const key = line[0];
+				if (!key) return;
+				const val = decodeURIComponent(line[1]);
+				data.push(`${key}=${val}`);
+			});
+			delayedParseIniData(data.join('\n'));
+
+
+			setTimeout(() => {
+				setTextareaActive(false);
+			}, 1000);
+
+			//parseIniData(data.join('\n'));
+		}
+	}, [tokens]);
+
+
 
 		return (
 			<>

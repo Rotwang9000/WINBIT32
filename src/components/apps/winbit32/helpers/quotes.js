@@ -4,6 +4,7 @@ import { amountInBigNumber } from "./quote";
 import { SwapKitApi } from "@swapkit/api";
 import bigInt from "big-integer";
 import { getQuoteFromMaya } from "./maya";
+import { forEach } from "lodash";
 
 export const getQuotes = async (
 	oSwapFrom,
@@ -14,7 +15,6 @@ export const getQuotes = async (
 	setStatusText,
 	setQuoteStatus,
 	setRoutes,
-	setQuoteId,
 	chooseWalletForToken,
 	tokens,
 	setDestinationAddress,
@@ -23,7 +23,11 @@ export const getQuotes = async (
 	selectedRoute,
 	license,
 	setReportData,
-	iniData
+	iniData,
+	thorAffiliate,
+	mayaAffiliate,
+	setThorAffiliate,
+	setMayaAffiliate
 ) => {
 	const thisDestinationAddress =
 		destinationAddress || chooseWalletForToken(swapTo, wallets)?.address;
@@ -40,48 +44,109 @@ export const getQuotes = async (
 			swapFrom.identifier.includes("/") || swapTo.identifier.includes("/")
 				? 16
 				: 32;
+		
+		let providerGroups = [["MAYACHAIN", "MAYACHAIN_STREAMING", "THORCHAIN", "THORCHAIN_STREAMING", "CHAINFLIP"]];
+		const affiliates = [mayaAffiliate, thorAffiliate];	
+		if(thorAffiliate !== mayaAffiliate){
+			providerGroups = [
+				["MAYACHAIN", "MAYACHAIN_STREAMING", "CHAINFLIP"],
+
+				["THORCHAIN", "THORCHAIN_STREAMING"],
+			];
+		}
 
 		//if(swapFrom.identifier === "XRD.XRD"){
 		//https://mayanode.mayachain.info/mayachain/quote/swap?from_asset=XRD.XRD&to_asset=MAYA.CACAO&amount=2000000000&destination=maya1jpvhncl60k5q3dljw354t0ccg54j3pkjcag9ef&affiliate_bps=44&affiliate=cs
 		//}
 
-		const swapKitQuoteParams = {
-			sellAsset: swapFrom.identifier,
-			buyAsset: swapTo.identifier,
-			sellAmount: parseFloat(amount).toString(),
-			sourceAddress: chooseWalletForToken(swapFrom, wallets)?.address,
-			destinationAddress: thisDestinationAddress,
-			affiliateFee: basisPoints,
-			affiliate: "be",
-			slippage: slippage,
-			providers: ["MAYACHAIN", "MAYACHAIN_STREAMING", "THORCHAIN", "THORCHAIN_STREAMING"],
-		};
+		const quotesParams = providerGroups.map((providerGroup, index) => {
+			const affiliate = affiliates[index];
+			const swapKitQuoteParams = {
+				sellAsset: swapFrom.identifier,
+				buyAsset: swapTo.identifier,
+				sellAmount: parseFloat(amount).toString(),
+				sourceAddress: chooseWalletForToken(swapFrom, wallets)?.address,
+				destinationAddress: thisDestinationAddress,
+				affiliateFee: basisPoints,
+				affiliate: affiliate,
+				slippage: slippage,
+				providers: providerGroup
+			};
+			return swapKitQuoteParams;
+		});
 
 		console.log("AssetValue", swapFrom.identifier, swapTo.identifier);
 
-		const thorSwapQuoteParams = {
-			sellAsset: swapFrom.identifier,
-			sellAmount: amount,
-			buyAsset: swapTo.identifier,
-			senderAddress: chooseWalletForToken(swapFrom, wallets)?.address,
-			recipientAddress: thisDestinationAddress,
-			slippage: slippage,
-			affiliateBasisPoints: basisPoints.toString(),
-			affiliateAddress: "be",
-		};
+		// const thorSwapQuoteParams = {
+		// 	sellAsset: swapFrom.identifier,
+		// 	sellAmount: amount,
+		// 	buyAsset: swapTo.identifier,
+		// 	senderAddress: chooseWalletForToken(swapFrom, wallets)?.address,
+		// 	recipientAddress: thisDestinationAddress,
+		// 	slippage: slippage,
+		// 	affiliateBasisPoints: basisPoints.toString(),
+		// 	affiliateAddress: "be",
+		// };
+
+		const quoteFuncs = quotesParams.map((quoteParams) => {
+			return () => getQuoteFromSwapKit(quoteParams);
+		});
+
+		let retry = false;
 
 		try {
-			const [swapKitResponse, thorSwapResponse] = await Promise.allSettled([
-				//SwapKitApi.getSwapQuoteV2(swapKitQuoteParams),
-				getQuoteFromSwapKit(swapKitQuoteParams),
-				getQuoteFromMaya(swapKitQuoteParams, swapTo, swapFrom)
-				// getQuoteFromThorSwap(thorSwapQuoteParams),
-			]);
+			const responses = await Promise.allSettled(quoteFuncs.map((quoteFunc) => quoteFunc()));
+			
+			//				getQuoteFromMaya(quotesParams[0], swapTo, swapFrom),
 
-			const swapKitRoutes =
-				swapKitResponse.status === "fulfilled"
-					? processSwapKitRoutes(swapKitResponse.value, swapTo.decimals)
-					: [];
+			// let responses = [];
+			// quotesParams.forEach(async (quotesParam) => {
+			// 	try{
+			// 		const response = await getQuoteFromSwapKit(quotesParam);
+			// 		responses.push(response);
+			// 	}catch(error){
+			// 		console.error("Error getting quotes from SwapKit:", error);
+			// 		responses.push({status: "rejected", value: error.message});
+			// 	}
+			// });
+
+			let swapKitRoutes = [];
+			//check for thornameAffiliate errors
+
+			responses.forEach((response, index) => {
+				console.log("response", response);
+				if(!response.value) {
+					return;
+				}
+				if (response.value.providerErrors && response.value.providerErrors.length) {
+					response.value.providerErrors.forEach((error) => {
+
+						if (error.errorCode === "thornameAffiliate") {
+							retry = true;
+							if (index === 0) {
+								console.log("setting mayaAffiliate to be");
+								setMayaAffiliate("be");
+							} else {
+								console.log("setting thorAffiliate to be");
+								setThorAffiliate("be");
+							}
+						}
+					});
+				}
+				if (response.status === "fulfilled") {
+					console.log("response", response);
+					
+					const routes =	processSwapKitRoutes(response.value, swapTo.decimals)
+					swapKitRoutes = swapKitRoutes.concat(routes);
+				}
+			});
+			if (retry) {
+				throw new Error("Retry");
+			}
+			// const swapKitRoutes =
+			// 	swapKitResponse.status === "fulfilled"
+			// 		? processSwapKitRoutes(swapKitResponse.value, swapTo.decimals)
+			// 		: [];
 			// const thorSwapRoutes =
 			// 	thorSwapResponse.status === "fulfilled"
 			// 		? processThorSwapRoutes(thorSwapResponse.value)
@@ -96,23 +161,18 @@ export const getQuotes = async (
 			}
 			console.log("combinedRoutes", combinedRoutes);
 			setRoutes(combinedRoutes);
-			setQuoteId(
-				swapKitResponse.status === "fulfilled"
-					? swapKitResponse.value.quoteId
-					: thorSwapResponse.value.quoteId
-			);
+			// setQuoteId(swapKitRoutes?.value?.quoteId);
 
 			//see if selectedRoute is still valid
 			const selectedRouteIndex = combinedRoutes.findIndex(
-				(route) => route.providers.join(',') === currentSelectedRoute
-			);	
-			if (!selectedRouteIndex || selectedRouteIndex === -1){ 
-				setSelectedRoute('optimal');
+				(route) => route.providers?.join(",") === currentSelectedRoute
+			);
+			if (!selectedRouteIndex || selectedRouteIndex === -1) {
+				setSelectedRoute("optimal");
 			}
 
-			
 			//const optimalRoute =
-		//		combinedRoutes.find(({ optimal }) => optimal) || combinedRoutes[0];
+			//		combinedRoutes.find(({ optimal }) => optimal) || combinedRoutes[0];
 
 			//optimal is one with biggest 	optimalRoute.expectedOutputMaxSlippage ||	optimalRoute.expectedBuyAmountMaxSlippage
 			const optimalRoute = combinedRoutes.reduce((a, b) => {
@@ -131,7 +191,6 @@ export const getQuotes = async (
 			combinedRoutes.forEach((route) => {
 				route.optimal = route === optimalRoute;
 			});
-			
 
 			const optimalRouteTime =
 				optimalRoute.estimatedTime === null ||
@@ -145,7 +204,6 @@ export const getQuotes = async (
 					: typeof optimalRoute.estimatedTime === "object"
 					? optimalRoute.estimatedTime.total / 60
 					: optimalRoute.estimatedTime / 60;
-
 
 			if (!destinationAddress)
 				setDestinationAddress(chooseWalletForToken(swapTo, wallets)?.address);
@@ -162,43 +220,53 @@ export const getQuotes = async (
 				swapTo.decimals
 			).toString();
 
-			if(setReportData){
-				console.log('setting report data');
-				setReportData({
-					Quote:{
-					quoteId: swapKitResponse.value.quoteId,
-					quoteTime: new Date().toISOString(),
-					quoteStatus: swapKitResponse.status === "fulfilled" ? "Success" : "Error",
-					quoteError: swapKitResponse.status === "fulfilled" ? "" : swapKitResponse.reason,
-					quoteSource: "SwapKit",
-					quoteParams: swapKitQuoteParams,
-					quoteResponse: swapKitResponse.value,
-					quoteRoutes: combinedRoutes,
-					optimalRoute: optimalRoute,
-					optimalRouteTime: optimalRouteTime,
-					expectedUSD: expectedUSD,
-					minRecd: minRecd,
-					destinationAddress: thisDestinationAddress,
-					swapFrom: swapFrom,
-					swapTo: swapTo,
-					amount: amount,
-					slippage: slippage,
-					license: license,
-					},
-					ini: iniData,
-					Log: [swapKitQuoteParams, combinedRoutes] 
+			if (setReportData) {
+				console.log("setting report data");
+				let quoteSection = {};
+				forEach(providerGroups, (providerGroup, index) => {
+					const swapKitQuoteParams = quotesParams[index];
+					const swapKitResponse = responses[index];
+					quoteSection[providerGroup[0]] = {
+						quoteId: swapKitResponse.value?.quoteId,
+
+						quoteStatus:
+							swapKitResponse.status === "fulfilled" ? "Success" : "Error",
+						quoteError:
+							swapKitResponse.status === "fulfilled"
+								? ""
+								: swapKitResponse.reason,
+						quoteSource: "SwapKit",
+						quoteParams: swapKitQuoteParams,
+						quoteResponse: swapKitResponse.value,
+					};
 				});
 
-
+				setReportData({
+					Quote: {
+						quoteTime: new Date().toISOString(),
+						quotes: quoteSection,
+						quoteRoutes: combinedRoutes,
+						optimalRoute: optimalRoute,
+						optimalRouteTime: optimalRouteTime,
+						expectedUSD: expectedUSD,
+						minRecd: minRecd,
+						destinationAddress: thisDestinationAddress,
+						swapFrom: swapFrom,
+						swapTo: swapTo,
+						amount: amount,
+						slippage: slippage,
+						license: license,
+					},
+					ini: iniData,
+					Log: [quotesParams, combinedRoutes],
+				});
 			}
-
 
 			setQuoteStatus(
 				<>
 					<div>
 						<span>Optimal: </span>
 						<span>{optimalRoute.providers.join(", ")} </span>
-
 					</div>
 					<div>
 						<span>Time (In+Swap+Out)</span>
@@ -240,11 +308,12 @@ export const getQuotes = async (
 				</>
 			);
 
-
 			return combinedRoutes;
-
 		} catch (error) {
 			console.error("Error getting quotes from both sources:", error);
+			if(error.message === "Retry" || retry){
+				return 'retry';
+			}
 			setQuoteStatus("Error getting quotes: " + error.message);
 		}
 	}
@@ -252,8 +321,9 @@ export const getQuotes = async (
 
 const processSwapKitRoutes = (response, swapToDecimals) => {
 	const routes = response.routes;
-
+	const quoteid = response.quoteId;
 	routes.forEach((route) => {
+		route.quoteId = quoteid;
 		if (route.memo && (route.providers.includes("MAYACHAIN") || route.providers.includes("MAYACHAIN_STREAMING"))){
 			route.originalMemo = route.memo;
 			const parts = route.memo.split(":");
