@@ -183,10 +183,8 @@ export const handleSwap = async (
 	setExplorerUrl,
 	setTxnStatus,
 	setTxnTimer,
-	setQuoteId,
 	tokens,
 	swapInProgress,
-	quoteId,
 	feeOption,
 	currentTxnStatus,
 	chainflipBroker,
@@ -525,7 +523,7 @@ export const handleSwap = async (
 	const txDetailsToSend = {
 		txn: {
 			hash: swapResponse,
-			quoteId: quoteId,
+			quoteId: route.quoteId,
 			route: routeWithTransaction,
 			feeOption: swapParams.feeOption,
 			recipient: swapParams.recipient,

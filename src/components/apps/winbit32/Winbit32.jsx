@@ -92,6 +92,9 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 		if (connectedRef.current !== connectedPhrase) {
 			connectedRef.current = connectedPhrase;
 		}
+		if (metadata && metadata?.phrase !== connectedPhrase){
+			metadata.phrase = connectedPhrase;
+		}
 	}, [connectedPhrase]);
 
 
@@ -562,6 +565,7 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 					{ label: 'Exit', action: 'exit' },
 				],
 			},
+			embedMode? {}:
 			{
 				label: 'Edit',
 				submenu: [
@@ -598,7 +602,9 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 			label: 'Edit',
 			submenu: [
 				{ label: 'Copy', action: 'copy' },
-				{ label: 'Paste', action: 'paste' },
+				//no paste in embed mode
+				embedMode? {}:
+					{ label: 'Paste', action: 'paste' },
 			],
 		},	
 		{

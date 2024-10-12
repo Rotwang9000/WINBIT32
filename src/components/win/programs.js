@@ -172,8 +172,8 @@ export const getPrograms = () => {
 					initialPosition: {
 						x: "auto",
 						y: 0,
-						width: 375,
-						height: 650,
+						width: 400,
+						height: 675,
 						smHeight: 350,
 					},
 				},

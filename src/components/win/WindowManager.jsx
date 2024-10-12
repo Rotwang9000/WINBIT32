@@ -107,8 +107,8 @@ const WindowManager = ({ programs, windowName, windowId, handleOpenFunction, set
 
 
 
-	const openWindowByProgName = useCallback((progName) => {
-		createNewWindow(programs, windowName, handleOpenArray, programData, highestZIndexRef, (newIndex) => dispatch({ type: 'SET_HIGHEST_Z_INDEX', payload: newIndex }), dispatch, closeWindow, progName);
+	const openWindowByProgName = useCallback((progName, metadata) => {
+		createNewWindow(programs, windowName, handleOpenArray, programData, highestZIndexRef, (newIndex) => dispatch({ type: 'SET_HIGHEST_Z_INDEX', payload: newIndex }), dispatch, closeWindow, progName, metadata, true);
 	}, [closeWindow, dispatch, handleOpenArray, programData, programs]);
 
 	const handleHashChange = useCallback(() => {
@@ -210,8 +210,18 @@ const WindowManager = ({ programs, windowName, windowId, handleOpenFunction, set
 
 				if(hashPathRef.current.length){
 					//Pop the first element from the array and open the window
-					const progName = hashPathRef.current.shift();
-					openWindowByProgName(progName);
+					const progName = hashPathRef.current.shift().split('~');
+					if(progName.length > 1){
+						//open the window with the metadata
+						const metadata = JSON.parse(atob(progName[1]));
+						console.log('Opening window with metadata:', metadata);
+
+						openWindowByProgName(progName[0], metadata);
+
+
+					}else{
+						openWindowByProgName(progName[0]);
+					}
 				}
 
 				defaultProgramsInitialized.current = true;
@@ -259,7 +269,7 @@ const WindowManager = ({ programs, windowName, windowId, handleOpenFunction, set
 			sendUpHash(_hash, windowId);
 			
 		}else{
-			console.log('No front window', frontWindow, windowId, _windowId);
+			// console.log('No front window', frontWindow, windowId, _windowId);
 			//downstreamHashes.current[_windowId].push('');
 		}
 	}
@@ -302,7 +312,7 @@ const WindowManager = ({ programs, windowName, windowId, handleOpenFunction, set
 						if (downstreamHashes.current[window.windowId] && downstreamHashes.current[window.windowId].length){
 							const frontChildWindow = downstreamHashes.current[window.windowId].slice().pop();
 							
-							console.log('frontWindow:', frontChildWindow,);
+							// console.log('frontWindow:', frontChildWindow,);
 							if (frontChildWindow){
 								//remove the .exe and capitalise first letter
 								title = title + ' - ' + frontChildWindow.charAt(0).toUpperCase() + frontChildWindow.slice(1).replace('.exe', '')
@@ -335,6 +345,7 @@ const WindowManager = ({ programs, windowName, windowId, handleOpenFunction, set
 							zIndex={window.zIndex}
 							appData={appData}
 							isActiveWindow={getCurrentFrontWindow.id === window.id}
+							metadata={window.metadata}
 						>
 							{window.menu && (
 								<MenuBar

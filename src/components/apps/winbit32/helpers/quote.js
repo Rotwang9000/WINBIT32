@@ -112,6 +112,25 @@ export function amountInBigInt(amount, decimals) {
 	return bigIntValue;
 }
 
+export function amountInFloat(bigIntValue, decimals) {
+	//bigIntValue is bigint
+	//convert to float
+
+	//convert amount to bigint with decimals
+	const float = parseFloat(bigIntValue) / 10 ** decimals;
+
+	return float;
+}
+
+export function assetToFloat(asset){
+
+
+	return amountInFloat(asset.bigIntValue, asset.decimal);
+
+}
+
+
+
 export async function getAssetValue(asset, value){
 
 	//value is float

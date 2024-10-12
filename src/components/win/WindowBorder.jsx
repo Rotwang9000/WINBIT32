@@ -21,7 +21,8 @@ const WindowBorder = React.memo(({
 	isActiveWindow,
 	children,
 	embedable,
-	inContainer
+	inContainer,
+	metadata
 }) => {
 
 	const { getWindowContent } = useWindowData();
@@ -40,7 +41,7 @@ const WindowBorder = React.memo(({
 		console.log('handleStart');
 		e.stopPropagation();
 	}, []);
-	
+
 	if(embedMode && inContainer) {
 		if(isActiveWindow) {
 			maximised = true;
@@ -71,6 +72,7 @@ const WindowBorder = React.memo(({
 						isActiveWindow={isActiveWindow}
 						embedable={embedable}
 						embeded={embedMode && inContainer}
+						metadata={metadata}
 					>
 						{children} {/* Additional content */}
 					</Window>

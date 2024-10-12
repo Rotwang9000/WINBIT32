@@ -49,7 +49,7 @@ const SwapComponent = ({ providerKey, windowId, programData, appData, onOpenWind
 	const currentTxnStatus = useRef(txnStatus);
 	const [statusText, setStatusText] = useIsolatedState(windowId, 'statusText', '');
 	const [quoteStatus, setQuoteStatus] = useIsolatedState(windowId, 'quoteStatus', (license ? '0.16% Affiliate fee' : 'Aff. fee 0.32% (0.16% for synths)'));
-	const [quoteId, setQuoteId] = useIsolatedState(windowId, 'quoteId', '');
+	//const [quoteId, setQuoteId] = useIsolatedState(windowId, 'quoteId', '');
 	const [maxAmount, setMaxAmount] = useIsolatedState(windowId, 'maxAmount', '0');
 	const [txnTimer, setTxnTimer] = useIsolatedState(windowId, 'txnTimer', null);
 	const [usersDestinationAddress, setUsersDestinationAddress] = useIsolatedState(windowId, 'usersDestinationAddress', '');
@@ -62,6 +62,8 @@ const SwapComponent = ({ providerKey, windowId, programData, appData, onOpenWind
 	const [streamingNumSwaps, setStreamingNumSwaps] = useIsolatedState(windowId, 'streamingNumSwaps', 0); //0 = optimal, otherwise max 20
 	const [manualStreamingSet, setManualStreamingSet] = useIsolatedState(windowId, 'manualStreamingSet', false);
 	const [reportData, setReportData] = useIsolatedState(windowId, 'reportData', {});
+	const [thorAffiliate, setThorAffiliate] = useIsolatedState(windowId, 'thorAffiliate', metadata.tcName?.split('.')[0].toLowerCase().replace([/[^a-z0-9]/g], '') || 're');
+	const [mayaAffiliate, setMayaAffiliate] = useIsolatedState(windowId, 'mayaAffiliate', metadata.mayaName?.split('.')[0].toLowerCase().replace([/[^a-z0-9]/g], '') || 'be');
 	const bigInt = require('big-integer');
 
 	const txnTimerRef = useRef(txnTimer);
@@ -88,7 +90,8 @@ const SwapComponent = ({ providerKey, windowId, programData, appData, onOpenWind
 
 	const doGetQuotes = useCallback((force = false) => {
 		if (swapInProgress && !force) return;
-		getQuotes(swapFrom,
+
+		const r = getQuotes(swapFrom,
 			swapTo,
 			amount,
 			destinationAddress,
@@ -96,7 +99,6 @@ const SwapComponent = ({ providerKey, windowId, programData, appData, onOpenWind
 			setStatusText,
 			setQuoteStatus,
 			setRoutes,
-			setQuoteId,
 			chooseWalletForToken,
 			tokens,
 			setDestinationAddress,
@@ -105,9 +107,19 @@ const SwapComponent = ({ providerKey, windowId, programData, appData, onOpenWind
 			selectedRoute,
 			license,
 			(txnStatus === '') ? setReportData : () => { },
-			iniData
+			iniData,
+			thorAffiliate, mayaAffiliate,
+			setThorAffiliate, setMayaAffiliate
 		);
-	}, [swapInProgress, swapFrom, swapTo, amount, destinationAddress, slippage, setStatusText, setQuoteStatus, setRoutes, setQuoteId, tokens, setDestinationAddress, setSelectedRoute, wallets]);
+
+
+		// if(r==='retry'){
+		// 	setTimeout(() => {
+		// 		doGetQuotes();
+		// 	}, 3000);
+		// }
+
+	}, [swapInProgress, swapFrom, swapTo, amount, destinationAddress, slippage, setStatusText, setQuoteStatus, setRoutes, tokens, setDestinationAddress, setSelectedRoute, wallets, mayaAffiliate, thorAffiliate, license, txnStatus, iniData, setReportData]);
 
 
 
@@ -188,9 +200,9 @@ swap_count=${streamingNumSwaps}
 
 		return () => {
 			clearTimeout(timer);
-			console.log("Clearing timer");
+			// console.log("Clearing timer");
 		};
-	}, [swapFrom, swapTo, amount, destinationAddress, slippage, doGetQuotes]);
+	}, [swapFrom, swapTo, amount, destinationAddress, slippage, doGetQuotes, mayaAffiliate, thorAffiliate]);
 
 	useEffect(() => {
 		if (txnHash !== '') checkTxnStatus(txnHash, txnHash + '', 0, swapInProgress, txnStatus, setStatusText, setSwapInProgress, setShowProgress, setProgress, setTxnStatus, setTxnTimer, txnTimerRef);
@@ -449,7 +461,6 @@ swap_count=${streamingNumSwaps}
 					setStatusText,
 					setQuoteStatus,
 					setRoutes,
-					setQuoteId,
 					chooseWalletForToken,
 					tokens,
 					setDestinationAddress,
@@ -583,10 +594,8 @@ swap_count=${streamingNumSwaps}
 					setExplorerUrl,
 					setTxnStatus,
 					setTxnTimer,
-					setQuoteId,
 					tokens,
 					swapInProgress,
-					quoteId,
 					feeOption,
 					currentTxnStatus,
 					chainflipBroker,

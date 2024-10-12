@@ -83,12 +83,14 @@ const App = () => {
 				const option = hashParts[0].replace("~", "");
 				//split by =
 				const optionParts = option.split("=");
+				const validOptions = ["embedMode"];
 				if(optionParts[1] !== "true" && optionParts[1] !== "false"){
 					//base64 decode
 					optionParts[1] = atob(optionParts[1]);
 				}
-					
-				setAppDataKey(optionParts[0], optionParts[1]);
+				if(validOptions.includes(optionParts[0])){
+					setAppDataKey(optionParts[0], optionParts[1]);
+				}
 				hashParts.shift();
 				window.history.replaceState(null, null, `#${hashParts.join("/")}`);
 			}
