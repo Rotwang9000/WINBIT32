@@ -62,7 +62,7 @@ const SwapComponent = ({ providerKey, windowId, programData, appData, onOpenWind
 	const [streamingNumSwaps, setStreamingNumSwaps] = useIsolatedState(windowId, 'streamingNumSwaps', 0); //0 = optimal, otherwise max 20
 	const [manualStreamingSet, setManualStreamingSet] = useIsolatedState(windowId, 'manualStreamingSet', false);
 	const [reportData, setReportData] = useIsolatedState(windowId, 'reportData', {});
-	const [thorAffiliate, setThorAffiliate] = useIsolatedState(windowId, 'thorAffiliate', metadata.tcName?.split('.')[0].toLowerCase().replace([/[^a-z0-9]/g], '') || 're');
+	const [thorAffiliate, setThorAffiliate] = useIsolatedState(windowId, 'thorAffiliate', metadata.tcName?.split('.')[0].toLowerCase().replace([/[^a-z0-9]/g], '') || 'be');
 	const [mayaAffiliate, setMayaAffiliate] = useIsolatedState(windowId, 'mayaAffiliate', metadata.mayaName?.split('.')[0].toLowerCase().replace([/[^a-z0-9]/g], '') || 'be');
 	const bigInt = require('big-integer');
 
@@ -473,7 +473,7 @@ swap_count=${streamingNumSwaps}
 				);
 
 				setProgress(13 + (i * 7));
-				if (r.length === 0) {
+				if (!r || r.length === 0) {
 					continue;
 				}
 
