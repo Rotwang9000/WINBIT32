@@ -23,7 +23,7 @@ import { secureKeystoreWallet } from '../wallets/secureKeystore/index.ts';
 // import { polkadotWallet } from "@swapkit/wallet-polkadotjs";
 // import { talismanWallet } from "@swapkit/wallet-talisman";
 // import { trezorWallet } from "@swapkit/wallet-trezor";
-import { xdefiWallet } from "@swapkit/wallet-xdefi";
+import { xdefiWallet, XDEFI_SUPPORTED_CHAINS } from "@swapkit/wallet-xdefi";
 import { keystoreWallet } from "@swapkit/wallet-keystore";
 
 
@@ -53,7 +53,7 @@ const initialState = {
 		Chain.Kujira,
 		Chain.Arbitrum,
 		Chain.Radix,
-		// Chain.Base,
+		Chain.Base,
 		Chain.Solana,
 		Chain.Chainflip
 	],
@@ -528,25 +528,7 @@ export const useWindowSKClient = (key) => {
 			} else if (firstWord === "XDEFI") {
 				console.log("Connecting with xdefi");
 				//add xdefiwallet to skclient
-				const chains = [
-					Chain.Arbitrum,
-					Chain.Avalanche,
-					Chain.BinanceSmartChain,
-					Chain.Bitcoin,
-					Chain.BitcoinCash,
-					Chain.Cosmos,
-					Chain.Dogecoin,
-					Chain.Ethereum,
-					Chain.Kujira,
-					Chain.Litecoin,
-					Chain.Maya,
-					Chain.Optimism,
-					Chain.Polygon,
-					Chain.Solana,
-					Chain.THORChain,
-					Chain.Chainflip,
-					// Chain.Base,
-				];
+				const chains = XDEFI_SUPPORTED_CHAINS;
 				setChains(chains);
 
 				if (await skClient.connectXDEFI(chains)) {

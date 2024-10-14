@@ -126,7 +126,7 @@ const TitleBar = ({
 	const shareURL = siteName + '#' + shareHash;
 	const embedURL = siteName + '#~embedMode=true/' + shareHash;
 	// console.log(shareOptions);
-	const embedCode = `<iframe src="${embedURL}" width="465" height="800" style="border: none;" allow="clipboard-write"></iframe>`;
+	const embedCode = `<iframe src="${embedURL}" width="465" height="800" style="border: none;" allow="clipboard-write, camera"></iframe>`;
 
 	const openInNewTab = () => {
 		const newTabJson = (metadata.phrase) ? JSON.stringify({ phrase: metadata.phrase }) : '';

@@ -477,29 +477,32 @@ function connectSecureKeystore({
 			}else{
 				keystore = null;
 			}
+			try{
+				const { address, walletMethods, balance } = await getWalletMethodsForChain({
+					derivationPath,
+					chain,
+					api: apis[chain],
+					rpcUrl: rpcUrls[chain],
+					covalentApiKey,
+					ethplorerApiKey,
+					keystore,
+					blockchairApiKey,
+					stagenet,
+					passwordRequest: passwordRequestWrapper,
+					password,
+					otherOptions,
+				});
 
-			const { address, walletMethods, balance } = await getWalletMethodsForChain({
-				derivationPath,
-				chain,
-				api: apis[chain],
-				rpcUrl: rpcUrls[chain],
-				covalentApiKey,
-				ethplorerApiKey,
-				keystore,
-				blockchairApiKey,
-				stagenet,
-				passwordRequest: passwordRequestWrapper,
-				password,
-				otherOptions,
-			});
-
-			addChain({
-				...walletMethods,
-				chain,
-				address,
-				balance: balance? balance : walletMethods.getBalance ? await walletMethods.getBalance(address) : [],
-				// walletType: WalletOption.KEYSTORE,
-			});
+				addChain({
+					...walletMethods,
+					chain,
+					address,
+					balance: balance? balance : walletMethods.getBalance ? await walletMethods.getBalance(address) : [],
+					// walletType: WalletOption.KEYSTORE,
+				});
+			}catch(e){
+				console.log("Error", e);
+			}
 		});
 
 		await Promise.all(promises);

@@ -257,7 +257,8 @@ input{
 @media screen and (max-width: 600px) {
 	.dialog-box-row-adapt {
 		flex-direction: column;
-			aspect-ratio: 266/466;
+			aspect-ratio: auto;
+		height: 75vh;
 	}
 }
 
@@ -440,10 +441,11 @@ input{
 	height: auto;
 	top: 50%;
 	left: 50%;
-	transform: translate(-50%, -50%);
+	transform: translate(-51%, -60%);
 	z-index: 9999;
 	width: max-content;
-
+	max-width: 96vw;
+	max-height: 90vh;
 }
 
 

@@ -1,6 +1,6 @@
 {
   "name": "winbit32",
-  "version": "0.99.RC.0",
+  "version": "1.0",
   "private": false,
   "homepage": "https://winbit32.com",
   "dependencies": {
@@ -17,6 +17,7 @@
     "@radixdlt/radix-dapp-toolkit": "^2.0.3",
     "@radixdlt/radix-engine-toolkit": "^1.0.5",
     "@scure/bip39": "^1.2.1",
+    "@solana/spl-token-registry": "^0.2.4574",
     "@swapkit/plugin-chainflip": "^1.0.0-rc.72",
     "@swapkit/sdk": "^1.1.8",
     "@swapkit/tokens": "nightly",

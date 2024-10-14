@@ -218,7 +218,8 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 				let chkPrivateKeyBuffer;
 				//try decoding chkPrivateKey as HEX for EVM
 				chkPrivateKeyBuffer = Buffer.from(chkPrivateKey, 'hex');
-				if (chkPrivateKeyBuffer.length === 32) {
+				console.log('Trying as a private key for EVM', chkPrivateKeyBuffer, chkPrivateKeyBuffer.length);
+				if (chkPrivateKeyBuffer.length === 32 || chkPrivateKeyBuffer.length === 16 || chkPrivateKeyBuffer.length === 64) {
 					//convert to uint8array
 					const entropy = new Uint8Array(chkPrivateKeyBuffer);
 					try{
