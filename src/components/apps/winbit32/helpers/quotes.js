@@ -62,15 +62,15 @@ export const getQuotes = async (
 		const quotesParams = providerGroups.map((providerGroup, index) => {
 			const affiliate = affiliates[index];
 			const swapKitQuoteParams = {
-				sellAsset: swapFrom.identifier,
-				buyAsset: swapTo.identifier,
+				sellAsset: swapFrom.chain + "." + swapFrom.symbol,
+				buyAsset: swapTo.chain + "." + swapTo.symbol,
 				sellAmount: parseFloat(amount).toString(),
 				sourceAddress: chooseWalletForToken(swapFrom, wallets)?.address,
 				destinationAddress: thisDestinationAddress,
 				affiliateFee: basisPoints,
 				affiliate: affiliate,
 				slippage: slippage,
-				providers: providerGroup
+				providers: providerGroup,
 			};
 			return swapKitQuoteParams;
 		});

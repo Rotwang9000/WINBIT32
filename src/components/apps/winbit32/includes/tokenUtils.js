@@ -80,8 +80,8 @@ export const chainImages = {
 
 export 	const fetchTokenPrices = async (swapFrom, swapTo) => {
 	try {
-		swapFrom.identifier = swapFrom.identifier.toLowerCase();
-		swapTo.identifier = swapTo.identifier.toLowerCase();
+		swapFrom.identifier = swapFrom.identifier.replace('0X', '0x');
+		swapTo.identifier = swapTo.identifier.replace('0X', '0x');
 
 		const response = await fetch("https://api.swapkit.dev/price", {
 			method: "POST",
