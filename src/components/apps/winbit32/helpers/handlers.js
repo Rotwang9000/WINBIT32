@@ -464,7 +464,8 @@ export const handleSwap = async (
 
 		console.log("exURL", exURL);
 	} catch (error) {
-		setStatusText("Transaction sent but error getting result " + error.message);
+		console.log("Transaction sent but error getting result " + error.message);
+		setStatusText("Transaction sent");
 		setSwapInProgress(false);
 		setShowProgress(false);
 		return;

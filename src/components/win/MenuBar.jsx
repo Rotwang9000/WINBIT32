@@ -31,7 +31,7 @@ const MenuBar = ({ menu, window, onMenuClick }) => {
 	return (
 		<div className="menubar">
 			{menu.map((item, index) => (
-				(item.submenu.length > 0 &&
+				(item?.submenu && item.submenu.length > 0 &&
 				<div key={index} className="menuitem" onClick={() => handleMenuClick(item)}>
 					{item.label}
 					{item.submenu && openMenu === item.label && (

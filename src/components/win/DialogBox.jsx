@@ -51,7 +51,7 @@ const DialogBox = React.memo(({
 	const dialogContent = (
 		<div className={`dialog-wrapper ${modal ? 'modal' : ''}`}>
 			{modal && <div className="dialog-backdrop" onClick={onCancel} />} {/* Dimming background */}
-			<Draggable handle={"div div.title>div.title-text"} defaultPosition={{ x: 0, y: 0 }} positionOffset={{ x: '-50%', y: '-50%' }} onStart={handleStart} cancel='.search-text-box' disabled={true}
+			<Draggable handle={"div div.title>div.title-text"} defaultPosition={{ x: 0, y: 0 }} positionOffset={{ x: '-51%', y: '-55%' }} onStart={handleStart} cancel='.search-text-box' disabled={true}
 				onKeyDown={(e) => {
 					if (e.key === 'Escape') {
 						onClose();

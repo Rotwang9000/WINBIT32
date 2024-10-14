@@ -103,7 +103,7 @@ export const checkTxnStatus = async (
 		
 		const status = await getTxnDetails({ hash: txnHash.toString() }).catch(
 			(error) => {
-				setStatusText("Error getting transaction details");
+				//setStatusText("Error getting transaction details");
 				setSwapInProgress(false);
 				setShowProgress(false);
 				return null;
