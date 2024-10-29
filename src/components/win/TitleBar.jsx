@@ -123,8 +123,8 @@ const TitleBar = ({
 	}, [shareOptions, shareProgOptions]);
 
 	const siteName = window.location.hostname.includes('winbit')? 'https://WINBIT32.COM': window.location.origin;
-	const shareURL = siteName + '#' + shareHash;
-	const embedURL = siteName + '#~embedMode=true/' + shareHash;
+	const shareURL = siteName + '/#' + shareHash;
+	const embedURL = siteName + '/#~embedMode=true/' + shareHash;
 	// console.log(shareOptions);
 	const embedCode = `<iframe src="${embedURL}" width="465" height="800" style="border: none;" allow="clipboard-write, camera"></iframe>`;
 
