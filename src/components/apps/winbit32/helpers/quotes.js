@@ -37,7 +37,7 @@ export const getQuotes = async (
 	const currentSelectedRoute = selectedRoute || "optimal";
 
 	if (swapFrom && swapTo && amount && thisDestinationAddress) {
-		setStatusText("");
+		//setStatusText("");
 		setQuoteStatus("Getting Quotes...", swapFrom, swapTo, amount);
 
 		const basisPoints = license? 16:
@@ -59,11 +59,15 @@ export const getQuotes = async (
 		//https://mayanode.mayachain.info/mayachain/quote/swap?from_asset=XRD.XRD&to_asset=MAYA.CACAO&amount=2000000000&destination=maya1jpvhncl60k5q3dljw354t0ccg54j3pkjcag9ef&affiliate_bps=44&affiliate=cs
 		//}
 
+		const sellAsset = (swapFrom.symbol)?  swapFrom.chain + "." + swapFrom.symbol: swapFrom.identifier;
+		const buyAsset = (swapTo.symbol)? swapTo.chain + "." + swapTo.symbol: swapTo.identifier;
+
+
 		const quotesParams = providerGroups.map((providerGroup, index) => {
 			const affiliate = affiliates[index];
 			const swapKitQuoteParams = {
-				sellAsset: swapFrom.chain + "." + swapFrom.symbol,
-				buyAsset: swapTo.chain + "." + swapTo.symbol,
+				sellAsset: sellAsset,
+				buyAsset: buyAsset,
 				sellAmount: parseFloat(amount).toString(),
 				sourceAddress: chooseWalletForToken(swapFrom, wallets)?.address,
 				destinationAddress: thisDestinationAddress,

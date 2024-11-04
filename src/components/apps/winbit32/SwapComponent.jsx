@@ -202,7 +202,7 @@ swap_count=${streamingNumSwaps}
 			clearTimeout(timer);
 			// console.log("Clearing timer");
 		};
-	}, [swapFrom, swapTo, amount, destinationAddress, slippage, doGetQuotes, mayaAffiliate, thorAffiliate]);
+	}, [swapFrom, swapTo, amount, destinationAddress, slippage, mayaAffiliate, thorAffiliate]);
 
 	useEffect(() => {
 		if (txnHash !== '') checkTxnStatus(txnHash, txnHash + '', 0, swapInProgress, txnStatus, setStatusText, setSwapInProgress, setShowProgress, setProgress, setTxnStatus, setTxnTimer, txnTimerRef);
@@ -634,6 +634,7 @@ swap_count=${streamingNumSwaps}
 					setSwapInProgress(false);
 					setTxnHash('');
 					setTxnStatus('');
+					setStatusText("");
 					doGetQuotes(true);
 				}}>
 					<div className='swap-toolbar-icon'>❝</div>

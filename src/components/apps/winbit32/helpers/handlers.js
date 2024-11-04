@@ -5,7 +5,6 @@ import { FeeOption, SwapKitApi } from "@swapkit/sdk";
 import { ChainIdToChain } from "@swapkit/sdk";
 import { getTxnDetails, getTxnDetailsV2, getTxnUrl } from "./transaction";
 import { getTokenForProvider } from './token';
-import { re } from "mathjs";
 
 export const chooseWalletForToken = (token, wallets) => {
 	if (!token) return null;
@@ -52,6 +51,8 @@ export const handleApprove = async (
 
 	if("CHAINFLIP" === route.providers[0]){
 		
+		setStatusText("Approve not required for Chainflip");
+		return;
 
 		const {broker, toolbox} = await chainflipBroker(dotWallet);
 		console.log("broker", broker);
@@ -70,12 +71,14 @@ export const handleApprove = async (
 //   }: RequestSwapDepositAddressParams) => {
 
 
-		const targetAddress = await broker.requestSwapDepositAddress({
+
+		const targetAddress = await skClient.chainflip.requestSwapDepositAddress({
 			route: route,
 			sellAsset: swapFrom,
 			buyAsset: swapFrom,
 			recipient: wallet.address,
-			brokerCommissionBPS: 9
+			brokerCommissionBPS: 32,
+
 		}).catch((error) => {
 			console.log("error", error);
 			setStatusText("Error getting target address " + error.message);
@@ -292,14 +295,46 @@ export const handleSwap = async (
 			swapToAssetValue.toString().toUpperCase(),
 			assetValue.toString().toUpperCase()
 		);
+
+		// 	export async function getDepositAddress({
+		//   buyAsset,
+		//   sellAsset,
+		//   recipient,
+		//   brokerEndpoint,
+		//   maxBoostFeeBps,
+		//   brokerCommissionBPS,
+		//   ccmParams,
+		//   chainflipSDKBroker,
+		// }: {
+		//   buyAsset: AssetValue;
+		//   sellAsset: AssetValue;
+		//   recipient: string;
+		//   brokerEndpoint: string;
+		//   maxBoostFeeBps: number;
+		//   brokerCommissionBPS?: number;
+		//   ccmParams?: DepositAddressRequest["ccmParams"];
+		//   chainflipSDKBroker?: boolean;
+		// }) {
+
 		try {
-			cfAddress = await broker.requestSwapDepositAddress({
+			cfAddress = await skClient.chainflip.getDepositAddress({
 				route: route,
 				sellAsset: assetValue,
 				buyAsset: swapToAssetValue,
 				recipient: destinationAddress,
-				brokerCommissionBPS: 9,
+				brokerCommissionBPS: 32,
+				maxBoostFeeBps: 0,
+				chainflipSDKBroker: true,
+				brokerEndpoint: "https://chainflip.winbit32.com",
 			});
+
+			if(cfAddress.error){
+				setStatusText("Error getting target address " + cfAddress.error);
+				setSwapInProgress(false);
+				setShowProgress(false);
+				return null;
+			}
+
 		} catch (error) {
 			console.log("error", error);
 			setStatusText("Error getting target address " + error.message);
@@ -393,7 +428,7 @@ export const handleSwap = async (
 			const txID = await wallet.transfer(txData);
 			setProgress(87);
 			const explorerUrl =
-				"https://scan.chainflip.io/channels/" + cfAddress.depositChannelId;
+				"https://scan.chainflip.io/channels/" + cfAddress.channelId;
 			console.log("Explorer URL:", explorerUrl);
 
 			//add tx info to reportData

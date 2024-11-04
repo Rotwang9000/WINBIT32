@@ -9,9 +9,10 @@ import { useWindowSKClient } from '../../contexts/SKClientProviderManager';
 import { Chain, ChainToChainId } from '@swapkit/sdk';
 import { QRCodeSVG } from 'qrcode.react';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { isValidMnemonic } from './helpers/phrase';
+import { isValidMnemonic, phraseToParts } from './helpers/phrase';
 import { processKeyPhrase, setupFileInput, triggerFileInput } from '../sectools/includes/KeyStoreFunctions';
 import { processSKKeyPhrase, setupSKFileInput, triggerSKFileInput } from './includes/secureKeystoreFunctions';
+import { createHash } from "crypto-browserify";
 
 import { createKeyring } from '@swapkit/toolbox-substrate';
 import {  networks } from 'bitcoinjs-lib';
@@ -19,6 +20,7 @@ import { ECPairFactory, } from 'ecpair';
 import { fetchMNFTsForAccount } from './mnft/mnftfuncs';
 import { walletNames } from '../../win/includes/constants';
 import DialogBox from '../../win/DialogBox';
+import bs58 from 'bs58';
 
 
 const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave, handleStateChange, metadata, hashPath, sendUpHash, appData, handleOpenArray, onOpenWindow }) => {
@@ -265,7 +267,39 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 
 					}
 				}
+				if(!isValid){
+					//try for SOL
+					console.log('Trying as a private key for SOL');
+					try{
+						//Reverse of this process
+						// const seed = mnemonicToSeedSync(phrase);
+						// const hdKey = HDKey.fromMasterSeed(seed);
 
+						// return Keypair.fromSeed(hdKey.derive(derivationPath, true).privateKey);
+
+						const bs58Decoded = bs58.decode(chkPrivateKey);
+						console.log('sol bs58Decoded', bs58Decoded, bs58Decoded.length);
+						const bs58DecodedHex = bs58Decoded.toString('hex');
+						console.log('sol bs58DecodedHex', bs58DecodedHex, bs58DecodedHex.length);
+
+						if(bs58Decoded.length === 64){
+							//try decoding as a private key for SOL
+							const entropy = new Uint8Array(bs58Decoded.slice(0, 32));
+		
+							//convert to uint8array
+							phrase = entropyToMnemonic(entropy, wordlist);
+							if(phrase){								
+								console.log('Valid private key for SOL', phrase);
+								isValid = true;
+							}else{
+								console.log('Invalid private key for SOL');
+							}
+							
+						}
+					}catch(e){
+						console.log('Invalid private key for SOL', e);
+					}
+				}
 
 				//Try decoding as a private key for ETH
 
@@ -332,8 +366,9 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 		}
 		// export const createKeyring = async (phrase: string, networkPrefix: number) => {
 		if (wallet.createKeyring) {
-			wallet.keyRing = await wallet.createKeyring(phrase, wallet.network.prefix);
-			wallet.cfKeyRing = await createKeyring(phrase, 2112);
+			const { words } = phraseToParts(phrase);
+			wallet.keyRing = await wallet.createKeyring(words, wallet.network.prefix);
+			wallet.cfKeyRing = await createKeyring(words, 2112);
 		}
 		//console.log('Connect Result', wallet);
 

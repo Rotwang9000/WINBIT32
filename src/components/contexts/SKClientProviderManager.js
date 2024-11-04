@@ -7,11 +7,13 @@ import React, {
 	useCallback,
 } from "react";
 import { ChainflipBroker } from "@swapkit/plugin-chainflip";
-import { ChainflipToolbox } from "@swapkit/toolbox-substrate";
+import { ChainflipToolbox, isKeyringPair } from "@swapkit/toolbox-substrate";
 import { createSwapKit, Chain, WalletOption, AssetValue } from "@swapkit/sdk";
 import { walletconnectWallet } from "@swapkit/wallet-wc";
 import { result } from "lodash";
 import { secureKeystoreWallet } from '../wallets/secureKeystore/index.ts';
+import { Keyring } from "@polkadot/api";
+import { ChainflipPlugin } from "@swapkit/plugin-chainflip";
 
 // import { coinbaseWallet } from "@swapkit/wallet-coinbase";
 // import { evmWallet } from "@swapkit/wallet-evm-extensions";
@@ -89,7 +91,10 @@ const reducer = (state, action) => {
 				},
 			};
 		case "SET_CHAINFLIPTOOLBOX":
-			return { ...state, chainflipToolbox: action.chainflipToolbox };
+			if (!state.chainflipToolbox) {
+				return { ...state, chainflipToolbox: { [action.key]: action.chainflipToolbox } };
+			}
+			return { ...state, chainflipToolbox: { ...state.chainflipToolbox, [action.key]: action.chainflipToolbox } };
 
 		case "SET_PROVIDERS":
 			return { ...state, providers: action.providers };
@@ -141,17 +146,27 @@ export const SKClientProviderManager = ({ children }) => {
 					walletConnectProjectId: "dac706e68e589ffa15fed9bbccd825f7",
 
 					chainflipBrokerUrl: "https://chainflip.winbit32.com",
+					chainflipBrokerConfig: {
+						chainflipBrokerUrl: "https://chainflip.winbit32.com",
+						useChainflipSDKBroker: false,
+						chainflipBrokerEndpoint: "https://chainflip.winbit32.com",
+					},
 					thorswapApiKey: "",
 				},
+				plugins: {
+					...ChainflipPlugin,
+				},
 				rpcUrls: {
-					FLIP: "https://api-chainflip.dwellir.com/204dd906-d81d-45b4-8bfa-6f5cc7163dbc",
+					Chainflip:
+						"https://api-chainflip.dwellir.com/204dd906-d81d-45b4-8bfa-6f5cc7163dbc",
 					ETH: "https://mainnet.infura.io/v3/c3b4e673639742a89bbddcb49895d568",
 					AVAX: "https://avalanche-mainnet.infura.io/v3/c3b4e673639742a89bbddcb49895d568",
 					DOT: "https://rpc.polkadot.io",
-					
+
 					// XRD: "https://radix-mainnet.rpc.grove.city/v1/456359ff",
 					// Radix: "https://radix-mainnet.rpc.grove.city/v1/456359ff",
 				},
+
 				wallets: {
 					...walletconnectWallet,
 					...keystoreWallet,
@@ -173,8 +188,8 @@ export const SKClientProviderManager = ({ children }) => {
 		dispatch({ type: "SET_CHAINFLIPBROKER", key, chainflipBroker });
 	}, []);
 
-	const setChainflipToolbox = useCallback((chainflipToolbox) => {
-		dispatch({ type: "SET_CHAINFLIPTOOLBOX", chainflipToolbox });
+	const setChainflipToolbox = useCallback((key, chainflipToolbox) => {
+		dispatch({ type: "SET_CHAINFLIPTOOLBOX", key, chainflipToolbox });
 	}, []);
 
 	const setWallets = useCallback((key, wallets) => {
@@ -214,8 +229,9 @@ export const SKClientProviderManager = ({ children }) => {
 		[state.clients, state.connectChains]
 	);
 
-	const getChainflipToolbox = useCallback(async (chain) => {
-		if (!state.chainflipToolbox) {
+	const getChainflipToolbox = useCallback(
+		async (key, chain) => {
+		if (!state.chainflipToolbox || !state.chainflipToolbox[key]) {
 
 			if (!chain) {
 				throw new Error("No chain provided to getChainflipToolbox");
@@ -237,7 +253,9 @@ export const SKClientProviderManager = ({ children }) => {
 
 				console.log("Created chainflip toolbox", chainflipToolbox, keyRing);
 				await chainflipToolbox.api.isReady;
-				setChainflipToolbox(chainflipToolbox);
+
+
+				setChainflipToolbox(key, chainflipToolbox);
 				return chainflipToolbox;
 			} catch (e) {
 				console.log("Error", e);
@@ -245,9 +263,9 @@ export const SKClientProviderManager = ({ children }) => {
 
 		}
 
-		return state.chainflipToolbox;
+		return state.chainflipToolbox[key];
 
-	}, [setChainflipToolbox, state.chainflipToolbox]);
+	}, [setChainflipToolbox, state.chainflipToolbox ]);
 
 	const registerAsBroker = useCallback(async (toolbox) => {
 		const extrinsic = toolbox.api.tx.swapping?.registerAsBroker();
@@ -265,9 +283,29 @@ export const SKClientProviderManager = ({ children }) => {
 	const chainflipBroker = useCallback(
 		async (key, chain) => {
 			if (!state.chainflipBroker || !state.chainflipBroker[key]) {
-				const chainflipToolbox = await getChainflipToolbox(chain);
+				const chainflipToolbox = await getChainflipToolbox(key, chain);
 
-				const chainflipBroker = await ChainflipBroker(chainflipToolbox);
+				console.log("Creating chainflip broker", chainflipToolbox, chain);
+				
+		
+				const brokerPubKey = new Uint8Array([158, 110, 87, 118, 81, 171, 252, 12, 204, 174, 206, 219, 228, 26, 8, 230, 38, 189, 11, 212, 184, 247, 209, 83, 39, 161, 127, 35, 39, 204, 82, 4]);
+				const brokerAddressRaw = new Uint8Array([158, 110, 87, 118, 81, 171, 252, 12, 204, 174, 206, 219, 228, 26, 8, 230, 38, 189, 11, 212, 184, 247, 209, 83, 39, 161, 127, 35, 39, 204, 82, 4]);
+				const networkPrefix = 2112;
+				const brokerKeyRing = new Keyring({ type: "sr25519", ss58Format: networkPrefix }).addFromAddress(brokerAddressRaw, brokerPubKey);
+				
+				// {
+				// 	address: "cFMTDAyTJtVXM8qbucU1dvUSw9hFd2Vz9DLdt2CdHdLfwuvz2",
+				// 	addressRaw: brokerAddressRaw,
+				// 	publicKey: brokerPubKey,
+				// };
+
+				const brokerChain = {cfKeyRing: brokerKeyRing};
+
+				const brokerToolbox = await getChainflipToolbox("broker", brokerChain);
+
+				const chainflipBroker = await ChainflipBroker(brokerToolbox);
+
+				console.log("Chainflip broker", chainflipBroker, brokerToolbox);
 
 				const cfAddress = chainflipToolbox.getAddress();
 
@@ -308,7 +346,7 @@ export const SKClientProviderManager = ({ children }) => {
 
 			return {
 				broker: state.chainflipBroker[key],
-				toolbox: state.chainflipToolbox,
+				toolbox: state.chainflipToolbox[key],
 			};
 		},
 		[getChainflipToolbox, setChainflipBroker, state.chainflipBroker, state.chainflipToolbox, state.wallets]
@@ -578,49 +616,22 @@ export const useWindowSKClient = (key) => {
 				return promises;
 			} else if (firstWord === "SECUREKEYSTORE") {
 				console.log("Connecting with SecureKeystore");
-				const { password, dIndex, radixNetwork } =
-					await skClient.promptForPassword({
-						advancedContent: (
-							<>
-								<div className="dialog-field">
-									<label>Derivation Index:</label>
-									<select name="dIndex">
-										<option value="0" selected>
-											0
-										</option>
-										<option value="1">1</option>
-										<option value="2">2</option>
-										<option value="3">3</option>
-										<option value="4">4</option>
-										<option value="5">5</option>
-										<option value="6">6</option>
-										<option value="7">7</option>
-										<option value="8">8</option>
-										<option value="9">9</option>
-									</select>
-								</div>
-								<div className="dialog-field">
-									<label>Radix Network:</label>
-									<select name="radixNetwork">
-										<option value="legacy">Swapkit Legacy</option>
-										<option value="olympia">Olympia (Radix Legacy)</option>
-										<option value="mainnet" selected>
-											Mainnet (Babylon)
-										</option>
-									</select>
-								</div>
-							</>
-						),
-					});
+
+
+				const { password, dIndex, networkOptions } =
+					await skClient.promptForPassword();
+						
 				if (!password) {
 					return;
 				}
-				console.log("chains", connectChains, dIndex, radixNetwork);
+				console.log("chains", connectChains, dIndex, networkOptions);
 
 				for (const chain of connectChains) {
 					promises.push(
 						skClient
-							.connectSecureKeystore([chain], password, dIndex, { radixNetwork })
+							.connectSecureKeystore([chain], password, dIndex, {
+								networkOptions,
+							})
 							.then(async () => {
 								console.log("Connected to chain", chain);
 								if (!result) return;
