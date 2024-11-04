@@ -66,15 +66,15 @@ export async function getDepositAddress({
   //         refundAddress: 'tb1p8p3xsgaeltylmvyrskt3mup5x7lznyrh7vu2jvvk7mn8mhm6clksl5k0sm', // address to which assets are refunded
   //           retryDurationBlocks: 100, // 100 blocks * 6 seconds = 10 minutes before deposits are refunded
   // },
-      //rate between buy and sell asset 
-      const minRate = Number(sellAsset.getBaseValue("string")) / Number(buyAsset.getBaseValue("string"));
+      //rate is the number of buyAsset units per sellAsset unit - not bigints... so adjust for the number of decimals
+      const rate = sellAsset.getValue("number") / buyAsset.getValue("number"); 
 
       const fillOrKillParams = {
-        slippageTolerancePercent: slippage || 1,
+        // slippageTolerancePercent: slippage || 1, //only in V2
         refundAddress: sender,
         retryDurationBlocks: 100,
         //as non-scientific notation string
-        minPrice: format(minRate, { notation: 'fixed' }),
+        minPrice: format(rate, { notation: 'fixed' }),
       } as typeof fillOrKillParams;
 
       const dcaParams = {
@@ -98,7 +98,7 @@ export async function getDepositAddress({
       });
 
       console.log("fillOrKillParams", fillOrKillParams);
-      console.log("dcaParams", dcaParams, brokerCommissionBPS, maxBoostFeeBps, recipient, sellAsset.getBaseValue("string"), srcAsset, srcChain, destAsset, destChain, _affiliateBrokers);
+      console.log("dcaParams", dcaParams, brokerCommissionBPS, maxBoostFeeBps, recipient, sellAsset.getBaseValue("string"), srcAsset, srcChain, destAsset, destChain, _affiliateBrokers, sellAsset.getValue("number"), buyAsset.getValue("number"));
 
       const req = {
         destAddress: recipient,

@@ -331,8 +331,8 @@ export const handleSwap = async (
 				chainflipSDKBroker: true,
 				brokerEndpoint: "https://chainflip.winbit32.com",
 				slippage: slippage,
-				numChunks: streamingNumSwaps,
-				chunkIntervalBlocks: streamingInterval,
+				numChunks: Number(streamingNumSwaps),
+				chunkIntervalBlocks: Number(streamingInterval),
 				sender: wallet.address,
 			});
 
