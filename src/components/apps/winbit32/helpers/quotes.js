@@ -37,7 +37,7 @@ export const getQuotes = async (
 	const currentSelectedRoute = selectedRoute || "optimal";
 
 	if (swapFrom && swapTo && amount && thisDestinationAddress) {
-		setStatusText("");
+		//setStatusText("");
 		setQuoteStatus("Getting Quotes...", swapFrom, swapTo, amount);
 
 		const basisPoints = license? 16:
