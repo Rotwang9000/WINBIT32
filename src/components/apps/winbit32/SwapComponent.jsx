@@ -553,6 +553,18 @@ swap_count=${streamingNumSwaps}
 			const r = routes.find(route => selectedRoute === route.providers.join(', ') || (selectedRoute === 'optimal' && route.optimal === true));
 
 			if (r) {
+				//if chainflip set streaming
+				if (r.providers.includes('CHAINFLIP')) {
+					console.log('Chainflip route selected');
+					setIsStreamingSwap(true);
+					if (!manualStreamingSet) {
+						setStreamingInterval(100);
+						setStreamingNumSwaps(1);
+					}
+					return;
+				}
+
+
 				const parts = r.memo?.split(":");
 
 				if (parts && parts.length > 3) {
@@ -848,7 +860,8 @@ swap_count=${streamingNumSwaps}
 									<span>Information:</span>
 									<span>
 										<a href="https://docs.mayaprotocol.com/mayachain-dev-docs/introduction/swapping-guide/streaming-swaps" target="_blank">Maya</a> -
-										<a href="https://dev.thorchain.org/swap-guide/streaming-swaps.html" target="_blank" >Thorchain</a>
+										<a href="https://dev.thorchain.org/swap-guide/streaming-swaps.html" target="_blank" >Thorchain</a> - 
+										<a href="https://docs.chainflip.io/swapping/integrations/swapping-basics#dollar-cost-average-dca-improving-price" target="_blank" >Chainflip</a>
 									</span>
 								</div>
 							</div>

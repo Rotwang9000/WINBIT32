@@ -1,10 +1,11 @@
 {
   "name": "winbit32",
-  "version": "1.2",
+  "version": "1.2c",
   "private": false,
   "homepage": "https://winbit32.com",
   "dependencies": {
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
+    "@chainflip/sdk": "^1.6.7-rc.3",
     "@fortawesome/fontawesome-svg-core": "^6.6.0",
     "@fortawesome/free-brands-svg-icons": "^6.6.0",
     "@fortawesome/free-regular-svg-icons": "^6.6.0",

@@ -242,7 +242,7 @@ export const handleSwap = async (
 		return;
 	}
 
-	if(isStreamingSwap){
+	if(isStreamingSwap && route.memo){
 		const parts = route.memo.split(":");
 		const splitP3 = parts[3].split("/");
 		const newSplitP3 = splitP3[0] + '/' + streamingInterval + '/' + streamingNumSwaps;
@@ -318,16 +318,22 @@ export const handleSwap = async (
 		//   chainflipSDKBroker?: boolean;
 		// }) {
 
+
+
 		try {
 			cfAddress = await skClient.chainflip.getDepositAddress({
 				route: route,
 				sellAsset: assetValue,
 				buyAsset: swapToAssetValue,
 				recipient: destinationAddress,
-				brokerCommissionBPS: (license)? 16 : 32,
+				brokerCommissionBPS: license ? 16 : 32,
 				maxBoostFeeBps: 0,
 				chainflipSDKBroker: true,
 				brokerEndpoint: "https://chainflip.winbit32.com",
+				slippage: slippage,
+				numChunks: streamingNumSwaps,
+				chunkIntervalBlocks: streamingInterval,
+				sender: wallet.address,
 			});
 
 			if(cfAddress.error){

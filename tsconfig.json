@@ -1,0 +1,13 @@
+{
+	"include": [
+		"src/**/*.ts"
+	],
+	"exclude": [
+		"node_modules",
+		"**/wallets/winbit"
+	],
+	"compilerOptions": {
+		"allowImportingTsExtensions": true,
+		"noEmit": true
+	}
+}
