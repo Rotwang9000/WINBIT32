@@ -10,7 +10,9 @@ import {
   type UTXOWallets,
 } from "@swapkit/helpers";
 import { assetTickerToChainflipAsset, chainToChainflipChain } from "./broker";
-import type { RequestSwapDepositAddressParams } from "./types";
+import type { RequestSwapDepositAddressParams } from "./types.ts";
+import { min } from "lodash";
+import { format } from "mathjs";
 
 type SupportedChain = keyof (EVMWallets & SubstrateWallets & UTXOWallets & SolanaWallets);
 
@@ -23,6 +25,11 @@ export async function getDepositAddress({
   brokerCommissionBPS,
   ccmParams,
   chainflipSDKBroker,
+  slippage,
+  numChunks,
+  chunkIntervalBlocks,
+  affiliateBrokers,
+  sender
 }: {
   buyAsset: AssetValue;
   sellAsset: AssetValue;
@@ -32,6 +39,11 @@ export async function getDepositAddress({
   brokerCommissionBPS?: number;
   ccmParams?: DepositAddressRequest["ccmParams"];
   chainflipSDKBroker?: boolean;
+  slippage?: number;
+  numChunks?: number;
+  chunkIntervalBlocks?: number;
+  affiliateBrokers?: string[];
+  sender: string;
 }) {
   try {
     if (chainflipSDKBroker) {
@@ -49,16 +61,62 @@ export async function getDepositAddress({
         throw new SwapKitError("chainflip_unknown_asset", { sellAsset, buyAsset });
       }
 
-      const resp = await chainflipSDK.requestDepositAddress({
+  //     fillOrKillParams: {
+  //       slippageTolerancePercent: 1, // 1% slippage tolerance from quoted price
+  //         refundAddress: 'tb1p8p3xsgaeltylmvyrskt3mup5x7lznyrh7vu2jvvk7mn8mhm6clksl5k0sm', // address to which assets are refunded
+  //           retryDurationBlocks: 100, // 100 blocks * 6 seconds = 10 minutes before deposits are refunded
+  // },
+      //rate between buy and sell asset 
+      const minRate = Number(sellAsset.getBaseValue("string")) / Number(buyAsset.getBaseValue("string"));
+
+      const fillOrKillParams = {
+        slippageTolerancePercent: slippage || 1,
+        refundAddress: sender,
+        retryDurationBlocks: 100,
+        //as non-scientific notation string
+        minPrice: format(minRate, { notation: 'fixed' }),
+      } as typeof fillOrKillParams;
+
+      const dcaParams = {
+        numberOfChunks: numChunks || 1,
+        chunkIntervalBlocks: chunkIntervalBlocks || 0,
+
+      } as typeof dcaParams;
+
+      // affiliateBrokers: [
+      //   {
+      //     account: 'cFJ1WW9QSvfzMoJJ4aNtGT8WJPtmEuxByc1kV37DTBkzA9S1W',
+      //     commissionBps: 100,
+      //   },
+      // ],
+
+      const _affiliateBrokers = affiliateBrokers?.map((broker) => {
+        return {
+          account: broker,
+          commissionBps: Math.floor(100 / affiliateBrokers.length)
+        };
+      });
+
+      console.log("fillOrKillParams", fillOrKillParams);
+      console.log("dcaParams", dcaParams, brokerCommissionBPS, maxBoostFeeBps, recipient, sellAsset.getBaseValue("string"), srcAsset, srcChain, destAsset, destChain, _affiliateBrokers);
+
+      const req = {
         destAddress: recipient,
         srcAsset,
         srcChain,
         destAsset,
         destChain,
+        maxBoostFeeBps,
         amount: sellAsset.getBaseValue("string"),
         brokerCommissionBps: brokerCommissionBPS || 0,
         ccmParams,
-      });
+        fillOrKillParams,
+        dcaParams,
+      };
+
+      console.log(req);
+
+      const resp = await chainflipSDK.requestDepositAddress(req);
 
       return {
         channelId: resp.depositChannelId,

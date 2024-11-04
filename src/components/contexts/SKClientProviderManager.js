@@ -13,7 +13,7 @@ import { walletconnectWallet } from "@swapkit/wallet-wc";
 import { result } from "lodash";
 import { secureKeystoreWallet } from '../wallets/secureKeystore/index.ts';
 import { Keyring } from "@polkadot/api";
-import { ChainflipPlugin } from "@swapkit/plugin-chainflip";
+import { ChainflipPlugin } from "../plugins/chainflip/plugin.ts";
 
 // import { coinbaseWallet } from "@swapkit/wallet-coinbase";
 // import { evmWallet } from "@swapkit/wallet-evm-extensions";
@@ -580,40 +580,40 @@ export const useWindowSKClient = (key) => {
 					}
 				}
 				return promises;
-			} else if (firstWord === "WINBIT") {
-				console.log("Connecting with WinBitWallet");
+			// } else if (firstWord === "WINBIT") {
+			// 	console.log("Connecting with WinBitWallet");
 
-				const chains = [
-					Chain.Arbitrum,
-					Chain.Avalanche,
-					Chain.BinanceSmartChain,
-					Chain.Bitcoin,
-					Chain.BitcoinCash,
-					Chain.Cosmos,
-					Chain.Dogecoin,
-					Chain.Ethereum,
-					Chain.Kujira,
-					Chain.Litecoin,
-					Chain.Maya,
-					Chain.Optimism,
-					Chain.Polygon,
-					Chain.Solana,
-					Chain.THORChain,
-					// Chain.Base,
-				];
-				setChains(chains);
+			// 	const chains = [
+			// 		Chain.Arbitrum,
+			// 		Chain.Avalanche,
+			// 		Chain.BinanceSmartChain,
+			// 		Chain.Bitcoin,
+			// 		Chain.BitcoinCash,
+			// 		Chain.Cosmos,
+			// 		Chain.Dogecoin,
+			// 		Chain.Ethereum,
+			// 		Chain.Kujira,
+			// 		Chain.Litecoin,
+			// 		Chain.Maya,
+			// 		Chain.Optimism,
+			// 		Chain.Polygon,
+			// 		Chain.Solana,
+			// 		Chain.THORChain,
+			// 		// Chain.Base,
+			// 	];
+			// 	setChains(chains);
 
-				if (await skClient.connectWinbitWallet(chains)) {
-					console.log("Connected with Winbit");
+			// 	if (await skClient.connectWinbitWallet(chains)) {
+			// 		console.log("Connected with Winbit");
 
-					for (const chain of chains) {
-						const wallet = await skClient.getWalletWithBalance(chain);
-						if (wallet) {
-							promises.push(callback(wallet, chain));
-						}
-					}
-				}
-				return promises;
+			// 		for (const chain of chains) {
+			// 			const wallet = await skClient.getWalletWithBalance(chain);
+			// 			if (wallet) {
+			// 				promises.push(callback(wallet, chain));
+			// 			}
+			// 		}
+			// 	}
+			// 	return promises;
 			} else if (firstWord === "SECUREKEYSTORE") {
 				console.log("Connecting with SecureKeystore");
 
