@@ -195,7 +195,9 @@ export const handleSwap = async (
 	streamingInterval,
 	streamingNumSwaps,
 	setReportData,
-	iniData
+	iniData,
+	license,
+
 ) => {
 	if (swapInProgress) return;
 	setSwapInProgress(true);
@@ -322,7 +324,7 @@ export const handleSwap = async (
 				sellAsset: assetValue,
 				buyAsset: swapToAssetValue,
 				recipient: destinationAddress,
-				brokerCommissionBPS: 32,
+				brokerCommissionBPS: (license)? 16 : 32,
 				maxBoostFeeBps: 0,
 				chainflipSDKBroker: true,
 				brokerEndpoint: "https://chainflip.winbit32.com",

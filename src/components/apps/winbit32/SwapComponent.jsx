@@ -603,7 +603,9 @@ swap_count=${streamingNumSwaps}
 					streamingInterval,
 					streamingNumSwaps,
 					setReportData,
-					iniData
+					iniData,
+					license,
+
 				)}>
 					<div className='swap-toolbar-icon'>🔄</div>
 					Execute
