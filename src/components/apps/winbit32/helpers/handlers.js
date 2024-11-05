@@ -408,6 +408,7 @@ export const handleSwap = async (
 		streamSwap: route.streamingSwap ? true : false,
 		feeOption: FeeOption[feeOption] || FeeOption.Average,
 		recipient: destinationAddress,
+	
 	};
 
 	//set report data with clones so stays static
@@ -416,7 +417,10 @@ export const handleSwap = async (
 		ini: iniData?.trim(),
 	});
 
-	if (route.providers[0] === "MAYACHAIN") swapParams.pluginName = "mayachain";
+	if (route.providers[0].match(/^MAYACHAIN/))
+		 swapParams.pluginName = "mayachain";
+	else if (route.providers[0].match(/^THORCHAIN/))
+		 swapParams.pluginName = "thorchain";
 	else if (route.providers[0] === "CHAINFLIP") {
 		swapParams.pluginName = "chainflip";
 		// swapParams.recipientAddress = cfAddress.depositAddress;

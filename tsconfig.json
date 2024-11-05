@@ -8,6 +8,18 @@
 	],
 	"compilerOptions": {
 		"allowImportingTsExtensions": true,
-		"noEmit": true
+		"noEmit": true,
+		"jsx": "react",
+		"target": "ES2023",
+		"moduleResolution":"node",
+		"module": "commonjs",
+		"esModuleInterop": true,
+		//just make it work
+		"skipLibCheck": true,
+		//Error: No handler found for procedure closeReport.
+		"strict": false,
+		
+
+
 	}
 }

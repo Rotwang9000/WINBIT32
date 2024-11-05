@@ -162,57 +162,57 @@ function plugin({
 
     const brokerUrl = chainflipBrokerUrl || legacyChainflipBrokerUrl;
 
-    if (!(swapParams?.route?.buyAsset && brokerUrl)) {
-      throw new SwapKitError("core_swap_invalid_params", {
-        ...swapParams,
-        chainflipBrokerUrl: brokerUrl,
-      });
-    }
-    const {
-      route: {
-        buyAsset: buyAssetString,
-        sellAsset: sellAssetString,
-        sellAmount,
-        destinationAddress: recipient,
-      },
-      maxBoostFeeBps = 0,
-    } = swapParams;
+    // if (!(swapParams?.route?.buyAsset && brokerUrl)) {
+    //   throw new SwapKitError("core_swap_invalid_params", {
+    //     ...swapParams,
+    //     chainflipBrokerUrl: brokerUrl,
+    //   });
+    // }
+    // const {
+    //   route: {
+    //     buyAsset: buyAssetString,
+    //     sellAsset: sellAssetString,
+    //     sellAmount,
+    //     destinationAddress: recipient,
+    //   },
+    //   maxBoostFeeBps = 0,
+    // } = swapParams;
 
-    if (!(sellAssetString && buyAssetString)) {
-      throw new SwapKitError("core_swap_asset_not_recognized");
-    }
+    // if (!(sellAssetString && buyAssetString)) {
+    //   throw new SwapKitError("core_swap_asset_not_recognized");
+    // }
 
-    const sellAsset = await AssetValue.from({
-      asyncTokenLookup: true,
-      asset: sellAssetString,
-      value: sellAmount,
-    });
+    // const sellAsset = await AssetValue.from({
+    //   asyncTokenLookup: true,
+    //   asset: sellAssetString,
+    //   value: sellAmount,
+    // });
 
-    const wallet = getWallet(sellAsset.chain as SupportedChain);
+    // const wallet = getWallet(sellAsset.chain as SupportedChain);
 
-    if (!wallet) {
-      throw new SwapKitError("core_wallet_connection_not_found");
-    }
+    // if (!wallet) {
+    //   throw new SwapKitError("core_wallet_connection_not_found");
+    // }
 
-    const buyAsset = await AssetValue.from({ asyncTokenLookup: true, asset: buyAssetString });
+    // const buyAsset = await AssetValue.from({ asyncTokenLookup: true, asset: buyAssetString });
 
-    const { depositAddress } = await getDepositAddress({
-      brokerEndpoint: brokerUrl,
-      buyAsset,
-      recipient,
-      sellAsset,
-      maxBoostFeeBps,
-      chainflipSDKBroker: useChainflipSDKBroker,
-    });
+  //   const { depositAddress } = await getDepositAddress({
+  //     brokerEndpoint: brokerUrl,
+  //     buyAsset,
+  //     recipient,
+  //     sellAsset,
+  //     maxBoostFeeBps,
+  //     chainflipSDKBroker: useChainflipSDKBroker,
+  //   });
 
-    const tx = await wallet.transfer({
-      assetValue: sellAsset,
-      from: wallet.address,
-      recipient: depositAddress,
-      isProgramDerivedAddress: true,
-    });
+  //   const tx = await wallet.transfer({
+  //     assetValue: sellAsset,
+  //     from: wallet.address,
+  //     recipient: depositAddress,
+  //     isProgramDerivedAddress: true,
+  //   });
 
-    return tx as string;
+  //   return tx as string;
   }
 
   return {

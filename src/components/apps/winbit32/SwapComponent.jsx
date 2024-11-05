@@ -128,7 +128,7 @@ const SwapComponent = ({ providerKey, windowId, programData, appData, onOpenWind
 
 			const route = (routes && routes.length !== 0 && selectedRoute && selectedRoute !== 'optimal' && selectedRoute !== -1) ? selectedRoute : 'optimal';
 
-			console.log('Selected route:', route, selectedRoute, routes);
+			//console.log('Selected route:', route, selectedRoute, routes);
 
 			let data = `token_from=${swapFrom?.identifier || ''}
 token_to=${swapTo?.identifier || ''}
@@ -307,7 +307,7 @@ swap_count=${streamingNumSwaps}
 
 
 	useEffect(() => {
-		if (hashPath && hashPath.length > 0 && tokens && tokens.length > 0) {
+		if (hashPath && hashPath.length > 0 && tokens && tokens.length > 0 && !metadata.swapFrom && !metadata.swapTo) {
 			setTextareaActive(true);
 
 			const parts = hashPath[0].split('&');
