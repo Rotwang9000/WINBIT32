@@ -20,7 +20,7 @@
     "@scure/bip39": "^1.2.1",
     "@solana/spl-token-registry": "^0.2.4574",
     "@swapkit/plugin-chainflip": "^1.0.0-rc.72",
-    "@swapkit/sdk": "^1.1.8",
+    "@swapkit/sdk": "^2.0.4",
     "@swapkit/tokens": "nightly",
     "@swapkit/toolbox-radix": "^1.0.0-rc.5",
     "@swapkit/toolbox-substrate": "^1.0.0-rc.42",
@@ -113,6 +113,6 @@
     "webpack-target-webextension": "^1.1.2"
   },
   "target": [
-    "browserslist:modern"
+    "browserslist:ES2023"
   ]
 }

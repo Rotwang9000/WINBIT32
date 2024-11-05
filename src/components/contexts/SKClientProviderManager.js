@@ -14,7 +14,7 @@ import { result } from "lodash";
 import { secureKeystoreWallet } from '../wallets/secureKeystore/index.ts';
 import { Keyring } from "@polkadot/api";
 import { ChainflipPlugin } from "../plugins/chainflip/plugin.ts";
-
+import { ThorchainPlugin, MayachainPlugin } from "@swapkit/plugin-thorchain"; 
 // import { coinbaseWallet } from "@swapkit/wallet-coinbase";
 // import { evmWallet } from "@swapkit/wallet-evm-extensions";
 // import { keepkeyWallet } from "@swapkit/wallet-keepkey";
@@ -140,7 +140,7 @@ export const SKClientProviderManager = ({ children }) => {
 
 			const client = createSwapKit({
 				config: {
-					utxoApiKey: "A___UmqU7uQhRUl4" + "UhNzCi5LOu81LQ1T",
+					blockchairApiKey: "A___UmqU7uQhRUl4" + "UhNzCi5LOu81LQ1T",
 					covalentApiKey: "cqt_rQygB4xJkdv" + "m8fxRcBj3MxBhCHv4",
 					ethplorerApiKey: "EK-8ftjU-8Ff" + "7UfY-JuNGL",
 					walletConnectProjectId: "dac706e68e589ffa15fed9bbccd825f7",
@@ -155,6 +155,8 @@ export const SKClientProviderManager = ({ children }) => {
 				},
 				plugins: {
 					...ChainflipPlugin,
+					...MayachainPlugin,
+					...ThorchainPlugin
 				},
 				rpcUrls: {
 					Chainflip:
