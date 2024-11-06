@@ -21,7 +21,7 @@ import { wbRadixToolbox } from "../../plugins/winbitRadixToolbox.ts";
 import { HDNodeWallet, getProvider, getToolboxByChain as getToolboxByChainEVM } from "@swapkit/toolbox-evm";
 import { BCHToolbox } from "@swapkit/toolbox-utxo";
 import { getToolboxByChain as getToolboxByChainUTXO } from "@swapkit/toolbox-utxo";
-import { getToolboxByChain as getToolboxByChainCosmos } from "@swapkit/toolbox-cosmos";
+import { getToolboxByChain as getToolboxByChainCosmos } from "../../toolbox/cosmos/index.ts";
 import { Network, getToolboxByChain as getToolboxByChainSubstrate, createKeyring } from "@swapkit/toolbox-substrate";
 import { getRadixCoreApiClient, createPrivateKey, RadixMainnet } from "./legacyRadix.ts";
 import { SOLToolbox } from "../../plugins/sol-toolbox.ts";
@@ -457,11 +457,22 @@ function connectSecureKeystore({
 				keystore = null;
 			}
 			try {
+
+				let api = apis[chain];
+				let rpcUrl = rpcUrls[chain];
+				switch(chain) {
+					case Chain.Kujira:
+						api = "https://kujira-rpc.publicnode.com:443";
+						rpcUrl = "https://kujira-rpc.publicnode.com:443";
+						console.log("Kujira", api, rpcUrl);
+						break;
+				}
+
 				const { address, walletMethods, balance } = await getWalletMethodsForChain({
 					derivationPath,
 					chain,
-					api: apis[chain],
-					rpcUrl: rpcUrls[chain],
+					api,
+					rpcUrl,
 					covalentApiKey,
 					ethplorerApiKey,
 					keystore,

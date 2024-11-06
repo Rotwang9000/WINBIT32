@@ -156,7 +156,7 @@ export const SKClientProviderManager = ({ children }) => {
 				plugins: {
 					...ChainflipPlugin,
 					...MayachainPlugin,
-					...ThorchainPlugin
+					...ThorchainPlugin,
 				},
 				rpcUrls: {
 					Chainflip:
@@ -164,6 +164,8 @@ export const SKClientProviderManager = ({ children }) => {
 					ETH: "https://mainnet.infura.io/v3/c3b4e673639742a89bbddcb49895d568",
 					AVAX: "https://avalanche-mainnet.infura.io/v3/c3b4e673639742a89bbddcb49895d568",
 					DOT: "https://rpc.polkadot.io",
+					KUJI: "https://kujira-rpc.publicnode.com:443",
+					Kujira: "https://kujira-rpc.publicnode.com:443", 
 
 					// XRD: "https://radix-mainnet.rpc.grove.city/v1/456359ff",
 					// Radix: "https://radix-mainnet.rpc.grove.city/v1/456359ff",
