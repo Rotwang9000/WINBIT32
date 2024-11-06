@@ -576,7 +576,7 @@ export const handleSwap = async (
 			feeOption: swapParams.feeOption,
 			recipient: swapParams.recipient,
 			pluginName: swapParams.pluginName,
-			
+			memo: route.memo,
 		},
 		route: routeWithTransaction,
 	};
@@ -614,7 +614,7 @@ export const handleSwap = async (
 		setShowProgress(false);
 		return;
 	}else if(txDetails?.message.includes("Server Error")){
-		setStatusText("TX Started but Server Error Getting Progress: " + txDetails.message);
+		setStatusText("Process Started, Click 'View TX' to see progress");
 		setSwapInProgress(false);
 		setShowProgress(false);
 		return;
