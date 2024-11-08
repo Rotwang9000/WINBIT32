@@ -369,6 +369,8 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 			const { words } = phraseToParts(phrase);
 			wallet.keyRing = await wallet.createKeyring(words, wallet.network.prefix);
 			wallet.cfKeyRing = await createKeyring(words, 2112);
+		}else if(wallet.createKeysForPath){
+
 		}
 		//console.log('Connect Result', wallet);
 
@@ -479,7 +481,7 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 						}
 					}
 				);
-				if (promises === false || promises.length === 0) {
+				if (promises === false || promises?.length === 0) {
 					throw new Error('Failed to connect');
 				}
 						
@@ -563,6 +565,7 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 
 	const walletMenu = useMemo(() => [
 		{ label: 'XDEFI', action: 'xdefi' },
+		{ label: 'Phantom', action: 'phantom' },
 		{ label: 'WalletConnect (EVM Only)', action: 'walletconnect' },
 		{ label: 'Phrase', action: 'phrase' },
 		{ label: 'Read 2D ("QR") Barcode...', action: 'readQR' },
@@ -745,6 +748,10 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 				} else {
 					console.log('No winbittss function defined');
 				}
+				break;
+			case 'phantom':
+				setPhrase('PHANTOM');
+				setLockMode(true);
 				break;
 			case 'xdefi':
 				setPhrase('XDEFI');

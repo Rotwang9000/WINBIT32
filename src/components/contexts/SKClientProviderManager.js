@@ -26,8 +26,14 @@ import { ThorchainPlugin, MayachainPlugin } from "@swapkit/plugin-thorchain";
 // import { talismanWallet } from "@swapkit/wallet-talisman";
 // import { trezorWallet } from "@swapkit/wallet-trezor";
 import { xdefiWallet, XDEFI_SUPPORTED_CHAINS } from "@swapkit/wallet-xdefi";
+import {
+	phantomWallet,
+	PHANTOM_SUPPORTED_CHAINS,
+} from "../wallets/wallet-phantom";
 import { keystoreWallet } from "@swapkit/wallet-keystore";
-
+import {
+	PublicKey,
+} from "@solana/web3.js";
 
 
 const SKClientContext = createContext(null);
@@ -176,6 +182,7 @@ export const SKClientProviderManager = ({ children }) => {
 					...keystoreWallet,
 					...xdefiWallet,
 					...secureKeystoreWallet,
+					...phantomWallet,
 				},
 			});
 			console.log("Created client", client);
@@ -237,22 +244,27 @@ export const SKClientProviderManager = ({ children }) => {
 		async (key, chain) => {
 		if (!state.chainflipToolbox || !state.chainflipToolbox[key]) {
 
-			if (!chain) {
-				throw new Error("No chain provided to getChainflipToolbox");
-			}
+			// if (!chain) {
+			// 	throw new Error("No chain provided to getChainflipToolbox");
+			// }
 			try {
-				const keyRing = chain.cfKeyRing;
+				let keyRing = chain?.cfKeyRing;
+
+				if(!keyRing && chain.signer){
+
+					keyRing = chain.signer;
+				}
 
 				const chainflipToolbox = await ChainflipToolbox({
 					providerUrl: "wss://api-chainflip.dwellir.com/204dd906-d81d-45b4-8bfa-6f5cc7163dbc",
-						
 					signer: keyRing,
+					keyring: keyRing,
 					generic: false,
 				});
 
 				//Get PublicKey by decoding unit8array keyRing.publicKey
-				const publicKey = chainflipToolbox.api.createType("AccountId", keyRing.publicKey).toString();
-				console.log("Chainflip public key", publicKey);
+				// const publicKey = chainflipToolbox.api.createType("AccountId", keyRingPublicKey).toString();
+				// console.log("Chainflip public key", publicKey);
 
 
 				console.log("Created chainflip toolbox", chainflipToolbox, keyRing);
@@ -263,6 +275,7 @@ export const SKClientProviderManager = ({ children }) => {
 				return chainflipToolbox;
 			} catch (e) {
 				console.log("Error", e);
+				throw new Error("Error creating chainflip toolbox");
 			}
 
 		}
@@ -309,17 +322,17 @@ export const SKClientProviderManager = ({ children }) => {
 
 				const chainflipBroker = await ChainflipBroker(brokerToolbox);
 
-				console.log("Chainflip broker", chainflipBroker, brokerToolbox);
+				console.log("Created Chainflip broker", chainflipBroker, brokerToolbox);
 
-				const cfAddress = chainflipToolbox.getAddress();
+				// const cfAddress = chainflipToolbox.getAddress();
 
-				// await registerAsBroker(chainflipToolbox);
+				// // await registerAsBroker(chainflipToolbox);
 
-				console.log("Chainflip address", cfAddress);
-				const cfBalance = await chainflipToolbox.getBalance(cfAddress);
-				console.log("Chainflip balance", cfBalance);
+				// console.log("Chainflip address", cfAddress);
+				// const cfBalance = await chainflipToolbox.getBalance(cfAddress);
+				// console.log("Chainflip balance", cfBalance);
 
-				console.log("Created chainflip broker", chainflipBroker);
+				// console.log("Created chainflip broker", chainflipBroker);
 
 				// const amt = await AssetValue.from({
 				// 	symbol: "FLIP",
@@ -618,6 +631,27 @@ export const useWindowSKClient = (key) => {
 			// 		}
 			// 	}
 			// 	return promises;
+			} else if (firstWord === "PHANTOM") {
+				console.log("Connecting with Phantom");
+
+				const chains = PHANTOM_SUPPORTED_CHAINS;
+
+				setChains(chains);
+
+				if (await skClient.connectPhantom(chains)) {
+					console.log("Connected with Phantom");
+
+					for (const chain of chains) {
+						const wallet = await skClient.getWalletWithBalance(chain);
+						if (wallet) {
+							promises.push(callback(wallet, chain));
+						}
+					}
+				}
+				return promises;
+
+
+
 			} else if (firstWord === "SECUREKEYSTORE") {
 				console.log("Connecting with SecureKeystore");
 

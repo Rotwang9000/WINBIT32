@@ -109,7 +109,8 @@ const SwapComponent = ({ providerKey, windowId, programData, appData, onOpenWind
 			(txnStatus === '') ? setReportData : () => { },
 			iniData,
 			thorAffiliate, mayaAffiliate,
-			setThorAffiliate, setMayaAffiliate
+			setThorAffiliate, setMayaAffiliate,
+			streamingNumSwaps, streamingInterval
 		);
 
 
@@ -469,7 +470,13 @@ swap_count=${streamingNumSwaps}
 					selectedRoute,
 					license,
 					false,
-					''
+					'',
+					'be',
+					'be',
+					setThorAffiliate,
+					setMayaAffiliate,
+					streamingNumSwaps,
+					streamingInterval
 				);
 
 				setProgress(13 + (i * 7));
@@ -554,12 +561,12 @@ swap_count=${streamingNumSwaps}
 
 			if (r) {
 				//if chainflip set streaming
-				if (r.providers.includes('CHAINFLIP')) {
+				if (r.providers.includes('CHAINFLIP_DCA')) {
 					console.log('Chainflip route selected');
 					setIsStreamingSwap(true);
 					if (!manualStreamingSet) {
-						setStreamingInterval(100);
-						setStreamingNumSwaps(1);
+						setStreamingInterval(r.cfQuote?.dcaParams?.chunkIntervalBlocks || 10);
+						setStreamingNumSwaps(r.cfQuote?.dcaParams?.numberOfChunks || 10);
 					}
 					return;
 				}

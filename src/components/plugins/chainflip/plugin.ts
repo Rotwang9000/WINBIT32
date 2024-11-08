@@ -29,7 +29,8 @@ export async function getDepositAddress({
   numChunks,
   chunkIntervalBlocks,
   affiliateBrokers,
-  sender
+  sender,
+  route
 }: {
   buyAsset: AssetValue;
   sellAsset: AssetValue;
@@ -44,6 +45,7 @@ export async function getDepositAddress({
   chunkIntervalBlocks?: number;
   affiliateBrokers?: string[];
   sender: string;
+  route?: any;
 }) {
   try {
     if (chainflipSDKBroker) {
@@ -61,21 +63,16 @@ export async function getDepositAddress({
         throw new SwapKitError("chainflip_unknown_asset", { sellAsset, buyAsset });
       }
 
-  //     fillOrKillParams: {
-  //       slippageTolerancePercent: 1, // 1% slippage tolerance from quoted price
-  //         refundAddress: 'tb1p8p3xsgaeltylmvyrskt3mup5x7lznyrh7vu2jvvk7mn8mhm6clksl5k0sm', // address to which assets are refunded
-  //           retryDurationBlocks: 100, // 100 blocks * 6 seconds = 10 minutes before deposits are refunded
-  // },
-      //rate is the number of buyAsset units per sellAsset unit - not bigints... so adjust for the number of decimals
-      const rate = sellAsset.getValue("number") / buyAsset.getValue("number"); 
+      const isV2 = route.cfQuote? true : false;
 
-      const fillOrKillParams = {
-        // slippageTolerancePercent: slippage || 1, //only in V2
-        refundAddress: sender,
-        retryDurationBlocks: 100,
-        //as non-scientific notation string
-        minPrice: format(rate, { notation: 'fixed' }),
-      } as typeof fillOrKillParams;
+      //     fillOrKillParams: {
+      //       slippageTolerancePercent: 1, // 1% slippage tolerance from quoted price
+      //         refundAddress: 'tb1p8p3xsgaeltylmvyrskt3mup5x7lznyrh7vu2jvvk7mn8mhm6clksl5k0sm', // address to which assets are refunded
+      //           retryDurationBlocks: 100, // 100 blocks * 6 seconds = 10 minutes before deposits are refunded
+      // },
+      //rate is the number of buyAsset units per sellAsset unit - not bigints... so adjust for the number of decimals
+      const rate = sellAsset.getValue("number") / buyAsset.getValue("number");
+
 
       const dcaParams = {
         numberOfChunks: numChunks || 1,
@@ -97,28 +94,56 @@ export async function getDepositAddress({
         };
       });
 
-      console.log("fillOrKillParams", fillOrKillParams);
       console.log("dcaParams", dcaParams, brokerCommissionBPS, maxBoostFeeBps, recipient, sellAsset.getBaseValue("string"), srcAsset, srcChain, destAsset, destChain, _affiliateBrokers, sellAsset.getValue("number"), buyAsset.getValue("number"));
 
-      const req = {
-        destAddress: recipient,
-        srcAsset,
-        srcChain,
-        destAsset,
-        destChain,
-        maxBoostFeeBps,
-        amount: sellAsset.getBaseValue("string"),
-        brokerCommissionBps: brokerCommissionBPS || 0,
-        ccmParams,
-        fillOrKillParams,
-        dcaParams,
-      };
+      const fillOrKillParams = {
+        slippageTolerancePercent: slippage || 1, //only in V2
+        refundAddress: sender,
+        retryDurationBlocks: 100,
+        //as non-scientific notation string
+      } as typeof fillOrKillParams;
 
-      console.log(req);
+      let resp;
 
-      const resp = await chainflipSDK.requestDepositAddress(req);
+      if(isV2){
+        fillOrKillParams.slippageTolerancePercent = slippage || 1;
 
-      return {
+        const req = {
+          quote: route.cfQuote,
+          destAddress: recipient,
+          brokerCommissionBPS: brokerCommissionBPS || 0,
+          fillOrKillParams,
+          dcaParams,
+          affiliateBrokers: _affiliateBrokers,
+        };
+
+        console.log(req);
+
+        resp = await chainflipSDK.requestDepositAddressV2(req);
+
+      }else{
+        fillOrKillParams.minPrice = format(rate, { notation: 'fixed' });
+
+        const req = {
+          destAddress: recipient,
+          srcAsset,
+          srcChain,
+          destAsset,
+          destChain,
+          maxBoostFeeBps,
+          amount: sellAsset.getBaseValue("string"),
+          brokerCommissionBps: brokerCommissionBPS || 0,
+          ccmParams,
+          fillOrKillParams,
+          dcaParams,
+        };
+        console.log(req);
+      
+        resp = await chainflipSDK.requestDepositAddress(req);
+      
+      }
+      
+        return {
         channelId: resp.depositChannelId,
         depositAddress: resp.depositAddress,
         chain: buyAsset.chain,
@@ -196,23 +221,23 @@ function plugin({
 
     // const buyAsset = await AssetValue.from({ asyncTokenLookup: true, asset: buyAssetString });
 
-  //   const { depositAddress } = await getDepositAddress({
-  //     brokerEndpoint: brokerUrl,
-  //     buyAsset,
-  //     recipient,
-  //     sellAsset,
-  //     maxBoostFeeBps,
-  //     chainflipSDKBroker: useChainflipSDKBroker,
-  //   });
+    //   const { depositAddress } = await getDepositAddress({
+    //     brokerEndpoint: brokerUrl,
+    //     buyAsset,
+    //     recipient,
+    //     sellAsset,
+    //     maxBoostFeeBps,
+    //     chainflipSDKBroker: useChainflipSDKBroker,
+    //   });
 
-  //   const tx = await wallet.transfer({
-  //     assetValue: sellAsset,
-  //     from: wallet.address,
-  //     recipient: depositAddress,
-  //     isProgramDerivedAddress: true,
-  //   });
+    //   const tx = await wallet.transfer({
+    //     assetValue: sellAsset,
+    //     from: wallet.address,
+    //     recipient: depositAddress,
+    //     isProgramDerivedAddress: true,
+    //   });
 
-  //   return tx as string;
+    //   return tx as string;
   }
 
   return {

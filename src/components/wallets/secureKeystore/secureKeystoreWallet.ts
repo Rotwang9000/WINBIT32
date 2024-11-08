@@ -24,7 +24,7 @@ import { getToolboxByChain as getToolboxByChainUTXO } from "@swapkit/toolbox-utx
 import { getToolboxByChain as getToolboxByChainCosmos } from "../../toolbox/cosmos/index.ts";
 import { Network, getToolboxByChain as getToolboxByChainSubstrate, createKeyring } from "@swapkit/toolbox-substrate";
 import { getRadixCoreApiClient, createPrivateKey, RadixMainnet } from "./legacyRadix.ts";
-import { SOLToolbox } from "../../plugins/sol-toolbox.ts";
+import { SOLToolbox } from "../../toolbox/solana/toolbox.ts";
 import { addDialogOptions } from "./dialogOptions"
 
 const derivationPathAccountPositions = {
@@ -189,7 +189,6 @@ const getWalletMethodsForChain = async ({
 
 			// Get the base toolbox
 			toolbox = getToolboxByChainEVM(chain)(params);
-
 			// Specify sensitive methods for EVM chains
 			sensitiveMethods = ['transfer', 'signMessage', 'approve', 'call', 'estimateCall', 'sendTransaction', 'createTransferTx', 'createApprovalTx'];
 
@@ -248,7 +247,6 @@ const getWalletMethodsForChain = async ({
 
 			const keys = toolbox.createKeysForPath({ phrase, derivationPath });
 			address = toolbox.getAddressFromKeys(keys);
-
 			// Specify sensitive methods for UTXO chains
 			sensitiveMethods = ['transfer', 'createKeysForPath', 'getAddressFromKeys', 'getPrivateKeyFromMnemonic'];
 
