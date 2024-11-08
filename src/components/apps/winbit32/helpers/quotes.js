@@ -1,10 +1,13 @@
 import { AssetValue } from "@swapkit/sdk";
-import { getQuoteFromThorSwap, getQuoteFromSwapKit } from "./quote";
+import { getQuoteFromChainflip, getQuoteFromSwapKit } from "./quote";
 import { amountInBigNumber } from "./quote";
 import { SwapKitApi } from "@swapkit/api";
 import bigInt from "big-integer";
 import { getQuoteFromMaya } from "./maya";
 import { forEach } from "lodash";
+import { getAssetValue } from "./quote";
+
+
 
 export const getQuotes = async (
 	oSwapFrom,
@@ -27,7 +30,9 @@ export const getQuotes = async (
 	thorAffiliate,
 	mayaAffiliate,
 	setThorAffiliate,
-	setMayaAffiliate
+	setMayaAffiliate,
+	numChunks,
+	chunkIntervalBlocks
 ) => {
 	const thisDestinationAddress =
 		destinationAddress || chooseWalletForToken(swapTo, wallets)?.address;
@@ -45,11 +50,11 @@ export const getQuotes = async (
 				? 16
 				: 32;
 		
-		let providerGroups = [["MAYACHAIN", "MAYACHAIN_STREAMING", "THORCHAIN", "THORCHAIN_STREAMING", "CHAINFLIP"]];
+		let providerGroups = [["MAYACHAIN", "MAYACHAIN_STREAMING", "THORCHAIN", "THORCHAIN_STREAMING"]];
 		const affiliates = [mayaAffiliate, thorAffiliate];	
 		if(thorAffiliate !== mayaAffiliate){
 			providerGroups = [
-				["MAYACHAIN", "MAYACHAIN_STREAMING", "CHAINFLIP"],
+				["MAYACHAIN", "MAYACHAIN_STREAMING"],
 
 				["THORCHAIN", "THORCHAIN_STREAMING"],
 			];
@@ -79,8 +84,24 @@ export const getQuotes = async (
 			return swapKitQuoteParams;
 		});
 
-		console.log("AssetValue", swapFrom.identifier, swapTo.identifier);
+		console.log("AssetValue", swapFrom, amount);
 
+		const { assetValue } = await getAssetValue(swapFrom, amount);
+
+		const chainflipQuoteParams = {
+			sellAsset: swapFrom,
+			buyAsset: swapTo,
+			sellChain: swapFrom.chain,
+			buyChain: swapTo.chain,
+			assetValue,
+			slippage: slippage || 1,
+			sourceAddress: chooseWalletForToken(swapFrom, wallets)?.address,
+			destinationAddress: thisDestinationAddress,
+			affiliateBasisPoints: basisPoints.toString(),
+		};
+
+
+		// const mayaSwapQuoteParams = {
 		// const thorSwapQuoteParams = {
 		// 	sellAsset: swapFrom.identifier,
 		// 	sellAmount: amount,
@@ -95,6 +116,10 @@ export const getQuotes = async (
 		const quoteFuncs = quotesParams.map((quoteParams) => {
 			return () => getQuoteFromSwapKit(quoteParams);
 		});
+
+		//add chainflip to the list of quotes
+		
+		quoteFuncs.push(() => getQuoteFromChainflip(chainflipQuoteParams));
 
 		let retry = false;
 

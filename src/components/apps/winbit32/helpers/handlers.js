@@ -49,7 +49,7 @@ export const handleApprove = async (
 
 	const dotWallet = wallets.find((wallet) => wallet.chain === "DOT");
 
-	if("CHAINFLIP" === route.providers[0]){
+	if("CHAINFLIP" === route.providers[0] || "CHAINFLIP_DCA" === route.providers[0]){
 		
 		setStatusText("Approve not required for Chainflip");
 		return;
@@ -267,10 +267,10 @@ export const handleSwap = async (
 	console.log("assetValue", assetValue, swapFrom, amount, otherBits);
 
 	let cfAddress = null;
-	if (route.providers[0] === "CHAINFLIP") {
+	if (route.providers[0] === "CHAINFLIP" || route.providers[0] === "CHAINFLIP_DCA") {
 		const dotWallet = wallets.find((wallet) => wallet.chain === "DOT");
 
-		const { broker, toolbox } = await chainflipBroker(dotWallet);
+		const { broker, toolbox } = await chainflipBroker(dotWallet || wallet);
 		console.log("broker", broker);
 		console.log("toolbox", toolbox);
 
@@ -294,8 +294,8 @@ export const handleSwap = async (
 		);
 		console.log(
 			"swapToAssetValue",
-			swapToAssetValue.toString().toUpperCase(),
-			assetValue.toString().toUpperCase()
+			swapToAssetValue.toString(),
+			assetValue.toString()
 		);
 
 		// 	export async function getDepositAddress({
@@ -421,7 +421,7 @@ export const handleSwap = async (
 		 swapParams.pluginName = "mayachain";
 	else if (route.providers[0].match(/^THORCHAIN/))
 		 swapParams.pluginName = "thorchain";
-	else if (route.providers[0] === "CHAINFLIP") {
+	else if (route.providers[0] === "CHAINFLIP" || route.providers[0] === "CHAINFLIP_DCA"){
 		swapParams.pluginName = "chainflip";
 		// swapParams.recipientAddress = cfAddress.depositAddress;
 		// swapParams.chainflipBrokerUrl = "http://chainflip.winbit32.com:10997";

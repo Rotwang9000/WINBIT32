@@ -179,6 +179,7 @@ const Portfolio = ({ providerKey, handleOpenArray, onOpenWindow, windowId }) => 
 				balance: Number(token.bigIntValue) / Number(token.decimalMultiplier),
 				totalUSD: Number(token.bigIntValue) / Number(token.decimalMultiplier) * usdPrices.find(price => price.identifier.toLowerCase() === identifierFromBalance(token).toLowerCase())?.priceUsd, 
 				priceUSD: usdPrices.find(price => price.identifier.toLowerCase() === identifierFromBalance(token).toLowerCase())?.priceUsd,
+				address: token.address,
 				fullToken: token
 			})) : []
 		}));
@@ -232,7 +233,7 @@ const Portfolio = ({ providerKey, handleOpenArray, onOpenWindow, windowId }) => 
 			{data.tokens.map((token, index) => (
 				<tr key={index} style={{ marginBottom: '10px', padding: '10px', borderBottom: '1px solid grey' }}>
 					<td title={token.symbol} style={{maxWidth:'300px', overflow:'hidden', 'whiteSpace': 'nowrap', 'textOverflow': 'ellipsis'}}>	 {token.ticker}</td>
-					<td style={{ cursor: 'pointer' }} onClick={() => copyToClipboard(token.fullToken.address, this)} title="Copy this token's address">📋</td>
+					<td style={{ cursor: 'pointer' }} onClick={() => copyToClipboard(token.address, this)} title={"Copy this token's address: " + token.address}>📋</td>
 					<td style={{ maxWidth: '300px', overflow: 'hidden', 'whiteSpace': 'nowrap', 'textOverflow': 'ellipsis' }}>{formatNumber(token.balance)}</td>
 					<td style={{ maxWidth: '100px', overflow: 'hidden', 'whiteSpace': 'nowrap', 'textOverflow': 'ellipsis' }}>{token.totalUSD ? '$' + token.totalUSD.toFixed(2) : 'N/A'}</td>
 					<td onClick={() => handleOpenWindow('send.exe', { selectedToken: getTokenfromBalanceToken(token.fullToken) })} style={{ cursor: 'pointer' }} title="Send this token to someone else">✉️</td>

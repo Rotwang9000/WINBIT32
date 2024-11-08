@@ -151,7 +151,7 @@ const SendFundsComponent = ({ providerKey, windowId, onOpenWindow, metadata, has
 				};
 
 				if(sendingWallet.chain === 'SOL'){
-					txData.isPDA = true;
+					txData.isProgramDerivedAddress = true;
 				}
 
 			}
