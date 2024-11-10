@@ -591,7 +591,7 @@ export async function getTransferTransaction(connection: Connection, recipient: 
 	console.log('transaction', transaction, fromPublicKey, recipient, assetValue);
 
 
-	const blockHash = await connection.getLatestBlockhash();
+	const blockHash = await connection.getLatestBlockhash('confirmed');
 	transaction.recentBlockhash = blockHash.blockhash;
 	transaction.feePayer = fromPublicKey;
 

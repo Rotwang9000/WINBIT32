@@ -431,13 +431,17 @@ export const handleSwap = async (
 			assetValue: assetValue,
 			from: wallet.address,
 			recipient: cfAddress.depositAddress,
-			isPDA: true
+			isPDA: true,
+			isProgramDerivedAddress: true,
+			setStatusTextMessage: setStatusText,
 		};
 		setProgress(13);
 		console.log("Sending funds:", txData, wallet);
 
 		try {
 			const txID = await wallet.transfer(txData);
+			const txExplorerUrl = getTxnUrl(txID, wallet.chain, skClient);
+			setExplorerUrl(txExplorerUrl);
 			setProgress(87);
 			const explorerUrl =
 				"https://scan.chainflip.io/channels/" + cfAddress.channelId;

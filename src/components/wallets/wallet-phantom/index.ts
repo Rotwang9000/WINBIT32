@@ -89,7 +89,9 @@ async function getWalletMethods<T extends PhantomSupportedChains>({
         recipient,
         assetValue,
         isProgramDerivedAddress,
-      }: WalletTxParams & { assetValue: AssetValue; isProgramDerivedAddress?: boolean }) => {
+        setStatusMessage,
+      }: WalletTxParams & { assetValue: AssetValue; isProgramDerivedAddress?: boolean; setStatusMessage?: (message: string) => void
+       }) => {
         if (!(isProgramDerivedAddress || toolbox.validateAddress(recipient))) {
           throw new SwapKitError("core_transaction_invalid_recipient_address");
         }
@@ -107,6 +109,12 @@ async function getWalletMethods<T extends PhantomSupportedChains>({
           tokenAddress: assetValue.address,
         });
 
+
+        if(!setStatusMessage){
+          setStatusMessage = (message: string) => {
+            console.log("message", message);
+          }
+        }
 
         // const transaction = assetValue.isGasAsset
         //   ? new Transaction().add(
@@ -136,24 +144,86 @@ async function getWalletMethods<T extends PhantomSupportedChains>({
         // transaction.feePayer = fromPubkey;
         //getTransferTransaction(connection: Connection, recipient: string, assetValue: AssetValue, fromKeypair: Keypair) {
 
+        setStatusMessage("Generating transaction...");
+
         const transaction = await getTransferTransaction(toolbox.connection, recipient, assetValue, fromPubkey);
 
-        const blockHash = await toolbox.connection.getLatestBlockhash();
-        transaction.recentBlockhash = blockHash.blockhash;
+
         transaction.feePayer = fromPubkey;
 
         console.log("transaction", transaction);
 
-        const signedTransaction = await provider.signAndSendTransaction(transaction);
+        //we want to make sure the tx is sent and retry if not
 
-        console.log("signedTransaction", signedTransaction);
+        const SendOptions = {
+          skipPreflight: true,
+          preflightCommitment: 'confirmed',
+          maxRetries: 64,
+        };
 
-        const txid = signedTransaction.signature;
+        let txConfirmed = false;
+        let txid = "";
 
-        // console.log("signedTransaction", signedTransaction);
-        // //output as base64
-        // console.log("signedTransaction", signedTransaction.serialize());
+        //we loop thru until we get a confirmed tx, or user cancels
+        setStatusMessage("Sending transaction...");
 
+        while (!txConfirmed) {
+
+          const blockHash = await toolbox.connection.getLatestBlockhash('confirmed');
+
+          transaction.recentBlockhash = blockHash.blockhash;
+
+          const signedTransaction = await provider.signAndSendTransaction(transaction, SendOptions);
+
+          console.log("signedTransaction", signedTransaction);
+
+          if (!signedTransaction) {
+            throw new SwapKitError("core_transaction_rejected_by_user");
+          }
+
+          txid = signedTransaction.signature;
+
+          // console.log("signedTransaction", signedTransaction);
+          // //output as base64
+          // console.log("signedTransaction", signedTransaction.serialize());
+          try{
+            setStatusMessage("Confirming transaction...");
+            // confirm the transaction
+              txConfirmed = await toolbox.connection.confirmTransaction({
+                blockhash: blockHash.blockhash,
+                lastValidBlockHeight: blockHash.lastValidBlockHeight,
+                signature: signedTransaction.signature,
+              });
+            console.log("confirmation", txConfirmed);
+
+          }catch(e){
+            console.log("error", e);
+            // it probably errored as unknown... check again in case it was just a network issue
+            try {
+              setStatusMessage("Confirming transaction......");
+              // confirm the transaction
+              txConfirmed = await toolbox.connection.confirmTransaction({
+                blockhash: blockHash.blockhash,
+                lastValidBlockHeight: blockHash.lastValidBlockHeight,
+                signature: signedTransaction.signature,
+              });
+              console.log("confirmation", txConfirmed);
+
+            } catch (e) {
+              console.log("error", e);
+              // it errored again, we need to retry the transaction
+              setStatusMessage("Could not be confirmed, Retrying transaction...");
+              txConfirmed = false;
+            }
+
+          }
+          if(txConfirmed){
+            setStatusMessage("Transaction confirmed");
+          }else{
+            setStatusMessage("Could not be confirmed, Retrying transaction...");
+          }
+
+        }
 
         // const txid = await toolbox.connection.sendRawTransaction(signedTransaction.serialize());
 
