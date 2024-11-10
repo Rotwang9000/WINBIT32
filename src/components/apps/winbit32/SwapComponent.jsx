@@ -43,7 +43,7 @@ const SwapComponent = ({ providerKey, windowId, programData, appData, onOpenWind
 	const [swapInProgress, setSwapInProgress] = useIsolatedState(windowId, 'swapInProgress', false);
 	const [progress, setProgress] = useIsolatedState(windowId, 'progress', 0);
 	const [showProgress, setShowProgress] = useIsolatedState(windowId, 'showProgress', false);
-	const [explorerUrl, setExplorerUrl] = useIsolatedState(windowId, 'explorerUrl', '');
+	const [explorerUrls, setExplorerUrls] = useIsolatedState(windowId, 'explorerUrls', '');
 	const [txnHash, setTxnHash] = useIsolatedState(windowId, 'txnHash', '');
 	const [txnStatus, setTxnStatus] = useIsolatedState(windowId, 'txnStatus', '');
 	const currentTxnStatus = useRef(txnStatus);
@@ -72,6 +72,16 @@ const SwapComponent = ({ providerKey, windowId, programData, appData, onOpenWind
 		setCurrentTokenSetter(() => setter);
 		setIsTokenDialogOpen(toFrom || true);
 	};
+
+	const setExplorerUrl = useCallback((url) => {
+		if(url === ''){
+			setExplorerUrls([]);
+			return;
+		}
+		//add to urls
+		setExplorerUrls([...explorerUrls, url]);
+
+	}, [explorerUrls, setExplorerUrls]);
 
 
 	const secsToDisplay = useCallback((secs) => {
@@ -684,15 +694,17 @@ swap_count=${streamingNumSwaps}
 				}
 
 
-				{explorerUrl ?
-					<button className='swap-toolbar-button' onClick={() => {
-						window.open(explorerUrl, '_blank');
-					}}>
-						<div className='swap-toolbar-icon' >⛓</div>
-						View TX
-					</button>
-					: ''
+				{explorerUrls.length > 0 &&
+					explorerUrls.map((explorerUrl, index) => (
+						<button className='swap-toolbar-button' onClick={() => {
+							window.open(explorerUrl, '_blank');
+						}}>
+							<div className='swap-toolbar-icon' >⛓</div>
+							View TX
+						</button>
+					))
 				}
+
 				{reportData && reportData.ini &&
 					<button className='swap-toolbar-button' onClick={() => {
 						generateSwapReport(reportData, onOpenWindow);
@@ -714,7 +726,7 @@ swap_count=${streamingNumSwaps}
 
 			<div style={{ width: '100%', boxSizing: 'border-box', display: 'flex', flexDirection: 'column' }} className={'swap-component ' + (swapInProgress ? 'swap-in-progress' : '')}>
 
-				<div style={{ display: (swapInProgress || explorerUrl ? 'flex' : 'none') }} className="swap-progress-container">
+				<div style={{ display: (swapInProgress || explorerUrls.length  ? 'flex' : 'none') }} className="swap-progress-container">
 					{swapInProgress ? <div>
 						<div className="swap-progress" onClick={() => {
 							setTxnStatus((prev) => {

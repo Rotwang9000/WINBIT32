@@ -196,6 +196,8 @@ export const getTxnUrl = (txHash, chain, skClient) => {
 			case Chain.Ethereum:
 				return `https://www.xscanner.org/tx/${txHash}`;
 
+			case Chain.Solana:
+				return 'https://solscan.io/tx/' + txHash;
 			default:
 				return skClient.getExplorerTxUrl({ chain, txHash });
 		}
