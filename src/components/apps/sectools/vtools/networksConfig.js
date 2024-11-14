@@ -93,3 +93,96 @@ export const networks = {
 		network: "mainnet-beta",
 	},
 };
+
+
+const showKeyForNetwork = (privateKey, networkName) => {
+	try {
+		const network = networks[networkName];
+		const keyPair = ec.keyFromPrivate(privateKey, "hex");
+		const pubKey = keyPair.getPublic("hex");
+		console.log(`${networkName} private key:`, privateKey);
+		console.log(`${networkName} public key:`, pubKey);
+	} catch (error) {
+		console.error(`Error showing ${networkName} key:`, error);
+	}
+};
+
+const showEthereumKey = (privateKey) => {
+	try {
+		const wallet = new ethers.Wallet(privateKey);
+		console.log("Ethereum private key:", privateKey);
+		console.log("Ethereum address:", wallet.address);
+	} catch (error) {
+		console.error("Error showing Ethereum key:", error);
+	}
+};
+
+
+export 	const supportedCoins = [
+	{
+		name: "bitcoin",
+		derivePath: "m/44'/0'/0'/0/0",
+		action: (privateKey) => showKeyForNetwork(privateKey, "bitcoin"),
+	},
+	{
+		name: "ethereum",
+		derivePath: "m/44'/60'/0'/0/0",
+		action:  (privateKey) => showEthereumKey(privateKey),
+	},
+	{
+		name: "litecoin",
+		derivePath: "m/44'/2'/0'/0/0",
+		action: (privateKey) => showKeyForNetwork(privateKey, "litecoin"),
+	},
+	{
+		name: "dogecoin",
+		derivePath: "m/44'/3'/0'/0/0",
+		action: (privateKey) => showKeyForNetwork(privateKey, "dogecoin"),
+	},
+	{
+		name: "dash",
+		derivePath: "m/44'/5'/0'/0/0",
+		action: (privateKey) => showKeyForNetwork(privateKey, "dash"),
+	},
+	{
+		name: "binance smart chain",
+		derivePath: "m/44'/60'/0'/0/0",
+		action: (privateKey) =>
+			showKeyForNetwork(privateKey, "binance smart chain"),
+	},
+	{
+		name: "polygon",
+		derivePath: "m/44'/60'/0'/0/0",
+		action: (privateKey) => showKeyForNetwork(privateKey, "polygon"),
+	},
+	{
+		name: "cosmos",
+		derivePath: "m/44'/118'/0'/0/0",
+		action: (privateKey) => showKeyForNetwork(privateKey, "cosmos"),
+	},
+	{
+		name: "thorchain",
+		derivePath: "m/44'/931'/0'/0/0",
+		action: (privateKey) => showKeyForNetwork(privateKey, "thorchain"),
+	},
+	{
+		name: "arbitrum",
+		derivePath: "m/44'/60'/0'/0/0",
+		action: (privateKey) => showKeyForNetwork(privateKey, "arbitrum"),
+	},
+	{
+		name: "solana",
+		derivePath: "m/44'/501'/0'/0/0",
+		action: (privateKey) => showKeyForNetwork(privateKey, "solana"),
+	},
+	{
+		name: "kujira",
+		derivePath: "m/44'/118'/0'/0/0",
+		action: (privateKey) => showKeyForNetwork(privateKey, "kujira"),
+	},
+	{
+		name: "maya protocol",
+		derivePath: "m/44'/931'/0'/0/0",
+		action: (privateKey) => showKeyForNetwork(privateKey, "maya protocol"),
+	},
+];

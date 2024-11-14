@@ -192,8 +192,8 @@ export const BaseThorchainToolbox = ({
       ? "https://stagenet.mayanode.mayachain.info"
       : "https://stagenet-thornode.ninerealms.com"
     : isMaya
-      ? "https://mayanode.mayachain.info"
-      : "https://thornode.thorswap.net";
+      ? "https://tendermint.mayachain.info"
+      : "https://rpc.thorswap.net";
 
   const client = new CosmosClient({
     server: nodeUrl,
