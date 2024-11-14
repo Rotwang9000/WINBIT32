@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { handleFileUpload, generateVultFiles, handleCoinKeyDerivation, recoverKeys, combineSharesToRecoverKey, generateVaultFromShares } from './keyManagement';
 
-const TssKeyRecovery = () => {
+const VTools = ({ programData, windowId }) => {
 	const [decryptedVault, setDecryptedVault] = useState(null);
 	const [keyInput, setKeyInput] = useState("");
 	const [sharesInput, setSharesInput] = useState("");
@@ -51,7 +51,6 @@ const TssKeyRecovery = () => {
 
 	return (
 		<div>
-			<h1>TSS Key Recovery</h1>
 			<input type="file" onChange={(event) => handleFileUpload(event, setDecryptedVault)} />
 			{decryptedVault && (
 				<div>
@@ -119,4 +118,4 @@ const TssKeyRecovery = () => {
 	);
 };
 
-export default TssKeyRecovery;
+export default VTools;

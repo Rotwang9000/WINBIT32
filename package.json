@@ -1,10 +1,11 @@
 {
   "name": "winbit32",
-  "version": "1.2p2",
+  "version": "1.2p3",
   "private": false,
   "homepage": "https://winbit32.com",
   "dependencies": {
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
+    "@bufbuild/protobuf": "^1.10.0",
     "@chainflip/sdk": "^1.6.7-rc.3",
     "@fortawesome/fontawesome-svg-core": "^6.6.0",
     "@fortawesome/free-brands-svg-icons": "^6.6.0",
@@ -18,7 +19,6 @@
     "@radixdlt/radix-dapp-toolkit": "^2.0.3",
     "@radixdlt/radix-engine-toolkit": "^1.0.5",
     "@scure/bip39": "^1.2.1",
-    "@solana/spl-token-registry": "^0.2.4574",
     "@swapkit/plugin-chainflip": "^1.0.0-rc.72",
     "@swapkit/sdk": "^2.0.4",
     "@swapkit/tokens": "nightly",
