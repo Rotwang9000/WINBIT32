@@ -16,6 +16,7 @@ import { HDKey } from "@scure/bip32";
 import {
 	PrivateKey,
 } from "@radixdlt/radix-engine-toolkit";
+import { ECPairFactory, type ECPairInterface } from "ecpair";
 
 import { wbRadixToolbox } from "../../plugins/winbitRadixToolbox.ts";
 import { HDNodeWallet, getProvider, getToolboxByChain as getToolboxByChainEVM } from "@swapkit/toolbox-evm";
@@ -23,13 +24,56 @@ import { BCHToolbox } from "@swapkit/toolbox-utxo";
 import { getToolboxByChain as getToolboxByChainUTXO } from "@swapkit/toolbox-utxo";
 import { getToolboxByChain as getToolboxByChainCosmos } from "../../toolbox/cosmos/index.ts";
 import { Network, getToolboxByChain as getToolboxByChainSubstrate, createKeyring } from "@swapkit/toolbox-substrate";
+
+
 import { getRadixCoreApiClient, createPrivateKey, RadixMainnet } from "./legacyRadix.ts";
 import { SOLToolbox } from "../../toolbox/solana/toolbox.ts";
 import { addDialogOptions } from "./dialogOptions"
+import { Wallet as ethersWallet, Wallet } from "ethers";
+import { getNetwork } from "@swapkit/toolbox-utxo";
+import * as secp256k1 from "@bitcoinerlab/secp256k1";
+
 
 const derivationPathAccountPositions = {
 	SOL: 3,
 };
+
+// Add to existing code at top
+const isPK = (phrase: string) => phrase.trim().split(' ').length === 1;
+
+
+const UTXOcreateKeysForPath = ({
+	phrase,
+	wif,
+	derivationPath,
+	chain,
+}: {
+	phrase?: string;
+	wif?: string;
+	derivationPath: string;
+	chain: Chain;
+}) => {
+	if (!(wif || phrase)) throw new Error("Either phrase or wif must be provided");
+
+	const factory = ECPairFactory(secp256k1);
+	const network = getNetwork(chain);
+
+	// Handle WIF format directly
+	if (wif) return factory.fromWIF(wif, network);
+
+	// Check if phrase is actually a private key
+	if (phrase?.split(' ').length === 1) {
+		return factory.fromPrivateKey(Buffer.from(phrase, 'hex'), { network });
+	}
+
+	// Handle mnemonic phrase
+	const seed = mnemonicToSeedSync(phrase as string);
+	const master = HDKey.fromMasterSeed(seed, network).derive(derivationPath);
+	if (!master.privateKey) throw new Error("Could not get private key from phrase");
+
+	return factory.fromPrivateKey(Buffer.from(master.privateKey), { network });
+};
+
 
 const addIndexToDerivationPath = (chain: Chain, derivationPath: string, index: number) => {
 	const parts = derivationPath.split("/");
@@ -182,7 +226,9 @@ const getWalletMethodsForChain = async ({
 		case Chain.Polygon: {
 			const keys = ensureEVMApiKeys({ chain, covalentApiKey, ethplorerApiKey });
 			const provider = getProvider(chain, rpcUrl);
-			const wallet = HDNodeWallet.fromPhrase(phrase).connect(provider);
+			const wallet = isPK(phrase)
+				? new ethersWallet(phrase).connect(provider)
+				: HDNodeWallet.fromPhrase(phrase).connect(provider);
 			const params = { ...keys, api, provider, signer: wallet };
 
 			address = wallet.address;
@@ -196,7 +242,10 @@ const getWalletMethodsForChain = async ({
 			const wrappedToolbox = wrapSensitiveMethods(toolbox, (originalMethodName) => async (...args: any[]) => {
 				const { password } = await passwordRequest({ title: "EVM wallet password for " + originalMethodName + " required" }) as { password: string };
 				const phrase = await getPhrase(keystore, password);
-				const wallet = HDNodeWallet.fromPhrase(phrase).connect(provider);
+				const wallet = isPK(phrase)
+					? new ethersWallet(phrase).connect(provider)
+					: HDNodeWallet.fromPhrase(phrase).connect(provider);
+					//console.log("GOT ETHTYPE WALLET", phrase, isPK(phrase), wallet);
 				const signerToolbox = getToolboxByChainEVM(chain)({ ...keys, api, provider, signer: wallet });
 				debugLog("Calling on WrappedToolbox:", originalMethodName, signerToolbox, args);
 				//call originalMethodName on signer
@@ -209,8 +258,14 @@ const getWalletMethodsForChain = async ({
 		}
 
 		case Chain.BitcoinCash: {
+
+			//if phrase is just one word (private key) skip this chain.
+			if (isPK(phrase)) {
+				throw new Error("Private key not supported for BitcoinCash");
+			}
+
 			toolbox = BCHToolbox({ rpcUrl, apiKey: blockchairApiKey, apiClient: api });
-			const keys = await toolbox.createKeysForPath({ phrase, derivationPath });
+			const keys = await toolbox.createKeysForPath({ phrase, derivationPath, chain });
 			address = toolbox.getAddressFromKeys(keys);
 
 			// Specify sensitive methods for BitcoinCash
@@ -219,7 +274,7 @@ const getWalletMethodsForChain = async ({
 			const wrappedToolbox = wrapSensitiveMethods(toolbox, (originalMethod) => async (...args: any[]) => {
 				const { password } = await passwordRequest({ title: "BitcoinCash password for " + originalMethod + " required" }) as { password: string };
 				const phrase = await getPhrase(keystore, password);
-				const keys = await toolbox.createKeysForPath({ phrase, derivationPath });
+				const keys = await toolbox.createKeysForPath({ phrase, derivationPath, chain });
 				debugLog("Calling on WrappedToolbox:", originalMethod, toolbox, args);
 
 				return toolbox.transfer({
@@ -245,7 +300,7 @@ const getWalletMethodsForChain = async ({
 				apiClient: api,
 			});
 
-			const keys = toolbox.createKeysForPath({ phrase, derivationPath });
+			const keys = UTXOcreateKeysForPath({ phrase, derivationPath, chain });
 			address = toolbox.getAddressFromKeys(keys);
 			// Specify sensitive methods for UTXO chains
 			sensitiveMethods = ['transfer', 'createKeysForPath', 'getAddressFromKeys', 'getPrivateKeyFromMnemonic'];
@@ -253,7 +308,7 @@ const getWalletMethodsForChain = async ({
 			const wrappedToolbox = wrapSensitiveMethods(toolbox, (originalMethod) => async (...args: any[]) => {
 				const { password } = await passwordRequest({ title: "UTXO wallet password for " + originalMethod + " required" }) as { password: string };
 				const phrase = await getPhrase(keystore, password);
-				const keys = toolbox.createKeysForPath({ phrase, derivationPath });
+				const keys = UTXOcreateKeysForPath({ phrase, derivationPath, chain });
 				debugLog("Calling on WrappedToolbox:", originalMethod, toolbox, args);
 				return toolbox[originalMethod]({
 					...args[0], from: address, signTransaction: (psbt) => psbt.signAllInputs(keys)
@@ -268,15 +323,29 @@ const getWalletMethodsForChain = async ({
 		case Chain.Maya:
 		case Chain.THORChain: {
 			toolbox = getToolboxByChainCosmos(chain)({ server: api, stagenet });
-			address = await toolbox.getAddressFromMnemonic(phrase);
+
+			const phraseAsUint8Array = new Uint8Array(Buffer.from(phrase, 'hex'));
+
+			const signer = isPK(phrase) ? await toolbox.getSignerFromPrivateKey(phraseAsUint8Array):
+				await toolbox.getSigner(phrase);
+
+			console.log("Signer", chain, signer);
+
+			address = signer.address;
+
+
+			//address = await toolbox.getAddressFromMnemonic(phrase);
 
 			// Specify sensitive methods for Cosmos-based chains
 			sensitiveMethods = ['transfer', 'signMessage', 'deposit', 'getSigner'];
 			const wrappedToolbox = wrapSensitiveMethods(toolbox, (originalMethod) => async (...args: any[]) => {
 				const { password } = await passwordRequest({ title: "Cosmos wallet password for " + originalMethod + " required" }) as { password: string };
 				const phrase = await getPhrase(keystore, password);
-				const signer = await toolbox.getSigner(phrase);
-				const from = await toolbox.getAddressFromMnemonic(phrase);
+
+				const signer = isPK(phrase)? await toolbox.getSignerFromPrivateKey(phrase):
+					await toolbox.getSigner(phrase);
+
+				const from = signer.address;
 
 				args[0] = { ...args[0], from, signer };
 				debugLog("Calling on WrappedToolbox:", originalMethod, args);
@@ -289,7 +358,16 @@ const getWalletMethodsForChain = async ({
 
 		case Chain.Polkadot:
 		case Chain.Chainflip: {
+
+			//if phrase is just one word (private key) then convert to a hex string
+			if (isPK(phrase)) {
+				phrase = Buffer.from(phrase, 'hex').toString('hex');
+			}
+
 			const signer = await createKeyring(phrase, Network[chain].prefix);
+
+			console.log("Substrate Signer", chain, signer);
+
 			toolbox = await getToolboxByChainSubstrate(chain, {
 				signer,
 				providerUrl: chain === Chain.Polkadot ? RPCUrl.Polkadot : "wss://api-chainflip.dwellir.com/204dd906-d81d-45b4-8bfa-6f5cc7163dbc" as RPCUrl,
