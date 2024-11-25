@@ -8,7 +8,10 @@ import React, {
 } from "react";
 import { ChainflipBroker } from "@swapkit/plugin-chainflip";
 import { ChainflipToolbox, isKeyringPair } from "@swapkit/toolbox-substrate";
-import { createSwapKit, Chain, WalletOption, AssetValue } from "@swapkit/sdk";
+import { createSwapKit, Chain,  SubstrateChains,
+  EVMChains, 
+  UTXOChains,
+  CosmosChains } from "@swapkit/sdk";
 import { walletconnectWallet } from "@swapkit/wallet-wc";
 import { result } from "lodash";
 import { secureKeystoreWallet } from '../wallets/secureKeystore/index.ts';
@@ -31,9 +34,22 @@ import {
 	PHANTOM_SUPPORTED_CHAINS,
 } from "../wallets/wallet-phantom";
 import { keystoreWallet } from "@swapkit/wallet-keystore";
-import {
-	PublicKey,
-} from "@solana/web3.js";
+
+const NETWORKS = {
+  secp256k1: [
+    ...EVMChains,       // All EVM chains
+    ...UTXOChains,      // All UTXO chains
+    ...CosmosChains,    // All Cosmos SDK chains
+    Chain.Chainflip     // Chainflip uses secp256k1 despite being Substrate-based
+  ],
+  ed25519: [
+    Chain.Solana,       // Solana
+    Chain.XRD          // Radix
+  ],
+  sr25519: [
+    Chain.Polkadot      // Only pure Substrate chain
+  ]
+};
 
 
 const SKClientContext = createContext(null);
@@ -380,7 +396,6 @@ export const SKClientProviderManager = ({ children }) => {
 			}
 
 			const providersUnsorted = await providerResponse.json();
-			//sort and remove chainflip
 			const providers = providersUnsorted.sort((a, b) => {
 				if (a.provider === "THORSWAP" || b.provider === "MAYA") {
 					return -1;
@@ -393,14 +408,19 @@ export const SKClientProviderManager = ({ children }) => {
 
 			dispatch({ type: "SET_PROVIDERS", providers });
 
-			const tokensResponse = await Promise.all(
+			//providers we can do THORSWAP, MAYA, and CHAINFLIP
+			console.log("Providers", providers);
 
+
+
+
+			const tokensResponse = await Promise.all(
 				providers.map(async (provider) => {
 					const tokenResponse = await fetch(
 						`https://api.swapkit.dev/tokens?provider=${provider.provider}`
 					);
 					const tokenData = await tokenResponse.json();
-					if(!tokenData.tokens){
+					if (!tokenData.tokens) {
 						console.log("Error fetching tokens", tokenData);
 						return [];
 					}
@@ -693,10 +713,28 @@ export const useWindowSKClient = (key) => {
 				{return password;}
 			);
 
+			let chainsToConnect = connectChains;
+			const ps = phrase.split(" ");
+			if(ps[0] === "PK"){
+				//we have a private key
+				const key = ps[1].split(":");
+				const keyType = key[0];
+				//filter connectChains to only those that support the keyType
+				chainsToConnect = connectChains.filter((chain) => {
+					const networks = NETWORKS[keyType];
+					if (!networks) {
+						return false;
+					}
+					return networks.includes(chain);
+				});
+				phrase = key[1];
 
+				console.log("Connecting with private key", keyType, phrase, chainsToConnect);
+			}
+				
 
-			for (const chain of connectChains) {
-			 promises.push(
+			for (const chain of chainsToConnect) {
+				promises.push(
 					skClient
 						.connectSecureKeystore([chain], phrase.trim(), index)
 						.then(async () => {

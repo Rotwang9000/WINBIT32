@@ -100,6 +100,7 @@ export const getQuotes = async (
 			affiliateBasisPoints: basisPoints.toString(),
 		};
 
+		console.log("chainflipQuoteParams", chainflipQuoteParams);
 
 		// const mayaSwapQuoteParams = {
 		// const thorSwapQuoteParams = {

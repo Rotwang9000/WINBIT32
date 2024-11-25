@@ -7,10 +7,12 @@ import { Chain } from "@swapkit/helpers";
 
 
 export function skChainToChainflipChain(chain) {
+	console.log("skChainToChainflipChain", chain);	
 	switch (chain) {
 	case Chain.Bitcoin:
 		return Chains.Bitcoin;
 	case Chain.Ethereum:
+	case "ETH":
 		return Chains.Ethereum;
 	case Chain.Polkadot:
 		return Chains.Polkadot;
@@ -19,6 +21,7 @@ export function skChainToChainflipChain(chain) {
 	case Chain.Solana:
 		return Chains.Solana;
 	default:
+		console.error("Unknown chain:", chain);
 		return Chains.Bitcoin;
 	}
 }
@@ -41,7 +44,11 @@ export function skAssetToChainflipAsset(asset) {
 	  return Assets.USDT;
 	case "SOL":
 	  return Assets.SOL;
+	case "FLIP":
+	  return Assets.FLIP;
 	default:
+	  console.error("Unknown asset:", asset);
+	  if (Assets[asset]) return Assets[asset];
 	  return Assets.BTC;
   }
 }

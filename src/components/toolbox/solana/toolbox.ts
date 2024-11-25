@@ -68,6 +68,12 @@ function createKeysForPath({
 	derivationPath?: string;
 }) {
 
+	//if phase is one word, assume it is a private key, we connect without derivation path
+	if (phrase.split(' ').length === 1) {
+		return Keypair.fromSecretKey(new Uint8Array(Buffer.from(phrase, 'hex')));
+	}
+
+
 	if (derivationPath === "bip39") {
 
 		const seed = mnemonicToSeedSync(phrase, "");
