@@ -87,6 +87,8 @@
     "predeploy": "react-app-rewired build",
     "predeploydev": "react-app-rewired build",
     "deploy": "gh-pages -d build -b main --remote upstream",
+    "deploybuilt": "gh-pages -d build -b main --remote upstream",
+
     "deploydev": "gh-pages -d build -b Dev",
     "start": "react-app-rewired start",
     "build": "react-app-rewired build",
