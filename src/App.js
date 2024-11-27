@@ -9,9 +9,7 @@ import { SKClientProviderManager } from "./components/contexts/SKClientProviderM
 import { Toaster } from "react-hot-toast";
 import { StateSetterProvider } from "./components/contexts/SetterContext";
 import "./styles/win95.css";
-import { has, pad } from "lodash";
-import { hash } from "@radixdlt/radix-engine-toolkit";
-import { embed } from "bitcoinjs-lib/src/payments";
+import { AssetValue } from "@swapkit/helpers";
 
 const programs = getPrograms();
 
@@ -34,6 +32,8 @@ const App = () => {
 	const hashPathRef = useRef(null);
 
 	console.log('window', window);
+
+	AssetValue.loadStaticAssets();
 
 					// }
 
