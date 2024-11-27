@@ -49,6 +49,6 @@ export function skAssetToChainflipAsset(asset) {
 	default:
 	  console.error("Unknown asset:", asset);
 	  if (Assets[asset]) return Assets[asset];
-	  return Assets.BTC;
+	  return;
   }
 }

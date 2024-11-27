@@ -1,6 +1,6 @@
 {
   "name": "winbit32",
-  "version": "1.2th",
+  "version": "1.2bitrum",
   "private": false,
   "homepage": "https://winbit32.com",
   "dependencies": {
@@ -88,6 +88,7 @@
     "predeploydev": "react-app-rewired build",
     "deploy": "gh-pages -d build -b main --remote upstream",
     "deploydev": "gh-pages -d build -b Dev",
+    "deploybuilt": "gh-pages -d build -b main --remote upstream",
     "start": "react-app-rewired start",
     "build": "react-app-rewired build",
     "test": "react-app-rewired test",
