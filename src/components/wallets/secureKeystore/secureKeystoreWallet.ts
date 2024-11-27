@@ -23,8 +23,8 @@ import { HDNodeWallet, getProvider, getToolboxByChain as getToolboxByChainEVM } 
 import { BCHToolbox } from "@swapkit/toolbox-utxo";
 import { getToolboxByChain as getToolboxByChainUTXO } from "@swapkit/toolbox-utxo";
 import { getToolboxByChain as getToolboxByChainCosmos } from "../../toolbox/cosmos/index.ts";
-import { Network, getToolboxByChain as getToolboxByChainSubstrate, createKeyring } from "@swapkit/toolbox-substrate";
-
+import {  getToolboxByChain as getToolboxByChainSubstrate } from "../../plugins/substrateToolboxFactory.ts";
+import { Network, createKeyring } from "@swapkit/toolbox-substrate";
 
 import { getRadixCoreApiClient, createPrivateKey, RadixMainnet } from "./legacyRadix.ts";
 import { SOLToolbox } from "../../toolbox/solana/toolbox.ts";
@@ -329,12 +329,12 @@ const getWalletMethodsForChain = async ({
 			const signer = isPK(phrase) ? await toolbox.getSignerFromPrivateKey(phraseAsUint8Array):
 				await toolbox.getSigner(phrase);
 
-			console.log("Signer", chain, signer);
+//			console.log("Signer", chain, signer);
 
-			address = signer.address;
+			//address = signer.address;
+			const accounts = await signer.getAccounts();
 
-
-			//address = await toolbox.getAddressFromMnemonic(phrase);
+			address = accounts[0].address;
 
 			// Specify sensitive methods for Cosmos-based chains
 			sensitiveMethods = ['transfer', 'signMessage', 'deposit', 'getSigner'];
@@ -345,7 +345,11 @@ const getWalletMethodsForChain = async ({
 				const signer = isPK(phrase)? await toolbox.getSignerFromPrivateKey(phrase):
 					await toolbox.getSigner(phrase);
 
-				const from = signer.address;
+				const accounts = await signer.getAccounts();
+
+				console.log("Accounts", chain, accounts);
+
+				const from = accounts[0].address;
 
 				args[0] = { ...args[0], from, signer };
 				debugLog("Calling on WrappedToolbox:", originalMethod, args);

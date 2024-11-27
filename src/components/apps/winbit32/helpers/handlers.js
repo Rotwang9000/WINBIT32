@@ -369,7 +369,7 @@ export const handleSwap = async (
 
 		console.log("ApproveParams", ApproveParams);
 
-		const allowance = await skClient.evm
+		const allowance = await skClient
 			.isAssetValueApproved(ApproveParams)
 			.catch((error) => {
 				setStatusText("Error checking allowance");
