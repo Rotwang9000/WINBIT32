@@ -17,7 +17,7 @@ function ConnectionApp({ windowId, providerKey, phrase, setPhrase, connectionSta
 
 	const [phraseFocus, setPhraseFocus] = useIsolatedState(windowId, 'phraseFocus', false);
 
-	const { embedMode } = appData || {};
+	const { embedMode, isRandomPhrase } = appData || {};
 	//on phrase blur then remove all invalid words
 	useEffect(() => {
 		if(!phrase) return; 
