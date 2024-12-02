@@ -606,16 +606,21 @@ export const useWindowSKClient = (key) => {
 				const chains = CTRL_SUPPORTED_CHAINS;
 				setChains(chains);
 
-				if (await skClient.connectCTRL(chains)) {
-					console.log("Connected with ctrl");
+				if (!window.ctrlEthProviders){
+					window.open("https://ctrl.xyz/", "_blank");
+					return;
+				}
 
-					for (const chain of chains) {
-						const wallet = await skClient.getWalletWithBalance(chain);
-						if (wallet) {
-							promises.push(callback(wallet, chain));
+					if (await skClient.connectCTRL(chains)) {
+						console.log("Connected with ctrl");
+
+						for (const chain of chains) {
+							const wallet = await skClient.getWalletWithBalance(chain);
+							if (wallet) {
+								promises.push(callback(wallet, chain));
+							}
 						}
 					}
-				}
 				return promises;
 			// } else if (firstWord === "WINBIT") {
 			// 	console.log("Connecting with WinBitWallet");
