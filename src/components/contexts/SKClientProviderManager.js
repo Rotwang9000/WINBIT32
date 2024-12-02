@@ -27,8 +27,8 @@ import { ThorchainPlugin, MayachainPlugin } from "@swapkit/plugin-thorchain";
 // import { phantomWallet } from "@swapkit/wallet-phantom";
 // import { polkadotWallet } from "@swapkit/wallet-polkadotjs";
 // import { talismanWallet } from "@swapkit/wallet-talisman";
-// import { trezorWallet } from "@swapkit/wallet-trezor";
-import { xdefiWallet, XDEFI_SUPPORTED_CHAINS } from "@swapkit/wallet-xdefi";
+// import { trezorWallet } from "@swapkit/wallet-trezor";"
+import { ctrlWallet, CTRL_SUPPORTED_CHAINS } from "../wallets/wallet-ctrl";
 import {
 	phantomWallet,
 	PHANTOM_SUPPORTED_CHAINS,
@@ -196,7 +196,7 @@ export const SKClientProviderManager = ({ children }) => {
 				wallets: {
 					...walletconnectWallet,
 					...keystoreWallet,
-					...xdefiWallet,
+					...ctrlWallet,
 					...secureKeystoreWallet,
 					...phantomWallet,
 				},
@@ -600,14 +600,14 @@ export const useWindowSKClient = (key) => {
 				console.log("Connected with walletconnect", w);
 				document.getElementById("root").style.display = "block";
 				return promises;
-			} else if (firstWord === "XDEFI") {
-				console.log("Connecting with xdefi");
+			} else if (firstWord === "CTRL") {
+				console.log("Connecting with ctrl");
 				//add xdefiwallet to skclient
-				const chains = XDEFI_SUPPORTED_CHAINS;
+				const chains = CTRL_SUPPORTED_CHAINS;
 				setChains(chains);
 
-				if (await skClient.connectXDEFI(chains)) {
-					console.log("Connected with xdefi");
+				if (await skClient.connectCTRL(chains)) {
+					console.log("Connected with ctrl");
 
 					for (const chain of chains) {
 						const wallet = await skClient.getWalletWithBalance(chain);

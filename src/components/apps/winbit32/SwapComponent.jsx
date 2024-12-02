@@ -25,7 +25,7 @@ import { FaCopy, FaQrcode } from 'react-icons/fa';
 const SwapComponent = ({ providerKey, windowId, programData, appData, onOpenWindow, metadata, hashPath, sendUpHash }) => {
 	const { skClient, tokens, wallets, chainflipBroker } = useWindowSKClient(providerKey);
 	const { setPhrase } = programData;
-	const { license, embedMode } = appData || {}
+	const { license, embedMode, isRandomAddress } = appData || {}
 	const [swapFrom, setSwapFrom] = useIsolatedState(windowId, 'swapFrom', metadata.swapFrom || null);
 	const [swapFromAddress, setSwapFromAddress] = useIsolatedState(windowId, 'swapFromAddress', '');
 	const [swapTo, setSwapTo] = useIsolatedState(windowId, 'swapTo', metadata.swapTo || null);
@@ -223,7 +223,11 @@ swap_count=${streamingNumSwaps}
 	useEffect(() => {
 		const token = swapFrom;
 		const wallet = wallets.find(w => w?.chain === token?.chain);
-		setSwapFromAddress(wallet?.address || '');
+		if(hashPath && hashPath.length > 0 && hashPath[0].includes('CHAINFLIP') && embedMode && isRandomAddress){
+				setSwapFromAddress(r.cfQuote?.depositAddress || 'Click Open Channel to get deposit address');
+		}else{
+			setSwapFromAddress(wallet?.address || '');
+		}
 		const balance = wallet?.balance?.find(
 			b => b.isSynthetic !== true && (b.chain + '.' + b.ticker.toUpperCase() === token.identifier.toUpperCase() || b.chain + '.' + b.symbol.toUpperCase() === token.identifier.toUpperCase()))
 			|| wallet?.balance?.find(b => b.isSynthetic === true && b.symbol.toUpperCase() === token.identifier.toUpperCase());
@@ -580,8 +584,8 @@ swap_count=${streamingNumSwaps}
 							setStreamingNumSwaps(r.cfQuote?.dcaParams?.numberOfChunks || 10);
 						}
 					}
-					
-					if(embedMode){
+
+					if(embedMode && isRandomAddress){
 						setSwapFromAddress(r.cfQuote?.depositAddress || 'Click Open Channel to get deposit address');
 					}
 					return;

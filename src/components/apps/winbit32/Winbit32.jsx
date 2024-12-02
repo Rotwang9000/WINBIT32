@@ -88,6 +88,9 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 		}
 	}, [ phrase ]);
 
+	useEffect(() => {
+		appData.isRandomPhrase = isRandomPhrase;
+	}, [isRandomPhrase, appData]);
 
 
 	useEffect(() => {
@@ -482,7 +485,7 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 	}, [phrase, connectedPhrase, currentPhraseRef, setPhraseSaved]);
 
 	const walletMenu = useMemo(() => [
-		{ label: 'CTRL', action: 'xdefi' },
+		{ label: 'Take CTRL', action: 'ctrl' },
 		{ label: 'Phantom', action: 'phantom' },
 		{ label: 'WalletConnect (EVM Only)', action: 'walletconnect' },
 		{ label: 'Phrase', action: 'phrase' },
@@ -671,8 +674,8 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 				setPhrase('PHANTOM');
 				setLockMode(true);
 				break;
-			case 'xdefi':
-				setPhrase('XDEFI');
+			case 'ctrl':
+				setPhrase('CTRL');
 				setLockMode(true);
 				break;
 			case 'walletconnect':
@@ -750,24 +753,32 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 
 	if(embedMode){
 		//if showWarningDialog is false, then set an event to show it on a click anywhere
+		let doWarning = true;
 		if(showWarningDialog === 'clickshow'){
+			console.log('hashpath at w32', hashPath);
 
 			//if it is set to chainflip swap AND there is a destination address set then do nothing
-			const queryParam = new URLSearchParams(window.location.search);
-			const dest = queryParam.get('destination');
-			const selectedRoute = queryParam.get('route');
-			if(dest.length > 5 && selectedRoute.toLowerCase().includes('chainflip')){
-				return;
+			const queryParam = hashPath.slice().pop() + '&';
+			if(queryParam?.length > 0){
+				const dest = queryParam ? queryParam.split('destination=')[1]?.split('&')[0] : undefined;
+				const selectedRoute = queryParam ? queryParam.split('route=')[1]?.split('&')[0] : undefined;
+
+				console.log('dest w32', dest, selectedRoute, queryParam);
+
+				if(dest?.length > 5 && selectedRoute?.toLowerCase().includes('chainflip')){
+					
+					doWarning = false;
+				}
 			}
-
-			setShowWarningDialog(false);
-			setTimeout(() => {
-			document.addEventListener('click', () => {
-				console.log('click anywhere');
-				setShowWarningDialog(true);
-			}, { once: true });
-			}, 2000);
-
+			if(doWarning){
+				setShowWarningDialog(false);
+				setTimeout(() => {
+				document.addEventListener('click', () => {
+					console.log('click anywhere');
+					setShowWarningDialog(true);
+				}, { once: true });
+				}, 2000);
+			}
 		}else if(showWarningDialog === true){
 			const buttons = [
 				{ label: 'Copy Key Phrase to Clipboard', onclick: () => { handleMenuClick ('copy'); setShowWarningDialog(false); } },
