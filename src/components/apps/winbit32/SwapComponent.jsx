@@ -571,15 +571,23 @@ swap_count=${streamingNumSwaps}
 
 			if (r) {
 				//if chainflip set streaming
-				if (r.providers.includes('CHAINFLIP_DCA')) {
+				if (r.providers.includes('CHAINFLIP_DCA') || r.providers.includes('CHAINFLIP')) {
 					console.log('Chainflip route selected');
-					setIsStreamingSwap(true);
-					if (!manualStreamingSet) {
-						setStreamingInterval(r.cfQuote?.dcaParams?.chunkIntervalBlocks || 10);
-						setStreamingNumSwaps(r.cfQuote?.dcaParams?.numberOfChunks || 10);
+					if(r.cfQuote?.dcaParams?.numberOfChunks){
+						setIsStreamingSwap(true);
+						if (!manualStreamingSet) {
+							setStreamingInterval(r.cfQuote?.dcaParams?.chunkIntervalBlocks || 10);
+							setStreamingNumSwaps(r.cfQuote?.dcaParams?.numberOfChunks || 10);
+						}
+					}
+					
+					if(embedMode){
+						setSwapFromAddress(r.cfQuote?.depositAddress || 'Click Open Channel to get deposit address');
 					}
 					return;
 				}
+
+				
 
 
 				const parts = r.memo?.split(":");
@@ -634,12 +642,13 @@ swap_count=${streamingNumSwaps}
 					setReportData,
 					iniData,
 					license,
-
+					true,
+					setRoutes
 				)}>
 					<div className='swap-toolbar-icon'>🔄</div>
 					Execute
 				</button>
-				{swapFrom && swapFrom.identifier?.toLowerCase().includes('-0x') &&
+				{swapFrom && swapFrom.identifier?.toLowerCase().includes('-0x') && !selectedRoute.includes('CHAINFLIP_DCA') && !swapInProgress && !selectedRoute.includes('CHAINFLIP') &&
 					<button className='swap-toolbar-button' onClick={() => {
 						handleApprove(swapFrom,
 							amount,
@@ -659,8 +668,43 @@ swap_count=${streamingNumSwaps}
 						Approve
 					</button>
 				}
+				{(selectedRoute.includes('CHAINFLIP_DCA') || selectedRoute.includes('CHAINFLIP')) &&
+					<button className='swap-toolbar-button' onClick={() => handleSwap(swapFrom,
+						swapTo,
+						amount,
+						destinationAddress,
+						routes,
+						selectedRoute,
+						slippage,
+						skClient,
+						wallets,
+						setStatusText,
+						setSwapInProgress,
+						setShowProgress,
+						setProgress,
+						setTxnHash,
+						setExplorerUrl,
+						setTxnStatus,
+						setTxnTimer,
+						tokens,
+						swapInProgress,
+						feeOption,
+						currentTxnStatus,
+						chainflipBroker,
+						isStreamingSwap,
+						streamingInterval,
+						streamingNumSwaps,
+						setReportData,
+						iniData,
+						license,
+						false,
+						setRoutes
+					)}>
+						<div className='swap-toolbar-icon'>📂</div>
+						Open Channel
+					</button>
 
-
+				}
 				<button className='swap-toolbar-button' onClick={() => {
 					setSwapInProgress(false);
 					setTxnHash('');
@@ -826,8 +870,8 @@ swap_count=${streamingNumSwaps}
 							) :
 
 							<div className='infobox tofrom'>
-								<div><span><button onClick={() => copyToClipboard(swapFromAddress)}> <FaCopy /></button> <button onClick={() => qrToast(swapFromAddress)} ><FaQrcode /></button> From:</span><span title={swapFromAddress} > <span className="selectable">{swapFromAddress}</span></span></div>
-								<div><span><button onClick={() => copyToClipboard(destinationAddress)}><FaCopy /></button> <button onClick={() => qrToast(swapFromAddress)} ><FaQrcode /></button>To:</span><span style={{ flex: '0 0 0' }}>  {!swapInProgress && usersDestinationAddress && usersDestinationAddress !== destinationAddress ? (
+								<div><span><button onClick={() => copyToClipboard(swapFromAddress)}> <FaCopy /></button> <button onClick={() => qrToast(swapFromAddress)} ><FaQrcode /></button> Load funds here:</span><span title={swapFromAddress} > <span className="selectable">{swapFromAddress}</span></span></div>
+								<div><span><button onClick={() => copyToClipboard(destinationAddress)}><FaCopy /></button> <button onClick={() => qrToast(swapFromAddress)} ><FaQrcode /></button> Destination:</span><span style={{ flex: '0 0 0' }}>  {!swapInProgress && usersDestinationAddress && usersDestinationAddress !== destinationAddress ? (
 									<button onClick={() => setDestinationAddress(usersDestinationAddress)} title='Use Wallet Address' style={{ marginLeft: '5px', padding: '6px', fontSize: '10px', display: 'block', border: '1px solid black', minWidth: 'fit-content' }} >
 										Self
 									</button>

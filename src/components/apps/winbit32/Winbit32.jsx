@@ -751,6 +751,15 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 	if(embedMode){
 		//if showWarningDialog is false, then set an event to show it on a click anywhere
 		if(showWarningDialog === 'clickshow'){
+
+			//if it is set to chainflip swap AND there is a destination address set then do nothing
+			const queryParam = new URLSearchParams(window.location.search);
+			const dest = queryParam.get('destination');
+			const selectedRoute = queryParam.get('route');
+			if(dest.length > 5 && selectedRoute.toLowerCase().includes('chainflip')){
+				return;
+			}
+
 			setShowWarningDialog(false);
 			setTimeout(() => {
 			document.addEventListener('click', () => {
@@ -778,7 +787,7 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 					dialogClass="dialog-box-embed-warning"
 				>
 				<div className="warning-dialog">
-				<p><b>Connecting to a blank account.</b><br />
+				<p><b>You are Connected to a New Account.</b><br />
 				This is a decentralised service and so if you lose your key, you lose your funds with no help possible.<br />
 				</p>
 				</div>

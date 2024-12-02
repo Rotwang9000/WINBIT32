@@ -5,6 +5,7 @@ import { FeeOption, SwapKitApi } from "@swapkit/sdk";
 import { ChainIdToChain } from "@swapkit/sdk";
 import { getTxnDetails, getTxnDetailsV2, getTxnUrl } from "./transaction";
 import { getTokenForProvider } from './token';
+import { re } from "mathjs";
 
 export const chooseWalletForToken = (token, wallets) => {
 	if (!token) return null;
@@ -197,7 +198,8 @@ export const handleSwap = async (
 	setReportData,
 	iniData,
 	license,
-
+	doSwap = true,
+	setRoutes
 ) => {
 	if (swapInProgress) return;
 	setSwapInProgress(true);
@@ -349,6 +351,34 @@ export const handleSwap = async (
 			setSwapInProgress(false);
 			setShowProgress(false);
 			return null;
+		}
+
+		if(!doSwap){
+			const explorerUrl = "https://scan.chainflip.io/channels/" + cfAddress.channelId;
+			setStatusText(
+				<>Deposit Address: <a href={explorerUrl} target="_blank" rel="noopener noreferrer">{explorerUrl}</a></>
+			);
+			setSwapInProgress(false);
+			setShowProgress(false);
+			setExplorerUrl(explorerUrl);
+
+			//loop through routes, if they have cfQuote then add deposit address
+
+			setRoutes((prev) => 
+				prev.map((r) => {
+					if (r.cfQuote) {
+						r.cfQuote.depositAddress = cfAddress.depositAddress;
+					}
+					return r;
+				})
+			);
+
+
+
+			//open channel in new window
+			window.open("https://scan.chainflip.io/channels/" + cfAddress.channelId, "_blank");
+
+			return;
 		}
 
 		console.log("targetAddress", cfAddress);
