@@ -422,8 +422,8 @@ export const handleSwap = async (
 		route.sellAmount = parseFloat(
 			route.sellAmount / 10 ** otherBits.decimalDifference
 		);
-	} else if (swapFrom.identifier.toLowerCase() === "maya.cacao") {
-		route.sellAmount = route.sellAmount * 100;
+	// } else if (swapFrom.identifier.toLowerCase() === "maya.cacao") {
+	// 	route.sellAmount = route.sellAmount * 100;
 	}
 
 	console.log("route.sellAmount", route.sellAmount);
@@ -492,6 +492,7 @@ export const handleSwap = async (
 			setProgress(93);
 			setExplorerUrl(explorerUrl);
 			setProgress(100);
+			setSwapInProgress(false);
 			return;
 		} catch (error) {
 			console.error("Error sending funds:", error);

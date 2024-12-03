@@ -24,8 +24,8 @@ import { FaCopy, FaQrcode } from 'react-icons/fa';
 
 const SwapComponent = ({ providerKey, windowId, programData, appData, onOpenWindow, metadata, hashPath, sendUpHash }) => {
 	const { skClient, tokens, wallets, chainflipBroker } = useWindowSKClient(providerKey);
-	const { setPhrase } = programData;
-	const { license, embedMode, isRandomAddress } = appData || {}
+	const { setPhrase, isRandomPhrase } = programData;
+	const { license, embedMode } = appData || {}
 	const [swapFrom, setSwapFrom] = useIsolatedState(windowId, 'swapFrom', metadata.swapFrom || null);
 	const [swapFromAddress, setSwapFromAddress] = useIsolatedState(windowId, 'swapFromAddress', '');
 	const [swapTo, setSwapTo] = useIsolatedState(windowId, 'swapTo', metadata.swapTo || null);
@@ -223,8 +223,10 @@ swap_count=${streamingNumSwaps}
 	useEffect(() => {
 		const token = swapFrom;
 		const wallet = wallets.find(w => w?.chain === token?.chain);
-		if(hashPath && hashPath.length > 0 && hashPath[0].includes('CHAINFLIP') && embedMode && isRandomAddress){
-				setSwapFromAddress(r.cfQuote?.depositAddress || 'Click Open Channel to get deposit address');
+		console.log('Wallet:', wallet, 'Token:', token, 'Hash Path:', hashPath, 'Embed Mode:', embedMode, 'Random Phrase:', isRandomPhrase);
+		if (hashPath && hashPath.length > 0 && hashPath[0].includes('CHAINFLIP') && embedMode && isRandomPhrase){
+				const r = routes.find(route => route.providers.includes('CHAINFLIP_DCA') || route.providers.includes('CHAINFLIP'));
+				setSwapFromAddress(r?.cfQuote?.depositAddress || 'Click Open Channel to get deposit address');
 		}else{
 			setSwapFromAddress(wallet?.address || '');
 		}
@@ -585,7 +587,7 @@ swap_count=${streamingNumSwaps}
 						}
 					}
 
-					if(embedMode && isRandomAddress){
+					if (embedMode && isRandomPhrase){
 						setSwapFromAddress(r.cfQuote?.depositAddress || 'Click Open Channel to get deposit address');
 					}
 					return;
@@ -613,7 +615,7 @@ swap_count=${streamingNumSwaps}
 			}
 		}
 
-		, [selectedRoute, routes, setStreamingInterval, setStreamingNumSwaps, setIsStreamingSwap]);
+		, [selectedRoute, routes, setStreamingInterval, setStreamingNumSwaps, setIsStreamingSwap, isRandomPhrase]);
 
 	return (
 		<>

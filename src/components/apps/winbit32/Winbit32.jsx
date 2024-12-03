@@ -32,6 +32,7 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 
 
 	const generatePhrase = useCallback((size = 12) => {
+
 		const entropy = size === 12 ? 128 : 256;
 		const phrase = generateMnemonic(wordlist, entropy);
 		if(showWarningDialog === null && embedMode){
@@ -73,7 +74,7 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 	const phraseTextRef = useRef(null);
 
 
-	const [programData, setProgramData] = useIsolatedState(windowId, 'programData', { phrase, statusMessage, setPhrase, setStatusMessage, connectionAppRef, embedMode });
+	const [programData, setProgramData] = useIsolatedState(windowId, 'programData', { phrase, statusMessage, setPhrase, setStatusMessage, connectionAppRef, embedMode, isRandomPhrase });
 
 	useEffect(() => {
 		if(!phrase){
@@ -83,14 +84,10 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 
 
 	useEffect(() => {
-		if(phrase !== isRandomPhrase){
+		if (phrase && phrase !== isRandomPhrase){
 			setIsRandomPhrase(false);
 		}
 	}, [ phrase ]);
-
-	useEffect(() => {
-		appData.isRandomPhrase = isRandomPhrase;
-	}, [isRandomPhrase, appData]);
 
 
 	useEffect(() => {
@@ -136,8 +133,8 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 
 	useEffect(() => {
 		if(currentRef.current !== phrase) currentRef.current = phrase;
-		setProgramData({ phrase, statusMessage, setPhrase, setStatusMessage, lockMode, setLockMode, connectionAppRef, embedMode });
-	}, [phrase, setPhrase, setProgramData, setStatusMessage, statusMessage, lockMode, setLockMode, connectionAppRef, embedMode]);
+		setProgramData({ phrase, statusMessage, setPhrase, setStatusMessage, lockMode, setLockMode, connectionAppRef, embedMode, isRandomPhrase });
+	}, [phrase, setPhrase, setProgramData, setStatusMessage, statusMessage, lockMode, setLockMode, connectionAppRef, embedMode, isRandomPhrase]);
 
 
 
