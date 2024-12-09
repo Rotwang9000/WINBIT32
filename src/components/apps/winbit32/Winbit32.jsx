@@ -72,6 +72,7 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 	const handleSubProgramClickRef = useRef(null);
 	const connectionAppRef = useRef(null);
 	const phraseTextRef = useRef(null);
+	const randomPhraseRef = useRef(null);
 
 
 	const [programData, setProgramData] = useIsolatedState(windowId, 'programData', { phrase, statusMessage, setPhrase, setStatusMessage, connectionAppRef, embedMode, isRandomPhrase });
@@ -88,6 +89,10 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 			setIsRandomPhrase(false);
 		}
 	}, [ phrase ]);
+
+	useEffect(() => {
+		randomPhraseRef.current = isRandomPhrase;
+	}, [isRandomPhrase]);
 
 
 	useEffect(() => {
@@ -415,7 +420,7 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 				setPhraseSaved(false);
 				setConnectionStatus('connected');
 				
-				setStatusMessage('Connected successfully' + ((isRandomPhrase !== false)? ' using a random phrase. Save it before you use it, or lose your funds.': '.'));
+				setStatusMessage('Connected successfully' + ((randomPhraseRef.current === currentPhraseRef.current)? ' using a random phrase. Save it before you use it, or lose your funds.': '.'));
 				setTimeout(() => {
 					console.log('Connected successfully, hiding progress', wallets);
 					setShowProgress(false);
@@ -691,7 +696,7 @@ const Winbit32 = ({ onMenuAction, windowA, windowId, windowName, setStateAndSave
 				console.log(`Unknown action: ${action}`);
 				break;
 		}
-	}, [windowA, handleConnect, handleOpenFile, setConnectionStatus, setStatusMessage, setShowProgress, skClient, setWallets, resetWallets, setPhrase, setConnectedPhrase, setPhraseSaved, setLockMode, generatePhrase]);
+	}, [windowA, handleConnect, handleOpenFile, setConnectionStatus, setStatusMessage, setShowProgress, skClient, setWallets, resetWallets, setPhrase, setConnectedPhrase, setPhraseSaved, setLockMode, generatePhrase, isRandomPhrase]);
 //}, [handleConnect, handleOpenFile, handleSubProgramClick, setPhrase, setPhraseSaved, setShowScanner, showScanner, windowA, setLockMode]);
 
 	useEffect(() => {

@@ -6,7 +6,7 @@ import React, {
 	useMemo,
 	useCallback,
 } from "react";
-import { ChainflipBroker } from "@swapkit/plugin-chainflip";
+import { ChainflipBroker } from "../plugins/chainflip/broker.ts";	
 import { ChainflipToolbox, isKeyringPair } from "@swapkit/toolbox-substrate";
 import { createSwapKit, Chain,  SubstrateChains,
   EVMChains, 
@@ -183,7 +183,9 @@ export const SKClientProviderManager = ({ children }) => {
 				rpcUrls: {
 					Chainflip:
 						"https://api-chainflip.dwellir.com/204dd906-d81d-45b4-8bfa-6f5cc7163dbc",
-					ETH: "https://mainnet.infura.io/v3/c3b4e673639742a89bbddcb49895d568",
+					Ethereum:
+						"https://mainnet.infura.io/v3/c3b4e673639742a89bbddcb49895d568",
+					ETH: "https://api-eth-mainnet-archive.dwellir.com/204dd906-d81d-45b4-8bfa-6f5cc7163dbc",
 					AVAX: "https://avalanche-mainnet.infura.io/v3/c3b4e673639742a89bbddcb49895d568",
 					DOT: "https://rpc.polkadot.io",
 					KUJI: "https://kujira-rpc.publicnode.com:443",

@@ -14,6 +14,7 @@ import type {
   SwapDepositResponse,
   WithdrawFeeResponse,
 } from "./types";
+import { fromBase64 } from "../../toolbox/cosmos";
 
 export const chainToChainflipChain = new Map<Chain, keyof typeof Chains>([
   [Chain.Arbitrum, Chains.Arbitrum],
@@ -221,7 +222,7 @@ const withdrawFee =
 
 const fundStateChainAccount =
   (chainflipToolbox: Awaited<ReturnType<typeof ChainflipToolbox>>) =>
-  ({
+  async ({
     evmToolbox,
     stateChainAccount,
     assetValue,
@@ -246,10 +247,60 @@ const fundStateChainAccount =
       ? stateChainAccount
       : u8aToHex(decodeAddress(stateChainAccount));
 
+    const contractAddress = "0x6995ab7c4d7f4b03f467cf4c8e920427d9621dbd";
+
+    const ApproveParams = {
+      assetAddress: "0x826180541412D574cf1336d22c0C0a287822678A",
+      amount: assetValue.getBaseValue("string"),
+      spenderAddress: contractAddress,
+      from: evmToolbox.address,
+      contractAddress
+    };
+
+    const allowance = await evmToolbox.isApproved(ApproveParams)
+      .catch((error) => {
+        console.error("error", error);
+        return false;
+      });
+    console.log("allowance", allowance);
+    if (!allowance) {
+      console.log("approving", ApproveParams);
+
+      const approved = await evmToolbox.approve(ApproveParams)
+        .catch((error) => {
+          console.error("error", error);
+          return false;
+        });
+        if(!approved) {
+          throw new SwapKitError("chainflip_broker_fund_approve_error");
+        }
+
+        //loop for a while to wait for the approval to go through
+        let count = 0;
+        while(count < 10) {
+          const allowance = await evmToolbox.isApproved(ApproveParams)
+            .catch((error) => {
+              console.error("error", error);
+              return false;
+            });
+          if(allowance) {
+            break;
+          }
+          await new Promise((resolve) => setTimeout(resolve, 2500));
+          console.log("waiting for approval to go through:", count);
+          count++;
+        }
+
+      console.log("approved");
+    }
+
+    console.log("funding", hexAddress, assetValue.getBaseValue("string"));
+
     return evmToolbox.call<string>({
       abi: chainflipGateway,
-      contractAddress: "0x6995ab7c4d7f4b03f467cf4c8e920427d9621dbd",
+      contractAddress,
       funcName: "fundStateChainAccount",
+      txOverrides: { from: evmToolbox.address },
       funcParams: [hexAddress, assetValue.getBaseValue("string")],
     });
   };
