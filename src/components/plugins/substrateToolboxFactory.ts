@@ -12,13 +12,23 @@ type ToolboxParams = {
   generic?: boolean;
   signer: KeyringPair | Signer;
 };
+
+// /**
+//  * @param {string | string[]}  endpoint    The endpoint url. Usually `ws://ip:9944` or `wss://ip:9944`, may provide an array of endpoint strings.
+//  * @param {number | false} autoConnectMs Whether to connect automatically or not (default). Provided value is used as a delay between retries.
+//  * @param {Record<string, string>} headers The headers provided to the underlying WebSocket
+//  * @param {number} [timeout] Custom timeout value used per request . Defaults to `DEFAULT_TIMEOUT_MS`
+//  */
+// constructor(endpoint ?: string | string[], autoConnectMs ?: number | false, headers ?: Record<string, string>, timeout ?: number, cacheCapacity ?: number);
+//     /**
+
 // Define comprehensive WS options
 const wsOptions = {
   // Connection timeout
   timeout: 60000, // 60 second timeout per request
 
   // Auto reconnect settings
-  autoConnectMs: 5000, // 5 second delay between reconnect attempts
+  autoConnectMs: false, // 5 second delay between reconnect attempts
 
   // Optional headers for auth/tracking
   headers: {
@@ -27,7 +37,7 @@ const wsOptions = {
   },
 
   // Cache settings for performance
-  cacheCapacity: 100 // Store up to 100 recent requests
+  cacheCapacity: 200 // Store up to 100 recent requests
 };
 
 export const ToolboxFactory = async ({
@@ -36,6 +46,9 @@ export const ToolboxFactory = async ({
   chain,
   signer,
 }: ToolboxParams & { chain: SubstrateChain }) => {
+
+  let retries = 0;
+
   // Create provider with full options
   const provider = new WsProvider(
     providerUrl,
@@ -46,7 +59,11 @@ export const ToolboxFactory = async ({
   );
 
   // Add connection event handlers
-  provider.on('connected', () => console.log(`[${chain}] WS Connected`));
+  provider.on('connected', () => {
+    console.log(`[${chain}] WS Connected`);
+    retries = 0;
+    }
+  );
   provider.on('error', (error) => console.error(`[${chain}] WS Error:`, error));
   provider.on('disconnected', () => console.log(`[${chain}] WS Disconnected`));
 
