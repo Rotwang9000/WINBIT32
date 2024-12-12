@@ -167,11 +167,11 @@ export const SKClientProviderManager = ({ children }) => {
 					ethplorerApiKey: "EK-8ftjU-8Ff" + "7UfY-JuNGL",
 					walletConnectProjectId: "dac706e68e589ffa15fed9bbccd825f7",
 
-					//chainflipBrokerUrl: "https://chainflip.winbit32.com",
+					chainflipBrokerUrl: "https://chainflip.winbit32.com",
 					chainflipBrokerConfig: {
-						//chainflipBrokerUrl: "https://chainflip.winbit32.com",
+						chainflipBrokerUrl: "https://chainflip.winbit32.com",
 						useChainflipSDKBroker: true,
-						//chainflipBrokerEndpoint: "https://chainflip.winbit32.com",
+						chainflipBrokerEndpoint: "https://chainflip.winbit32.com",
 					},
 					thorswapApiKey: "",
 				},
