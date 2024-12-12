@@ -170,7 +170,7 @@ export const SKClientProviderManager = ({ children }) => {
 					chainflipBrokerUrl: "https://chainflip.winbit32.com",
 					chainflipBrokerConfig: {
 						chainflipBrokerUrl: "https://chainflip.winbit32.com",
-						useChainflipSDKBroker: false,
+						useChainflipSDKBroker: true,
 						chainflipBrokerEndpoint: "https://chainflip.winbit32.com",
 					},
 					thorswapApiKey: "",
