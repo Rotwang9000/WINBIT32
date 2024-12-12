@@ -7,7 +7,7 @@ import React, {
 	useCallback,
 } from "react";
 import { ChainflipBroker } from "../plugins/chainflip/broker.ts";	
-import { ChainflipToolbox, isKeyringPair } from "@swapkit/toolbox-substrate";
+import { ChainflipToolbox } from "../plugins/substrateToolboxFactory.ts";
 import { createSwapKit, Chain,  SubstrateChains,
   EVMChains, 
   UTXOChains,
@@ -183,6 +183,7 @@ export const SKClientProviderManager = ({ children }) => {
 				rpcUrls: {
 					Chainflip:
 						"https://api-chainflip.dwellir.com/204dd906-d81d-45b4-8bfa-6f5cc7163dbc",
+					//"https://api-chainflip.dwellir.com/204dd906-d81d-45b4-8bfa-6f5cc7163dbc",
 					Ethereum:
 						"https://mainnet.infura.io/v3/c3b4e673639742a89bbddcb49895d568",
 					ETH: "https://api-eth-mainnet-archive.dwellir.com/204dd906-d81d-45b4-8bfa-6f5cc7163dbc",
@@ -274,7 +275,9 @@ export const SKClientProviderManager = ({ children }) => {
 				}
 
 				const chainflipToolbox = await ChainflipToolbox({
-					providerUrl: "wss://api-chainflip.dwellir.com/204dd906-d81d-45b4-8bfa-6f5cc7163dbc",
+					//providerUrl: "wss://api-chainflip.dwellir.com/204dd906-d81d-45b4-8bfa-6f5cc7163dbc",
+					providerUrl:
+						"https://api-chainflip.dwellir.com/204dd906-d81d-45b4-8bfa-6f5cc7163dbc",
 					signer: keyRing,
 					keyring: keyRing,
 					generic: false,

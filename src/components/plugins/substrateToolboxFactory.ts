@@ -1,4 +1,4 @@
-import { ApiPromise, WsProvider } from "@polkadot/api";
+import { ApiPromise, WsProvider, HttpProvider } from "@polkadot/api";
 import type { KeyringPair } from "@polkadot/keyring/types";
 import { AssetValue, Chain, type SubstrateChain, SwapKitNumber, getRPCUrl } from "@swapkit/helpers";
 
@@ -48,15 +48,22 @@ export const ToolboxFactory = async ({
 }: ToolboxParams & { chain: SubstrateChain }) => {
 
   let retries = 0;
-
-  // Create provider with full options
-  const provider = new WsProvider(
-    providerUrl,
-    wsOptions.autoConnectMs,
-    wsOptions.headers,
-    wsOptions.timeout,
-    wsOptions.cacheCapacity
-  );
+  let provider;
+  //if begins with ws:// or wss://
+  if (providerUrl.startsWith("ws://") || providerUrl.startsWith("wss://")) {
+    // Create provider with full options
+    provider = new WsProvider(
+      providerUrl,
+      wsOptions.autoConnectMs,
+      wsOptions.headers,
+      wsOptions.timeout,
+      wsOptions.cacheCapacity
+    );
+  }else
+  {
+    // Create provider with default options
+    provider = new HttpProvider(providerUrl);
+  }
 
   // Add connection event handlers
   provider.on('connected', () => {
@@ -88,7 +95,13 @@ export const PolkadotToolbox = ({ providerUrl, signer, generic = false }: Toolbo
 };
 
 export const ChainflipToolbox = async ({ providerUrl, signer, generic = false }: ToolboxParams) => {
-  const provider = new WsProvider(providerUrl);
+  let provider;
+
+  if(providerUrl.startsWith("ws://") || providerUrl.startsWith("wss://"))
+      provider = new WsProvider(providerUrl, wsOptions.autoConnectMs, wsOptions.headers, wsOptions.timeout, wsOptions.cacheCapacity);
+  else
+      provider = new HttpProvider(providerUrl);
+
   const api = await ApiPromise.create({ provider });
   const gasAsset = AssetValue.from({ chain: Chain.Chainflip });
 

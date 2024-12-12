@@ -370,11 +370,11 @@ const getWalletMethodsForChain = async ({
 
 			const signer = await createKeyring(phrase, Network[chain].prefix);
 
-			console.log("Substrate Signer", chain, signer);
+			console.log("Substrate Signer", chain, signer);//"wss://api-chainflip.dwellir.com/204dd906-d81d-45b4-8bfa-6f5cc7163dbc"
 
 			toolbox = await getToolboxByChainSubstrate(chain, {
 				signer,
-				providerUrl: chain === Chain.Polkadot ? RPCUrl.Polkadot : "wss://api-chainflip.dwellir.com/204dd906-d81d-45b4-8bfa-6f5cc7163dbc" as RPCUrl,
+				providerUrl: chain === Chain.Polkadot ? RPCUrl.Polkadot : "https://api-chainflip.dwellir.com/204dd906-d81d-45b4-8bfa-6f5cc7163dbc" as RPCUrl,
 			});
 
 			address = signer.address;
