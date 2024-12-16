@@ -48,7 +48,59 @@ export async function getQuoteFromThorSwap(quoteParams) {
 	return body;
 }
 
+export async function getQuoteFromMaya(quoteParams) {
+	const apiUrl = "https://midgard.mayachain.info/v2/quote/swap";
 
+	const params = {
+		from_asset: quoteParams.sellAsset.identifier,
+		to_asset: quoteParams.buyAsset.identifier,
+		amount: quoteParams.assetValue.getBaseValue("string"),
+		destination: quoteParams.destinationAddress,
+		slippage_bps: quoteParams.slippage * 100,
+	};
+
+	const url = new URL(apiUrl);
+	Object.keys(params).forEach(key => url.searchParams.append(key, params[key]));
+
+	const response = await fetch(url, {
+		method: "GET",
+		headers: { "Content-Type": "application/json" },
+		retries: 5,
+		retryDelay: (attempt) => Math.pow(2, attempt) * 1000
+	});
+
+	if (!response.ok) {
+		throw new Error("Failed to fetch Maya quote");
+	}
+
+	const quote = await response.json();
+
+	return {
+		quoteId: new Date().getTime(),
+		routes: [{
+			providers: ["MAYA"],
+			sellAsset: quoteParams.sellAsset,
+			sellAmount: quoteParams.assetValue,
+			buyAsset: quoteParams.buyAsset,
+			expectedBuyAmount: amountInFloat(
+				quote.expected_amount_out,
+				quoteParams.buyAsset.decimals || 8
+			),
+			expectedBuyAmountMaxSlippage: amountInFloat(
+				quote.expected_amount_out * (1 - quoteParams.slippage / 100),
+				quoteParams.buyAsset.decimals || 8
+			),
+			EstimatedTime: 300, // Maya typically takes ~5 minutes
+			totalSlippageBps: quoteParams.slippage,
+			warnings: quote.warnings || [],
+			fees: {
+				affiliate: quote.fees?.affiliate || "0",
+				outbound: quote.fees?.outbound || "0"
+			},
+			mayaQuote: quote
+		}]
+	};
+}
 
 export async function getQuoteFromSwapKit(quoteParams) {
 	const fetch = require("fetch-retry")(global.fetch);

@@ -23,7 +23,7 @@ import { HDNodeWallet, getProvider, getToolboxByChain as getToolboxByChainEVM } 
 import { BCHToolbox } from "@swapkit/toolbox-utxo";
 import { getToolboxByChain as getToolboxByChainUTXO } from "@swapkit/toolbox-utxo";
 import { getToolboxByChain as getToolboxByChainCosmos } from "../../toolbox/cosmos/index.ts";
-import {  getToolboxByChain as getToolboxByChainSubstrate } from "../../plugins/substrateToolboxFactory.ts";
+import { getToolboxByChain as getToolboxByChainSubstrate } from "../../plugins/substrateToolboxFactory.ts";
 import { Network, createKeyring } from "@swapkit/toolbox-substrate";
 
 import { getRadixCoreApiClient, createPrivateKey, RadixMainnet } from "./legacyRadix.ts";
@@ -374,7 +374,7 @@ const getWalletMethodsForChain = async ({
 
 			toolbox = await getToolboxByChainSubstrate(chain, {
 				signer,
-				providerUrl: chain === Chain.Polkadot ? RPCUrl.Polkadot : "https://api-chainflip.dwellir.com/204dd906-d81d-45b4-8bfa-6f5cc7163dbc" as RPCUrl,
+				providerUrl: chain === Chain.Polkadot ? RPCUrl.Polkadot : "wss://rpc.chainflip.winbit32.com" as RPCUrl,
 			});
 
 			address = signer.address;

@@ -28,7 +28,7 @@ const wsOptions = {
   timeout: 60000, // 60 second timeout per request
 
   // Auto reconnect settings
-  autoConnectMs: false, // 5 second delay between reconnect attempts
+  autoConnectMs: 50000, // 5 second delay between reconnect attempts
 
   // Optional headers for auth/tracking
   headers: {
@@ -49,6 +49,7 @@ export const ToolboxFactory = async ({
 
   let retries = 0;
   let provider;
+  console.log("ToolboxFactory providerUrl: ", providerUrl);
   //if begins with ws:// or wss://
   if (providerUrl.startsWith("ws://") || providerUrl.startsWith("wss://")) {
     // Create provider with full options
@@ -62,9 +63,10 @@ export const ToolboxFactory = async ({
   }else
   {
     // Create provider with default options
+    console.log("HTTP Provider");
     provider = new HttpProvider(providerUrl);
   }
-
+  console.log("ToolboxFactory provider: ", provider);
   // Add connection event handlers
   provider.on('connected', () => {
     console.log(`[${chain}] WS Connected`);
@@ -74,7 +76,9 @@ export const ToolboxFactory = async ({
   provider.on('error', (error) => console.error(`[${chain}] WS Error:`, error));
   provider.on('disconnected', () => console.log(`[${chain}] WS Disconnected`));
 
+  console.log("ToolboxFactory providerUrl: ", providerUrl);
   const api = await ApiPromise.create({ provider });
+  console.log("ToolboxFactory api: ", api);
   const gasAsset = AssetValue.from({ chain });
 
   return BaseSubstrateToolbox({
@@ -102,8 +106,26 @@ export const ChainflipToolbox = async ({ providerUrl, signer, generic = false }:
   else
       provider = new HttpProvider(providerUrl);
 
+  console.log("ChainflipToolbox providerUrl: ", providerUrl);
   const api = await ApiPromise.create({ provider });
   const gasAsset = AssetValue.from({ chain: Chain.Chainflip });
+
+  console.log("ChainflipToolbox api: ", api);
+
+  api.on("connected", () => {
+    console.log("Connected to Chainflip");
+  }
+  );
+  api.on("disconnected", () => {
+    console.log("Disconnected from Chainflip");
+  }
+  );
+  api.on("error", (error) => {
+    console.error("Error from Chainflip: ", error);
+  }
+  );
+
+
 
   async function getBalance(api: ApiPromise, address: string) {
     // @ts-expect-error @Towan some parts of data missing?

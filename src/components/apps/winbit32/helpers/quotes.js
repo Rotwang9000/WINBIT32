@@ -52,7 +52,7 @@ export const getQuotes = async (
 		
 		let providerGroups = [["MAYACHAIN", "MAYACHAIN_STREAMING", "THORCHAIN", "THORCHAIN_STREAMING"]];
 		const affiliates = [mayaAffiliate, thorAffiliate];	
-		if(thorAffiliate !== mayaAffiliate){
+		if(thorAffiliate !== mayaAffiliate || true){
 			providerGroups = [
 				["MAYACHAIN", "MAYACHAIN_STREAMING"],
 
@@ -64,8 +64,10 @@ export const getQuotes = async (
 		//https://mayanode.mayachain.info/mayachain/quote/swap?from_asset=XRD.XRD&to_asset=MAYA.CACAO&amount=2000000000&destination=maya1jpvhncl60k5q3dljw354t0ccg54j3pkjcag9ef&affiliate_bps=44&affiliate=cs
 		//}
 
-		const sellAsset = (swapFrom.symbol)?  swapFrom.chain + "." + swapFrom.symbol: swapFrom.identifier;
-		const buyAsset = (swapTo.symbol)? swapTo.chain + "." + swapTo.symbol: swapTo.identifier;
+		const sellAsset =// (swapFrom.symbol)?  swapFrom.chain + "." + swapFrom.symbol:
+						 swapFrom.identifier;
+		const buyAsset = //(swapTo.symbol)? swapTo.chain + "." + swapTo.symbol: 
+						swapTo.identifier;
 
 
 		const quotesParams = providerGroups.map((providerGroup, index) => {
@@ -115,6 +117,10 @@ export const getQuotes = async (
 		// };
 
 		const quoteFuncs = quotesParams.map((quoteParams) => {
+			console.log("quoteParams", quoteParams);
+			// if(quoteParams.providers.includes("MAYACHAIN") || quoteParams.providers.includes("MAYACHAIN_STREAMING")){
+			// 	return () => getQuoteFromMaya(quoteParams, swapTo, swapFrom);
+			// }
 			return () => getQuoteFromSwapKit(quoteParams);
 		});
 
