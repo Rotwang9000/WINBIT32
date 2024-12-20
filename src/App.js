@@ -75,6 +75,7 @@ const App = () => {
 
 		//get hash, split by /, if the first one begins ~ then set option with it then remove it
 		const hash = window.location.hash;
+
 		if(!hash){
 			hashPathRef.current = [];
 		}else{
