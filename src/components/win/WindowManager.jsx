@@ -12,9 +12,10 @@ import { useWindowData } from './includes/WindowContext';
 import './styles/scrollbar.css';
 
 import { createNewWindow, convertObjectFunctions } from './includes/WindowManagerFunctions';
+import _ from 'lodash';
 
-const WindowManager = ({ programs, windowName, windowId, handleOpenFunction, setStateAndSave, providerKey, setWindowMenu, programData, 
-	setProgramData, handleOpenArray, handleExit, appData = {}, hashPath = [], sendUpHash = () => {}, inContainer }) => {
+const WindowManager = ({ programs, windowName, windowId, windowA, handleOpenFunction, setStateAndSave, providerKey, setWindowMenu, programData, 
+	setProgramData, handleOpenArray, handleExit, appData = {}, hashPath = [], sendUpHash = () => {}, inContainer, onOpenWindow = () => {} }) => {
 
 	const updatedState = {
 		windowName,
@@ -33,9 +34,10 @@ const WindowManager = ({ programs, windowName, windowId, handleOpenFunction, set
 	const { setWindowContent } = useWindowData();
 
 	const hashPathRef = useRef(hashPath);
-	const downstreamHashes = useRef({});
 	
+	const downstreamHashes = useRef({});
 
+	
 
 	useEffect(() => {
 		if (highestZIndex !== highestZIndexRef.current) highestZIndexRef.current = highestZIndex;
@@ -61,6 +63,7 @@ const WindowManager = ({ programs, windowName, windowId, handleOpenFunction, set
 	useEffect(() => {
 		window.document.body.style.cursor = 'default';
 		window.document.body.classList.remove('wait');
+		window.waitingFor = null;
 
 		if (setWindowMenu) {
 			const windowMenu = windows.map(window => ({
@@ -185,32 +188,37 @@ const WindowManager = ({ programs, windowName, windowId, handleOpenFunction, set
 			const loadedWindows = loadWindowState(windowName);
 			const initialWindows = initializeWindows(programs);
 
-			if (!defaultProgramsInitialized.current && (!windows || windows.length === 0)) {
-				if (loadedWindows) {
-					dispatch({ type: 'SET_WINDOWS', payload: Array.isArray(loadedWindows) ? loadedWindows : [] });
-				} else {
-					dispatch({ type: 'SET_WINDOWS', payload: initialWindows.windows });
-					dispatch({ type: 'SET_HIGHEST_Z_INDEX', payload: initialWindows.highestZIndex });
+			if (!defaultProgramsInitialized.current) {
+
+				if (!windows || windows.length === 0){
+					if (loadedWindows) {
+						dispatch({ type: 'SET_WINDOWS', payload: Array.isArray(loadedWindows) ? loadedWindows : [] });
+					} else {
+						dispatch({ type: 'SET_WINDOWS', payload: initialWindows.windows });
+						dispatch({ type: 'SET_HIGHEST_Z_INDEX', payload: initialWindows.highestZIndex });
+					}
+
+					const progs = getPrograms();
+					const mappedPrograms = progs.map(program => ({
+						...program,
+						onStateChange: program.onStateChange ? handleStateChange : undefined,
+					}));
+
+					programs.forEach(program => convertObjectFunctions(program, functionMap));
+					dispatch({ type: 'SET_PROGRAM_LIST', payload: mappedPrograms });
+					dispatch({ type: 'SET_PROGRAMS', payload: programs });
+
+					const defaultPrograms = programs.filter(program => program.defaultOpen);
+					defaultPrograms.forEach(program => handleOpenWindow(program, {}, false));
+					console.log('Default programs initialized:', defaultPrograms);
 				}
 
-				const progs = getPrograms();
-				const mappedPrograms = progs.map(program => ({
-					...program,
-					onStateChange: program.onStateChange ? handleStateChange : undefined,
-				}));
+				console.log('hashPath:', hashPath, hashPathRef.current, windowA);
 
-				programs.forEach(program => convertObjectFunctions(program, functionMap));
-				dispatch({ type: 'SET_PROGRAM_LIST', payload: mappedPrograms });
-				dispatch({ type: 'SET_PROGRAMS', payload: programs });
-
-				const defaultPrograms = programs.filter(program => program.defaultOpen);
-				defaultPrograms.forEach(program => handleOpenWindow(program, {}, false));
-				console.log('Default programs initialized:', defaultPrograms);
-
-
-				if(hashPathRef.current.length){
+				if (hashPathRef.current.length && (!windowA || !windowA.invisibleToHash)){
 					//Pop the first element from the array and open the window
 					const progName = hashPathRef.current.shift().split('~');
+					console.log('progName:', progName);
 					if(progName.length > 1){
 						//open the window with the metadata
 						const metadata = JSON.parse(atob(progName[1]));
@@ -257,6 +265,11 @@ const WindowManager = ({ programs, windowName, windowId, handleOpenFunction, set
 
 		//receive hash from child window, add to hashParts and send up
 	const _sendUpHash = (hash, _windowId) => {
+
+		if (windowA?.invisibleToHash) {
+			return;
+		}
+
 		//get our current front window and add to hash
 		const frontWindow = getCurrentFrontWindow;
 
@@ -264,9 +277,15 @@ const WindowManager = ({ programs, windowName, windowId, handleOpenFunction, set
 			//console.log('frontWindow:', frontWindow.id, _windowId, windowId);
 			downstreamHashes.current[_windowId] = hash.slice();
 			const _hash = hash.slice();
-			//console.log('frontWindow...', frontWindow);
-			_hash.push(frontWindow.progName); 
-			sendUpHash(_hash, windowId);
+				// console.log('frontWindow...', frontWindow);
+				_hash.push(frontWindow.progName); 
+			
+
+				if (!_hash.includes('progman.exe')){
+
+					sendUpHash(_hash, windowId);
+
+				}
 			
 		}else{
 			// console.log('No front window', frontWindow, windowId, _windowId);
@@ -284,7 +303,9 @@ const WindowManager = ({ programs, windowName, windowId, handleOpenFunction, set
 			const hashes = downstreamHashes.current[frontWindow.id]?.slice() || [];
 			// console.log('hashes:', hashes, frontWindow.windowId, windowId);
 			//send with the front window but don't add to downstreamHashes
-			hashes.push(frontWindow.progName);
+			if(!frontWindow.invisibleToHash){
+				hashes.push(frontWindow.progName);
+			}
 			sendUpHash(hashes, windowId);	
 		}
 	}
@@ -386,6 +407,7 @@ const WindowManager = ({ programs, windowName, windowId, handleOpenFunction, set
 											setProgramData={setProgramData}
 											appData={appData}
 											onOpenWindow={handleOpenWindow}
+											parentOnOpenWindow={onOpenWindow}
 											handleExit={handleExit}
 											hashPath={hashPathRef.current}
 											sendUpHash={_sendUpHash}
