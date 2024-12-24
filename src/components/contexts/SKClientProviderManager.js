@@ -181,8 +181,8 @@ export const SKClientProviderManager = ({ children }) => {
 					...ThorchainPlugin,
 				},
 				rpcUrls: {
-					Chainflip:
-						"wss://rpc.chainflip.winbit32.com",
+					Chainflip: "wss://rpc.chainflip.winbit32.com",
+					FLIP: "wss://rpc.chainflip.winbit32.com",
 					//"https://api-chainflip.dwellir.com/204dd906-d81d-45b4-8bfa-6f5cc7163dbc",
 					Ethereum:
 						"https://mainnet.infura.io/v3/c3b4e673639742a89bbddcb49895d568",
@@ -190,8 +190,12 @@ export const SKClientProviderManager = ({ children }) => {
 					AVAX: "https://avalanche-mainnet.infura.io/v3/c3b4e673639742a89bbddcb49895d568",
 					DOT: "https://rpc.polkadot.io",
 					KUJI: "https://kujira-rpc.publicnode.com:443",
-					Kujira: "https://kujira-rpc.publicnode.com:443",
-					Base: "https://api-base-mainnet-archive.dwellir.com/204dd906-d81d-45b4-8bfa-6f5cc7163dbc",
+					BASE: "https://api-base-mainnet-archive.dwellir.com/204dd906-d81d-45b4-8bfa-6f5cc7163dbc",
+					BSC: "https://api-bsc-mainnet-full.dwellir.com/204dd906-d81d-45b4-8bfa-6f5cc7163dbc",
+					ARB: "https://api-arbitrum-mainnet-archive.dwellir.com/204dd906-d81d-45b4-8bfa-6f5cc7163dbc",
+					OP: "https://api-optimism-mainnet-archive.dwellir.com/204dd906-d81d-45b4-8bfa-6f5cc7163dbc",
+					MATIC:
+						"https://api-polygon-mainnet-full.dwellir.com/204dd906-d81d-45b4-8bfa-6f5cc7163dbc",
 					// XRD: "https://radix-mainnet.rpc.grove.city/v1/456359ff",
 					// Radix: "https://radix-mainnet.rpc.grove.city/v1/456359ff",
 				},

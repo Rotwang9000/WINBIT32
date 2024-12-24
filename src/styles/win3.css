@@ -1,5 +1,9 @@
 html,body {
 	background-color: teal;
+	background-image: url('../images/xmas.webp');
+	background-size: 300px;
+	background-attachment: fixed;
+
 	font-family: "play", fixedsys, consolas, monospace;
 	-webkit-touch-callout: none;
 	-webkit-user-select: none;
